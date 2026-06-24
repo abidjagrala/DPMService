@@ -1,0 +1,14 @@
+{% extends "accounts/base.html" %}
+{% load i18n %}
+
+{% block title %}{{ page_title }} — Domain and Hosting Services{% endblock %}
+
+{% block breadcrumbs %}
+<div class="text-sm breadcrumbs mb-4">
+    <ul>
+        <li><a href="{% url 'accounts:dashboard' %}">Dashboard</a></li>
+        <li><a href="{% url 'hosting:hosting_list' %}">Domain and Hosting Services</a></li>
+        <li>{{ page_title }}</li>
+    </ul>
+</div>
+{% endblock %}

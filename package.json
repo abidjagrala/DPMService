@@ -1,0 +1,15 @@
+{
+  "name": "dpmservice",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tailwindcss -i ./static/src/main.css -o ./static/dist/main.css --minify",
+    "watch": "tailwindcss -i ./static/src/main.css -o ./static/dist/main.css --watch"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "daisyui": "^4.12.10",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13"
+  }
+}

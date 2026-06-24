@@ -1,0 +1,57 @@
+{% load i18n %}
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+    <a href="{% url 'tickets:ticket_create' %}" class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+        <div class="card-body p-3 items-center text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+            <span class="text-sm font-medium">{% trans "Create Ticket" %}</span>
+        </div>
+    </a>
+    {% if user.is_admin or user.is_manager %}
+    <a href="{% url 'clients:client_create' %}" class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+        <div class="card-body p-3 items-center text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            <span class="text-sm font-medium">{% trans "Add Client" %}</span>
+        </div>
+    </a>
+    <a href="{% url 'clients:employee_create' %}" class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+        <div class="card-body p-3 items-center text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            <span class="text-sm font-medium">{% trans "Add Employee" %}</span>
+        </div>
+    </a>
+    {% endif %}
+    {% if not user.is_staff_member %}
+    <a href="{% url 'clients:homeworker_create' %}" class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+        <div class="card-body p-3 items-center text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <span class="text-sm font-medium">{% trans "Add Homeworker" %}</span>
+        </div>
+    </a>
+    <a href="{% url 'assets:asset_create' %}" class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+        <div class="card-body p-3 items-center text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            <span class="text-sm font-medium">{% trans "Add Asset" %}</span>
+        </div>
+    </a>
+    {% endif %}
+    {% if user.is_admin or user.is_manager %}
+    <a href="{% url 'network:device_create' %}" class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+        <div class="card-body p-3 items-center text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            <span class="text-sm font-medium">{% trans "Add Device" %}</span>
+        </div>
+    </a>
+    <a href="{% url 'hosting:hosting_create' %}" class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+        <div class="card-body p-3 items-center text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+            <span class="text-sm font-medium">{% trans "Add Domain/Hosting" %}</span>
+        </div>
+    </a>
+    <a href="{% url 'hosting:hosting_list' %}" class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+        <div class="card-body p-3 items-center text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-base-content/60" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <span class="text-sm font-medium">{% trans "View Reports" %}</span>
+        </div>
+    </a>
+    {% endif %}
+</div>

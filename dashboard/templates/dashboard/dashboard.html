@@ -1,0 +1,271 @@
+{% extends "accounts/base.html" %}
+{% load i18n %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block breadcrumbs %}
+{% endblock %}
+
+{% block content %}
+<div x-data="dashboardApp()" class="space-y-6">
+
+    <div class="flex items-center justify-between flex-wrap gap-2">
+        <div>
+            <h1 class="text-2xl font-semibold">{% trans "Dashboard" %}</h1>
+            <p class="text-sm text-base-content/60">{% trans "Complete overview of your operations" %}</p>
+        </div>
+    </div>
+
+    {% include "dashboard/_filters.html" %}
+
+    <div id="kpi-section"
+         hx-get="{% url 'dashboard:htmx_kpis' %}"
+         hx-trigger="refresh-dashboard from:body"
+         hx-swap="innerHTML">
+        {% include "dashboard/_kpi_cards.html" %}
+    </div>
+
+    {% include "dashboard/_quick_actions.html" %}
+
+    {% if user.is_admin or user.is_manager %}
+    <div id="charts-section"
+         hx-get="{% url 'dashboard:htmx_charts' %}"
+         hx-trigger="refresh-dashboard from:body"
+         hx-swap="innerHTML">
+        {% include "dashboard/_charts.html" %}
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div id="recent-tickets-section"
+             hx-get="{% url 'dashboard:htmx_recent_tickets' %}"
+             hx-trigger="refresh-dashboard from:body"
+             hx-swap="innerHTML">
+            {% include "dashboard/_recent_tickets.html" %}
+        </div>
+        <div id="activities-section"
+             hx-get="{% url 'dashboard:htmx_activities' %}"
+             hx-trigger="refresh-dashboard from:body"
+             hx-swap="innerHTML">
+            {% include "dashboard/_activities.html" %}
+        </div>
+    </div>
+
+    {% if user.is_admin or user.is_manager %}
+    <div id="expiry-section"
+         hx-get="{% url 'dashboard:htmx_expiry_alerts' %}"
+         hx-trigger="refresh-dashboard from:body"
+         hx-swap="innerHTML">
+        {% include "dashboard/_expiry_alerts.html" %}
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {% if user.is_admin or user.is_manager %}
+        <div id="client-summary-section"
+             hx-get="{% url 'dashboard:htmx_client_summary' %}"
+             hx-trigger="refresh-dashboard from:body"
+             hx-swap="innerHTML">
+            {% include "dashboard/_client_summary.html" %}
+        </div>
+        {% endif %}
+        {% if not user.is_staff_member %}
+        <div id="homeworker-summary-section"
+             hx-get="{% url 'dashboard:htmx_homeworker_summary' %}"
+             hx-trigger="refresh-dashboard from:body"
+             hx-swap="innerHTML">
+            {% include "dashboard/_homeworker_summary.html" %}
+        </div>
+        {% endif %}
+    </div>
+
+    {% if user.is_admin or user.is_manager %}
+    <div id="domain-hosting-section"
+         hx-get="{% url 'dashboard:htmx_domain_hosting' %}"
+         hx-trigger="refresh-dashboard from:body"
+         hx-swap="innerHTML">
+        {% include "dashboard/_domain_hosting_panel.html" %}
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div id="my-tasks-section"
+             hx-get="{% url 'dashboard:htmx_my_tasks' %}"
+             hx-trigger="refresh-dashboard from:body"
+             hx-swap="innerHTML">
+            {% include "dashboard/_my_tasks.html" %}
+        </div>
+        <div id="comments-section"
+             hx-get="{% url 'dashboard:htmx_comments' %}"
+             hx-trigger="refresh-dashboard from:body"
+             hx-swap="innerHTML">
+            {% include "dashboard/_recent_comments.html" %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+function dashboardApp() {
+    return {
+        init() {
+            this.loadCharts();
+            this.$watch('filtersChanged', () => this.refreshAll());
+        },
+        filtersChanged: false,
+        refreshAll() {
+            document.body.dispatchEvent(new Event('refresh-dashboard'));
+            setTimeout(() => this.loadCharts(), 500);
+        },
+        loadCharts() {
+            loadMonthlyTrend();
+            loadTicketsByStatus();
+            loadClientWiseTickets();
+            loadStaffProductivity();
+            loadAssetStatus();
+            loadDeviceCategories();
+            loadDomainHostingOverview();
+            loadClientStateDist();
+        }
+    };
+}
+
+const chartInstances = {};
+function getOrCreate(id, config) {
+    if (chartInstances[id]) { chartInstances[id].destroy(); }
+    const ctx = document.getElementById(id);
+    if (!ctx) return null;
+    chartInstances[id] = new Chart(ctx, config);
+    return chartInstances[id];
+}
+
+function loadMonthlyTrend() {
+    fetch('{% url "dashboard:chart_monthly_trend" %}')
+        .then(r => r.json())
+        .then(data => {
+            getOrCreate('monthlyTrendChart', {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        { label: 'Total', data: data.total, borderColor: '#374151', backgroundColor: 'rgba(55,65,81,0.1)', fill: true, tension: 0.3 },
+                        { label: 'Open', data: data.open, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)', fill: false, tension: 0.3 },
+                        { label: 'Completed', data: data.completed, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: false, tension: 0.3 },
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        });
+}
+
+function loadTicketsByStatus() {
+    fetch('{% url "dashboard:chart_tickets_by_status" %}')
+        .then(r => r.json())
+        .then(data => {
+            getOrCreate('ticketsByStatusChart', {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels,
+                    datasets: [{ data: data.values, backgroundColor: ['#3b82f6','#f59e0b','#10b981','#6b7280','#ef4444','#8b5cf6'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        });
+}
+
+function loadClientWiseTickets() {
+    fetch('{% url "dashboard:chart_client_wise_tickets" %}')
+        .then(r => r.json())
+        .then(data => {
+            getOrCreate('clientWiseChart', {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{ label: 'Tickets', data: data.values, backgroundColor: '#6366f1' }]
+                },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        });
+}
+
+function loadStaffProductivity() {
+    fetch('{% url "dashboard:chart_staff_productivity" %}')
+        .then(r => r.json())
+        .then(data => {
+            getOrCreate('staffProductivityChart', {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        { label: 'Assigned', data: data.assigned, backgroundColor: '#3b82f6' },
+                        { label: 'Completed', data: data.completed, backgroundColor: '#10b981' },
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        });
+}
+
+function loadAssetStatus() {
+    fetch('{% url "dashboard:chart_asset_status" %}')
+        .then(r => r.json())
+        .then(data => {
+            getOrCreate('assetStatusChart', {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels,
+                    datasets: [{ data: data.values, backgroundColor: ['#10b981','#3b82f6','#f59e0b','#6b7280','#ef4444'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        });
+}
+
+function loadDeviceCategories() {
+    fetch('{% url "dashboard:chart_device_categories" %}')
+        .then(r => r.json())
+        .then(data => {
+            getOrCreate('deviceCategoryChart', {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{ label: 'Devices', data: data.values, backgroundColor: '#8b5cf6' }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        });
+}
+
+function loadDomainHostingOverview() {
+    fetch('{% url "dashboard:chart_domain_hosting" %}')
+        .then(r => r.json())
+        .then(data => {
+            getOrCreate('domainHostingChart', {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{ label: 'Count', data: data.values, backgroundColor: ['#10b981','#ef4444','#3b82f6','#f59e0b'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        });
+}
+
+function loadClientStateDist() {
+    fetch('{% url "dashboard:chart_client_state" %}')
+        .then(r => r.json())
+        .then(data => {
+            getOrCreate('clientStateChart', {
+                type: 'pie',
+                data: {
+                    labels: data.labels,
+                    datasets: [{ data: data.values, backgroundColor: ['#6366f1','#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#6b7280'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        });
+}
+</script>
+{% endblock %}

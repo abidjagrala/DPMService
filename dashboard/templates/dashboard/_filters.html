@@ -1,0 +1,89 @@
+{% load i18n %}
+<div class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body p-3">
+        <form id="dashboard-filters" class="flex items-center gap-3 flex-wrap"
+              hx-get="{% url 'dashboard:dashboard' %}"
+              hx-target="#page-content"
+              hx-swap="innerHTML"
+              hx-trigger="change"
+              hx-include="#page-content">
+            <div x-data="searchableSelect({name: 'client', value: '{{ request.GET.client|default:'' }}', placeholder: '{% trans "All Clients" %}', options: [{value: '', label: '{% trans "All Clients" %}'}, {% for c in clients %}{value: '{{ c.pk }}', label: '{{ c.company_name|escapejs }}'}{% if not forloop.last %},{% endif %}{% endfor %}]})" @click.outside="open = false" x-init="$watch('value', () => { document.getElementById('dashboard-filters').dispatchEvent(new Event('change', {bubbles: true})); })" class="ss-wrapper">
+                <input type="hidden" :name="name" :value="value">
+                <div class="ss-input-wrap">
+                    <input type="text" x-model="search" @focus="onFocus()" @input="open = true"
+                           class="input input-bordered input-sm w-full" :placeholder="placeholder">
+                    <span x-show="search" @click="clear()" class="ss-clear-btn">&#10005;</span>
+                </div>
+                <div x-show="open" x-cloak class="ss-dropdown">
+                    <template x-if="filtered.length > 0">
+                        <div>
+                            <template x-for="(opt, idx) in filtered" :key="idx">
+                                <div @click="select(opt)"
+                                     class="ss-item"
+                                     :class="{'ss-active': value == opt.value}"
+                                     x-text="opt.label"></div>
+                            </template>
+                        </div>
+                    </template>
+                    <template x-if="filtered.length === 0">
+                        <div class="ss-empty">No results found</div>
+                    </template>
+                </div>
+            </div>
+            <div x-data="searchableSelect({name: 'state', value: '{{ request.GET.state|default:'' }}', placeholder: '{% trans "All States" %}', options: [{value: '', label: '{% trans "All States" %}'}, {% for s in states %}{value: '{{ s.pk }}', label: '{{ s.name|escapejs }}'}{% if not forloop.last %},{% endif %}{% endfor %}]})" @click.outside="open = false" x-init="$watch('value', () => { document.getElementById('dashboard-filters').dispatchEvent(new Event('change', {bubbles: true})); })" class="ss-wrapper">
+                <input type="hidden" :name="name" :value="value">
+                <div class="ss-input-wrap">
+                    <input type="text" x-model="search" @focus="onFocus()" @input="open = true"
+                           class="input input-bordered input-sm w-full" :placeholder="placeholder">
+                    <span x-show="search" @click="clear()" class="ss-clear-btn">&#10005;</span>
+                </div>
+                <div x-show="open" x-cloak class="ss-dropdown">
+                    <template x-if="filtered.length > 0">
+                        <div>
+                            <template x-for="(opt, idx) in filtered" :key="idx">
+                                <div @click="select(opt)"
+                                     class="ss-item"
+                                     :class="{'ss-active': value == opt.value}"
+                                     x-text="opt.label"></div>
+                            </template>
+                        </div>
+                    </template>
+                    <template x-if="filtered.length === 0">
+                        <div class="ss-empty">No results found</div>
+                    </template>
+                </div>
+            </div>
+            <div x-data="searchableSelect({name: 'city', value: '{{ request.GET.city|default:'' }}', placeholder: '{% trans "All Cities" %}', options: [{value: '', label: '{% trans "All Cities" %}'}, {% for c in cities %}{value: '{{ c.pk }}', label: '{{ c.name|escapejs }}'}{% if not forloop.last %},{% endif %}{% endfor %}]})" @click.outside="open = false" x-init="$watch('value', () => { document.getElementById('dashboard-filters').dispatchEvent(new Event('change', {bubbles: true})); })" class="ss-wrapper">
+                <input type="hidden" :name="name" :value="value">
+                <div class="ss-input-wrap">
+                    <input type="text" x-model="search" @focus="onFocus()" @input="open = true"
+                           class="input input-bordered input-sm w-full" :placeholder="placeholder">
+                    <span x-show="search" @click="clear()" class="ss-clear-btn">&#10005;</span>
+                </div>
+                <div x-show="open" x-cloak class="ss-dropdown">
+                    <template x-if="filtered.length > 0">
+                        <div>
+                            <template x-for="(opt, idx) in filtered" :key="idx">
+                                <div @click="select(opt)"
+                                     class="ss-item"
+                                     :class="{'ss-active': value == opt.value}"
+                                     x-text="opt.label"></div>
+                            </template>
+                        </div>
+                    </template>
+                    <template x-if="filtered.length === 0">
+                        <div class="ss-empty">No results found</div>
+                    </template>
+                </div>
+            </div>
+            <input type="date" name="date_from" value="{{ request.GET.date_from|default:'' }}"
+                   class="input input-bordered input-sm" placeholder="{% trans 'From' %}">
+            <input type="date" name="date_to" value="{{ request.GET.date_to|default:'' }}"
+                   class="input input-bordered input-sm" placeholder="{% trans 'To' %}">
+            <button type="submit" class="btn btn-primary btn-sm">{% trans "Apply" %}</button>
+            {% if request.GET.client or request.GET.state or request.GET.city or request.GET.date_from or request.GET.date_to %}
+                <a href="{% url 'dashboard:dashboard' %}" class="btn btn-ghost btn-sm">{% trans "Clear" %}</a>
+            {% endif %}
+        </form>
+    </div>
+</div>

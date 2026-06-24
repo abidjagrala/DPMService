@@ -1,0 +1,74 @@
+{% load i18n %}
+
+<div class="card bg-base-100 border border-base-300">
+    <div class="card-body">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <div>
+                <h2 class="text-lg font-semibold">{% trans "Preview" %}</h2>
+                <p class="text-sm text-base-content/60">
+                    {{ valid_count }} {% trans "valid" %}, {{ error_count }} {% trans "with errors" %}
+                </p>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="{% url 'clients:client_import' %}" class="btn btn-ghost btn-sm">
+                    {% trans "Upload Another File" %}
+                </a>
+                {% if valid_count > 0 %}
+                    <form method="post" style="display:inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="confirm" value="yes">
+                        {% for r in rows %}
+                            {% if not r.errors %}
+                                <input type="hidden" name="valid_row" value="{{ r.row }}">
+                            {% endif %}
+                        {% endfor %}
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            {% trans "Import" %} {{ valid_count }} {% trans "Valid Row(s)" %}
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="table table-sm table-zebra w-full">
+                <thead>
+                    <tr>
+                        <th>{% trans "Row" %}</th>
+                        <th>{% trans "Company" %}</th>
+                        <th>{% trans "Contact" %}</th>
+                        <th>{% trans "Email" %}</th>
+                        <th>{% trans "Phone" %}</th>
+                        <th>{% trans "City" %}</th>
+                        <th>{% trans "State" %}</th>
+                        <th>{% trans "Status" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in rows %}
+                        <tr class="{% if r.errors %}bg-error/10{% endif %}">
+                            <td>{{ r.row }}</td>
+                            <td>{{ r.company_name }}</td>
+                            <td>{{ r.contact_person }}</td>
+                            <td>{{ r.email }}</td>
+                            <td>{{ r.phone }}</td>
+                            <td>{{ r.city }}</td>
+                            <td>{{ r.state }}</td>
+                            <td>
+                                {% if r.errors %}
+                                    <div class="text-error text-xs">
+                                        {% for e in r.errors %}
+                                            <div>{{ e }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <span class="badge badge-success badge-sm">{% trans "Ready" %}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

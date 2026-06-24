@@ -1,0 +1,38 @@
+{% load comments %}
+<div class="space-y-2">
+  {% for n in notifications %}
+  <div class="card bg-base-100 border border-base-300 shadow-sm {% if not n.is_read %}border-l-4 border-l-primary{% endif %}">
+    <div class="card-body p-4">
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-1">
+            {% if n.level == 'success' %}<span class="badge badge-success badge-xs">Success</span>
+            {% elif n.level == 'warning' %}<span class="badge badge-warning badge-xs">Warning</span>
+            {% elif n.level == 'error' %}<span class="badge badge-error badge-xs">Error</span>
+            {% else %}<span class="badge badge-info badge-xs">Info</span>{% endif %}
+            {% if not n.is_read %}<span class="badge badge-primary badge-xs">New</span>{% endif %}
+          </div>
+          <p class="text-sm">{{ n.verb }}</p>
+          <div class="text-xs text-base-content/50 mt-1">
+            {% if n.actor %}by {{ n.actor.get_full_name|default:n.actor.email }} · {% endif %}
+            {{ n.created_at|timesince }} ago
+          </div>
+        </div>
+        {% if not n.is_read %}
+        <form method="post" action="{% url 'notifications:mark_read' pk=n.pk %}"
+              hx-post="{% url 'notifications:mark_read' pk=n.pk %}"
+              hx-target="closest .card"
+              hx-swap="outerHTML">
+          {% csrf_token %}
+          <button class="btn btn-ghost btn-xs" type="submit">Mark read</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="text-center py-12 text-base-content/50">
+    <p>No notifications.</p>
+  </div>
+  {% endfor %}
+</div>

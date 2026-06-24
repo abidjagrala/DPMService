@@ -1,0 +1,26 @@
+{% extends "accounts/base.html" %}
+{% load i18n %}
+
+{% block title %}{{ page_title }} - Authorization{% endblock %}
+
+{% block breadcrumbs %}
+<div class="text-sm breadcrumbs">
+    <ul>
+        <li><a href="{% url 'accounts:dashboard' %}">Home</a></li>
+        <li><a href="{% url 'authorization:auth_dashboard' %}">Authorization</a></li>
+        <li><a href="{% url 'authorization:role_list' %}">Roles</a></li>
+        <li>{{ page_title }}</li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-semibold mb-6">{{ page_title }}</h1>
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            {% include "authorization/partials/_role_form_partial.html" %}
+        </div>
+    </div>
+</div>
+{% endblock %}

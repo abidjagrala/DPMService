@@ -1,0 +1,54 @@
+{% extends "clients/base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-4">
+    <div class="flex items-center justify-between flex-wrap gap-2">
+        <div>
+            <h1 class="text-2xl font-semibold">{{ obj.name }}</h1>
+            <p class="text-sm text-base-content/60">{{ obj.client.company_name }}</p>
+        </div>
+        {% if obj.is_active %}<span class="badge badge-success">{% trans "Active" %}</span>{% else %}<span class="badge badge-ghost">{% trans "Inactive" %}</span>{% endif %}
+    </div>
+
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-base">{% trans "Homeworker Details" %}</h2>
+            <div class="divider my-1"></div>
+            <dl class="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                <dt class="text-base-content/60">{% trans "Client" %}</dt>
+                <dd class="font-medium">{{ obj.client.company_name|default:"—" }}</dd>
+                <dt class="text-base-content/60">{% trans "Phone" %}</dt>
+                <dd class="font-medium">{{ obj.phone }}</dd>
+                <dt class="text-base-content/60">{% trans "Email" %}</dt>
+                <dd class="font-medium">{{ obj.email|default:"—" }}</dd>
+                <dt class="text-base-content/60">{% trans "Address" %}</dt>
+                <dd class="font-medium">{{ obj.address }}</dd>
+                <dt class="text-base-content/60">{% trans "State" %}</dt>
+                <dd class="font-medium">{{ obj.state.name|default:"—" }}</dd>
+                <dt class="text-base-content/60">{% trans "City" %}</dt>
+                <dd class="font-medium">{{ obj.city.name|default:"—" }}</dd>
+                <dt class="text-base-content/60">{% trans "Pincode" %}</dt>
+                <dd class="font-medium">{{ obj.pincode }}</dd>
+            </dl>
+            <div class="card-actions justify-between mt-4">
+                <a href="{% url 'clients:homeworker_list' %}" class="btn btn-ghost">{% trans "Back to homeworkers" %}</a>
+                <div class="flex gap-2">
+                    <a href="{% url 'clients:homeworker_update' pk=obj.pk %}" class="btn btn-primary">{% trans "Edit" %}</a>
+                    <button type="button" hx-get="{% url 'clients:homeworker_delete' pk=obj.pk %}" hx-target="#modal-body" hx-swap="innerHTML"
+                            @click="$dispatch('open-modal')" class="btn btn-error">{% trans "Delete" %}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div x-data="{ modalOpen: false }" @open-modal.window="modalOpen = true" @close-modal.window="modalOpen = false">
+    <div x-show="modalOpen" x-cloak class="fixed inset-0 z-40 bg-black/50" @click="modalOpen = false"></div>
+    <div x-show="modalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="bg-base-100 rounded-box shadow-2xl w-full max-w-md border border-base-300" @click.outside="modalOpen = false" x-transition>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}

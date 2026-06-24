@@ -1,0 +1,81 @@
+{% extends "accounts/base.html" %}
+{% load i18n %}
+
+{% block title %}{{ role.name }} - Role Details{% endblock %}
+
+{% block breadcrumbs %}
+<div class="text-sm breadcrumbs">
+    <ul>
+        <li><a href="{% url 'accounts:dashboard' %}">Home</a></li>
+        <li><a href="{% url 'authorization:auth_dashboard' %}">Authorization</a></li>
+        <li><a href="{% url 'authorization:role_list' %}">Roles</a></li>
+        <li>{{ role.name }}</li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-semibold">{{ role.name }}</h1>
+        <p class="text-sm text-base-content/60">{{ role.description|default:"No description" }}</p>
+    </div>
+    <div class="flex gap-2">
+        <a href="{% url 'authorization:role_edit' role.pk %}" class="btn btn-ghost btn-sm"
+           hx-get="{% url 'authorization:role_edit' role.pk %}" hx-target="#page-content" hx-push-url="true">{% trans "Edit" %}</a>
+        <a href="{% url 'authorization:role_list' %}" class="btn btn-ghost btn-sm"
+           hx-get="{% url 'authorization:role_list' %}" hx-target="#page-content" hx-push-url="true">{% trans "Back" %}</a>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h3 class="card-title text-sm">{% trans "Role Info" %}</h3>
+            <div class="space-y-2 text-sm">
+                <div><span class="text-base-content/60">{% trans "Group:" %}</span> {{ role.group|default:"—" }}</div>
+                <div><span class="text-base-content/60">{% trans "Status:" %}</span>
+                    {% if role.is_active %}<span class="badge badge-success badge-sm">{% trans "Active" %}</span>{% else %}<span class="badge badge-ghost badge-sm">{% trans "Inactive" %}</span>{% endif %}
+                </div>
+                <div><span class="text-base-content/60">{% trans "Created:" %}</span> {{ role.created_at|date:"d M Y" }}</div>
+                <div><span class="text-base-content/60">{% trans "Assigned Users:" %}</span> {{ role.user_assignments.count }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h3 class="card-title text-sm">{% trans "Module Permissions" %}</h3>
+            {% if module_perms %}
+            <div class="space-y-1">
+                {% for mp in module_perms %}
+                <div class="flex items-center justify-between text-sm">
+                    <span>{{ mp.module.name }}</span>
+                    <span class="text-xs text-base-content/60">
+                        {% for perm, val in mp.permissions.items %}{% if val %}{{ perm }} {% endif %}{% endfor %}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-sm text-base-content/40">{% trans "No module permissions set." %}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h3 class="card-title text-sm">{% trans "Assigned Users" %}</h3>
+            {% if assignments %}
+            <div class="space-y-1">
+                {% for a in assignments %}
+                <div class="text-sm">{{ a.user.email }}</div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-sm text-base-content/40">{% trans "No users assigned." %}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

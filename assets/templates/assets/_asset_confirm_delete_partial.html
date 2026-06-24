@@ -1,0 +1,24 @@
+{% load i18n %}
+
+<div class="p-4">
+    <h3 class="font-semibold text-lg">{% trans "Delete asset" %}</h3>
+    <p class="text-sm text-base-content/60 mt-1">{% trans "This action cannot be undone." %}</p>
+
+    <dl class="grid grid-cols-3 gap-y-2 gap-x-4 text-sm mt-4">
+        <dt class="text-base-content/60">{% trans "Asset Tag" %}</dt>
+        <dd class="col-span-2 font-medium">{{ obj.asset_tag }}</dd>
+        <dt class="text-base-content/60">{% trans "Type" %}</dt>
+        <dd class="col-span-2 font-medium">{{ obj.asset_type.name }}</dd>
+        <dt class="text-base-content/60">{% trans "Brand / Model" %}</dt>
+        <dd class="col-span-2 font-medium">{{ obj.brand }} {{ obj.model_name }}</dd>
+    </dl>
+
+    <form hx-post="{% url 'assets:asset_delete' pk=obj.pk %}"
+          hx-target="this"
+          hx-swap="outerHTML"
+          class="flex justify-end gap-2 mt-6">
+        {% csrf_token %}
+        <button type="button" class="btn btn-ghost btn-sm" @click="$dispatch('close-modal')">{% trans "Cancel" %}</button>
+        <button type="submit" class="btn btn-error btn-sm">{% trans "Yes, delete" %}</button>
+    </form>
+</div>

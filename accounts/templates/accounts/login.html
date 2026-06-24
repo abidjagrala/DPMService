@@ -1,0 +1,29 @@
+{% extends "accounts/base_auth.html" %}
+{% load daisy %}
+
+{% block title %}Sign in &mdash; DPM Service{% endblock %}
+
+{% block content %}
+<div class="card bg-base-100 shadow-xl border border-base-300">
+    <div class="card-body">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary text-primary-content font-bold">DP</span>
+            <div>
+                <h1 class="card-title text-lg">DPM Service</h1>
+                <p class="text-xs text-base-content/60">Sign in to continue</p>
+            </div>
+        </div>
+
+        <form method="post" novalidate class="space-y-3">
+            {% csrf_token %}
+            {% daisy_form_errors form %}
+            {% daisy_field form.email %}
+            {% daisy_field form.password %}
+            {% if request.GET.next %}
+                <input type="hidden" name="next" value="{{ request.GET.next }}">
+            {% endif %}
+            <button type="submit" class="btn btn-primary w-full">Sign in</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% load i18n auth_tags %}
+<div class="space-y-4">
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <div class="flex items-end gap-4">
+                <div class="form-control flex-1">
+                    <label class="label"><span class="label-text font-medium">{% trans "Select Role" %}</span></label>
+                    <select name="role" class="select select-bordered w-full"
+                            onchange="var m=document.querySelector('[name=model]').value;if(this.value){htmx.ajax('GET','{% url "authorization:field_perm_matrix" %}?role='+this.value+'&model='+m,{target:'#field-perm-container',swap:'innerHTML'})}">
+                        <option value="">{% trans "Choose a role..." %}</option>
+                        {% for role in roles %}
+                        <option value="{{ role.pk }}" {% if selected_role and selected_role.pk == role.pk %}selected{% endif %}>{{ role.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-control flex-1">
+                    <label class="label"><span class="label-text font-medium">{% trans "Select Model" %}</span></label>
+                    <select name="model" class="select select-bordered w-full"
+                            onchange="var r=document.querySelector('[name=role]').value;if(r){htmx.ajax('GET','{% url "authorization:field_perm_matrix" %}?role='+r+'&model='+this.value,{target:'#field-perm-container',swap:'innerHTML'})}">
+                        <option value="">{% trans "Choose a model..." %}</option>
+                        {% for model_value, model_label in model_choices %}
+                        <option value="{{ model_value }}" {% if selected_model == model_value %}selected{% endif %}>{{ model_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if selected_role and selected_model and fields %}
+    <form hx-post="{% url 'authorization:field_perm_save' %}" hx-target="#field-perm-container" hx-swap="innerHTML">
+        {% csrf_token %}
+        <input type="hidden" name="role" value="{{ selected_role.pk }}">
+        <input type="hidden" name="model" value="{{ selected_model }}">
+
+        <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body p-0">
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full">
+                        <thead>
+                            <tr>
+                                <th class="w-64">{% trans "Field" %}</th>
+                                <th class="text-center">{% trans "Permission" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for field in fields %}
+                            <tr>
+                                <td class="font-medium">{{ field }}</td>
+                                <td class="text-center">
+                                    {% with current_perm=field_perms|dict_get:field %}
+                                    <select name="fp_{{ field }}" class="select select-bordered select-sm w-48">
+                                        {% for value, label in permission_choices %}
+                                        <option value="{{ value }}" {% if current_perm == value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    {% endwith %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end mt-4">
+            <button type="submit" class="btn btn-primary">{% trans "Save Field Permissions" %}</button>
+        </div>
+    </form>
+    {% elif selected_role and selected_model %}
+    <div class="alert alert-info">
+        <span>{% trans "No fields defined for this model." %}</span>
+    </div>
+    {% endif %}
+</div>

@@ -1,0 +1,31 @@
+{% extends "accounts/base.html" %}
+
+{% block title %}Dashboard &mdash; DPM Service{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body flex-row items-center justify-between">
+        <div>
+            <h2 class="card-title">Welcome, {{ user.get_short_name }}</h2>
+            <p class="text-sm text-base-content/60">Glad to have you here.</p>
+        </div>
+        <span class="badge badge-success badge-lg">{{ role }}</span>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+    <a href="{% url 'accounts:profile' %}" class="card bg-base-100 border border-base-300 hover:border-primary hover:shadow-md transition">
+        <div class="card-body">
+            <h3 class="card-title text-primary">Profile</h3>
+            <p class="text-sm text-base-content/60">View and update your details.</p>
+        </div>
+    </a>
+    <div class="card bg-base-100 border border-base-300">
+        <div class="card-body">
+            <h3 class="card-title">Your Services</h3>
+            <p class="text-sm text-base-content/60">Service details will appear here.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

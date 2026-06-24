@@ -1,0 +1,12 @@
+{% extends "tickets/base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+    <div class="card bg-base-100 border border-base-300">
+        <div class="card-body">
+            {% include "tickets/_ticket_confirm_delete_partial.html" %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "tickets/base.html" %}
+{% load comments i18n %}
+
+{% block content %}
+<div class="flex flex-wrap items-center gap-2 mb-4">
+    <h1 class="text-2xl font-semibold mr-auto">{{ obj.ticket_number }} — {{ obj.subject }}</h1>
+    <a class="btn btn-ghost btn-sm" href="{% url 'tickets:ticket_list' %}">{% trans "Back" %}</a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    {# Main Info #}
+    <div class="lg:col-span-2 space-y-4">
+        <div class="card bg-base-100 border border-base-300">
+            <div class="card-body p-4">
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div><span class="font-semibold">{% trans "Service Type" %}:</span> {{ obj.service_type }}</div>
+                    <div><span class="font-semibold">{% trans "Client" %}:</span> {{ obj.client.company_name }}</div>
+                    <div><span class="font-semibold">{% trans "Asset" %}:</span> {{ obj.asset|default:"—" }}</div>
+                    <div><span class="font-semibold">{% trans "Assigned To" %}:</span>
+                        {% if obj.assigned_to %}{{ obj.assigned_to.user.get_full_name|default:obj.assigned_to.user.email }}{% else %}—{% endif %}</div>
+                    <div><span class="font-semibold">{% trans "Priority" %}:</span> {{ obj.get_priority_display }}</div>
+                    <div><span class="font-semibold">{% trans "Status" %}:</span> {{ obj.get_status_display }}</div>
+                    <div><span class="font-semibold">{% trans "Scheduled" %}:</span> {{ obj.scheduled_date|date:"d M Y"|default:"—" }}</div>
+                    {% if obj.transport_type %}
+                        <div><span class="font-semibold">{% trans "Transport Type" %}:</span> {{ obj.transport_type }}</div>
+                    {% endif %}
+                    {% if obj.tracking_url %}
+                        <div><span class="font-semibold">{% trans "Tracking URL" %}:</span> <a href="{{ obj.tracking_url }}" target="_blank" rel="noopener" class="link link-primary">{{ obj.tracking_url }}</a></div>
+                    {% endif %}
+                    <div><span class="font-semibold">{% trans "Created By" %}:</span> {{ obj.created_by.get_full_name|default:obj.created_by.email }}</div>
+                    <div><span class="font-semibold">{% trans "Created" %}:</span> {{ obj.created_at|date:"d M Y H:i" }}</div>
+                </div>
+                {% if obj.description %}
+                    <div class="mt-4"><span class="font-semibold text-sm">{% trans "Description" %}:</span><p class="text-sm mt-1">{{ obj.description }}</p></div>
+                {% endif %}
+                {% if obj.address %}
+                    <div class="mt-2"><span class="font-semibold text-sm">{% trans "Address" %}:</span><p class="text-sm mt-1">{{ obj.address }}</p></div>
+                {% endif %}
+                {% if obj.notes %}
+                    <div class="mt-2"><span class="font-semibold text-sm">{% trans "Internal Notes" %}:</span><p class="text-sm mt-1">{{ obj.notes }}</p></div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Comments #}
+        {% show_comments obj %}
+    </div>
+
+    {# Sidebar #}
+    <div class="space-y-4">
+        {# History #}
+        {% if history %}
+            <div class="card bg-base-100 border border-base-300">
+                <div class="card-body p-4">
+                    <h2 class="card-title text-sm mb-3">{% trans "History" %}</h2>
+                    <div class="space-y-2 text-sm">
+                        {% for h in history %}
+                            <div class="border-l-2 border-primary pl-2">
+                                <div class="font-semibold">{{ h.field_changed }}</div>
+                                <div class="text-base-content/50">
+                                    {{ h.old_value|default:"—" }} → {{ h.new_value|default:"—" }}
+                                </div>
+                                <div class="text-xs text-base-content/40">{{ h.changed_by.get_full_name|default:h.changed_by.email }} · {{ h.changed_at|date:"d M Y H:i" }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

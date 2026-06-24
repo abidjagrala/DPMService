@@ -1,0 +1,176 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en"
+      x-data="appTheme()"
+      x-init="init()"
+      :data-theme="theme">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{% block title %}DPM Service{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'main.css' %}">
+    <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+    <script defer src="https://unpkg.com/alpinejs@3.13.10/dist/cdn.min.js"></script>
+    <script>
+        const DAISYUI_THEMES = [
+            { id: 'light', label: 'Light', icon: '☀️' },
+            { id: 'dark', label: 'Dark', icon: '🌙' },
+        ];
+        function appTheme() {
+            return {
+                theme: 'light',
+                themeOpen: false,
+                sidebarOpen: window.innerWidth >= 1024,
+                init() {
+                    const stored = localStorage.getItem('daisyui-theme');
+                    if (stored && DAISYUI_THEMES.some(t => t.id === stored)) {
+                        this.theme = stored;
+                    } else {
+                        this.theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                    }
+                    document.documentElement.setAttribute('data-theme', this.theme);
+                    this.$watch('theme', (v) => {
+                        document.documentElement.setAttribute('data-theme', v);
+                        localStorage.setItem('daisyui-theme', v);
+                    });
+                    window.addEventListener('resize', () => {
+                        if (window.innerWidth >= 1024) this.sidebarOpen = true;
+                    });
+                },
+                setTheme(id) {
+                    this.theme = id;
+                    this.themeOpen = false;
+                },
+                toggleThemeDropdown() {
+                    this.themeOpen = !this.themeOpen;
+                },
+                closeThemeDropdown() {
+                    this.themeOpen = false;
+                },
+                get themeIcon() {
+                    const light = ['light', 'corporate'];
+                    const dark = ['dark', 'autumn', 'coffee', 'sunset', 'dim'];
+                    if (light.includes(this.theme)) return 'sun';
+                    if (dark.includes(this.theme)) return 'moon';
+                    return 'sun';
+                },
+                toggleSidebar() {
+                    this.sidebarOpen = !this.sidebarOpen;
+                },
+            };
+        }
+        document.addEventListener('htmx:configRequest', (e) => {
+            const token = document.querySelector('meta[name="csrf-token"]')?.content;
+            if (token) e.detail.headers['X-CSRFToken'] = token;
+        });
+
+        function searchableSelect(opts) {
+            return {
+                name: opts.name,
+                value: opts.value || '',
+                placeholder: opts.placeholder || 'Search...',
+                open: false,
+                search: '',
+                options: opts.options || [],
+                _skipWatch: false,
+                init() {
+                    const selected = this.options.find(o => o.value == this.value);
+                    if (selected) this.search = selected.label;
+                    this.$watch('value', (v) => {
+                        if (this._skipWatch) { this._skipWatch = false; return; }
+                        const opt = this.options.find(o => o.value == v);
+                        this.search = opt ? opt.label : '';
+                    });
+                },
+                get filtered() {
+                    const q = this.search.toLowerCase().trim();
+                    if (!q) return this.options;
+                    return this.options.filter(o => o.label.toLowerCase().includes(q));
+                },
+                select(opt) {
+                    this._skipWatch = true;
+                    this.value = opt.value;
+                    this.search = opt.label;
+                    this.open = false;
+                },
+                clear() {
+                    this._skipWatch = true;
+                    this.value = '';
+                    this.search = '';
+                    this.open = false;
+                },
+                onFocus() {
+                    this.open = true;
+                    this.search = '';
+                },
+            };
+        }
+
+    </script>
+    <style>
+        [x-cloak] { display: none !important; }
+        .app-shell { min-height: 100vh; }
+        .sidebar-brand { letter-spacing: 0.02em; }
+        .ss-wrapper { position: relative; }
+        .ss-input-wrap { position: relative; display: flex; align-items: center; }
+        .ss-input-wrap input { width: 100%; padding-right: 2rem; }
+        .ss-clear-btn { position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); cursor: pointer; opacity: 0.5; color: oklch(var(--bc)); }
+        .ss-clear-btn:hover { opacity: 1; }
+        .ss-dropdown { position: absolute; left: 0; right: 0; top: 100%; margin-top: 0.25rem; max-height: 15rem; overflow-y: auto; overflow-x: hidden; background: oklch(var(--b1)); border: 1px solid oklch(var(--bc) / 0.2); border-radius: 0.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 50; }
+        .ss-dropdown .ss-item { padding: 0.5rem 0.75rem; cursor: pointer; font-size: 0.875rem; line-height: 1.25rem; color: oklch(var(--bc)); }
+        .ss-dropdown .ss-item:hover { background: oklch(var(--b2)); }
+        .ss-dropdown .ss-item.ss-active { background: oklch(var(--p) / 0.15); color: oklch(var(--p)); font-weight: 600; }
+        .ss-dropdown .ss-empty { padding: 0.5rem 0.75rem; font-size: 0.875rem; color: oklch(var(--bc) / 0.5); }
+    </style>
+</head>
+<body class="bg-base-200 text-base-content antialiased">
+
+<div class="app-shell flex" x-data="{ toasts: [] }"
+     @toast.window="toasts.push({ ...$event.detail, id: Date.now() + Math.random() }); setTimeout(() => toasts.shift(), 4000)"
+     @keydown.escape.window="sidebarOpen = false">
+    {% if user.is_authenticated %}
+        {% include "accounts/_sidebar.html" %}
+        <div class="flex-1 flex flex-col min-w-0">
+            {% include "accounts/_topbar.html" %}
+            <main class="flex-1 p-4 lg:p-6">
+                <div id="page-content" class="mx-auto max-w-7xl">
+                    {% block breadcrumbs %}{% endblock %}
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+        </div>
+    {% else %}
+        <main class="flex-1 flex items-center justify-center p-4">
+            <div class="w-full max-w-md">
+                {% if messages %}
+                    <div class="mb-4 space-y-2">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags|default:'info' }} shadow">
+                                <span>{{ message }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                {% block auth_content %}{% endblock %}
+            </div>
+        </main>
+    {% endif %}
+
+    <div x-show="toasts.length" x-cloak class="toast toast-top toast-end z-[60]">
+        <template x-for="t in toasts" :key="t.id">
+            <div class="alert shadow-lg"
+                 :class="{
+                     'alert-success': t.level === 'success',
+                     'alert-error': t.level === 'error',
+                     'alert-warning': t.level === 'warning',
+                     'alert-info': !t.level || t.level === 'info'
+                 }">
+                <span x-text="t.message"></span>
+            </div>
+        </template>
+    </div>
+</div>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,65 @@
+{% load i18n auth_tags %}
+<div class="space-y-4">
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <div class="flex items-end gap-4">
+                <div class="form-control flex-1">
+                    <label class="label"><span class="label-text font-medium">{% trans "Select Role" %}</span></label>
+                    <select name="role" class="select select-bordered w-full"
+                            onchange="if(this.value){htmx.ajax('GET','{% url "authorization:menu_perm_matrix" %}?role='+this.value,{target:'#menu-perm-container',swap:'innerHTML'})}">
+                        <option value="">{% trans "Choose a role..." %}</option>
+                        {% for role in roles %}
+                        <option value="{{ role.pk }}" {% if selected_role and selected_role.pk == role.pk %}selected{% endif %}>{{ role.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if selected_role %}
+    <form hx-post="{% url 'authorization:menu_perm_save' %}" hx-target="#menu-perm-container" hx-swap="innerHTML">
+        {% csrf_token %}
+        <input type="hidden" name="role" value="{{ selected_role.pk }}">
+
+        <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body p-0">
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Module" %}</th>
+                                <th>{% trans "Menu Item" %}</th>
+                                <th>{% trans "URL" %}</th>
+                                <th class="text-center">{% trans "Visible" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in menu_items %}
+                            <tr>
+                                <td class="text-sm text-base-content/60">{{ item.module.name }}</td>
+                                <td class="font-medium">
+                                    {% if item.parent %}&nbsp;&nbsp;&nbsp;{% endif %}{{ item.name }}
+                                </td>
+                                <td class="text-sm text-base-content/60">{{ item.url_name }}</td>
+                                <td class="text-center">
+                                    {% with is_vis=menu_perms|dict_get_bool:item.pk %}
+                                    <input type="checkbox" name="menu_{{ item.pk }}"
+                                           class="checkbox checkbox-sm checkbox-primary"
+                                           {% if is_vis %}checked{% endif %}>
+                                    {% endwith %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end mt-4">
+            <button type="submit" class="btn btn-primary">{% trans "Save Menu Permissions" %}</button>
+        </div>
+    </form>
+    {% endif %}
+</div>

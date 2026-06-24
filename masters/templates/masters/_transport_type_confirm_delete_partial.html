@@ -1,0 +1,30 @@
+{% load i18n %}
+
+<div class="p-4">
+    <h3 class="font-semibold text-lg">{% trans "Delete transport type" %}</h3>
+    <p class="text-sm text-base-content/60 mt-1">{% trans "This action cannot be undone." %}</p>
+
+    <dl class="grid grid-cols-3 gap-y-2 gap-x-4 text-sm mt-4">
+        <dt class="text-base-content/60">{% trans "Name" %}</dt>
+        <dd class="col-span-2 font-medium">{{ obj.name }}</dd>
+        <dt class="text-base-content/60">{% trans "Description" %}</dt>
+        <dd class="col-span-2 font-medium">{{ obj.description|default:"—" }}</dd>
+        <dt class="text-base-content/60">{% trans "Status" %}</dt>
+        <dd class="col-span-2">
+            {% if obj.is_active %}
+                <span class="badge badge-success badge-sm">{% trans "Active" %}</span>
+            {% else %}
+                <span class="badge badge-ghost badge-sm">{% trans "Inactive" %}</span>
+            {% endif %}
+        </dd>
+    </dl>
+
+    <form hx-post="{% url 'masters:transport_type_delete' pk=obj.pk %}"
+          hx-target="this"
+          hx-swap="outerHTML"
+          class="flex justify-end gap-2 mt-6">
+        {% csrf_token %}
+        <button type="button" class="btn btn-ghost btn-sm" @click="$dispatch('close-modal')">{% trans "Cancel" %}</button>
+        <button type="submit" class="btn btn-error btn-sm">{% trans "Yes, delete" %}</button>
+    </form>
+</div>

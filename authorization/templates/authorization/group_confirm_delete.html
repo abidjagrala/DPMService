@@ -1,0 +1,33 @@
+{% extends "accounts/base.html" %}
+{% load i18n %}
+
+{% block title %}Delete Group - Authorization{% endblock %}
+
+{% block breadcrumbs %}
+<div class="text-sm breadcrumbs">
+    <ul>
+        <li><a href="{% url 'accounts:dashboard' %}">Home</a></li>
+        <li><a href="{% url 'authorization:auth_dashboard' %}">Authorization</a></li>
+        <li><a href="{% url 'authorization:group_list' %}">Groups</a></li>
+        <li>Delete</li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <div class="card bg-base-100 border border-error shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-error">{% trans "Delete Group" %}</h2>
+            <p>{% blocktrans with name=group.name %}Are you sure you want to delete the group "{{ name }}"? This action cannot be undone.{% endblocktrans %}</p>
+            <div class="card-actions justify-end mt-4">
+                <a href="{% url 'authorization:group_list' %}" class="btn btn-ghost">{% trans "Cancel" %}</a>
+                <form method="post" hx-post="{% url 'authorization:group_delete' group.pk %}" hx-target="#page-content">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-error">{% trans "Delete" %}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

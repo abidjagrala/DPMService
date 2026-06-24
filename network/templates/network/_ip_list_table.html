@@ -1,0 +1,34 @@
+{% load i18n %}
+
+<div class="overflow-x-auto">
+    <table class="table table-zebra table-sm">
+        <thead>
+            <tr><th>{% trans "IP Address" %}</th><th>{% trans "Subnet" %}</th><th>{% trans "Hostname" %}</th><th>{% trans "MAC" %}</th><th>{% trans "Status" %}</th><th>{% trans "Client" %}</th><th class="text-right">{% trans "Actions" %}</th></tr>
+        </thead>
+        <tbody>
+            {% for ip in ips %}
+            <tr>
+                <td class="font-medium"><code>{{ ip.ip_address }}</code></td>
+                <td>{{ ip.subnet.name }}</td>
+                <td>{{ ip.hostname|default:"—" }}</td>
+                <td><code class="text-xs">{{ ip.mac_address|default:"—" }}</code></td>
+                <td>
+                    {% if ip.status == 'available' %}<span class="badge badge-success badge-sm">{% trans "Available" %}</span>
+                    {% elif ip.status == 'assigned' %}<span class="badge badge-info badge-sm">{% trans "Assigned" %}</span>
+                    {% elif ip.status == 'reserved' %}<span class="badge badge-warning badge-sm">{% trans "Reserved" %}</span>
+                    {% else %}<span class="badge badge-ghost badge-sm">{% trans "Unavailable" %}</span>{% endif %}
+                </td>
+                <td>{{ ip.client.company_name|default:"—" }}</td>
+                <td class="text-right space-x-1">
+                    <button type="button" hx-get="{% url 'network:ip_update' pk=ip.pk %}" hx-target="#drawer-body" hx-swap="innerHTML"
+                            @click="$dispatch('open-drawer', { title: 'Edit {{ ip.ip_address|escapejs }}' })" class="btn btn-ghost btn-xs">{% trans "Edit" %}</button>
+                    <button type="button" hx-get="{% url 'network:ip_delete' pk=ip.pk %}" hx-target="#modal-body" hx-swap="innerHTML"
+                            @click="$dispatch('open-modal')" class="btn btn-ghost btn-xs text-error">{% trans "Delete" %}</button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-center text-base-content/60 py-8">{% trans "No IP addresses found." %}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

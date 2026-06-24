@@ -1,0 +1,263 @@
+{% load static %}
+<aside class="bg-base-100 border-r border-base-300 w-64 flex-shrink-0 flex flex-col"
+       x-show="sidebarOpen"
+       x-transition.opacity
+       @click.outside="if (window.innerWidth < 1024) sidebarOpen = false">
+    <div class="h-16 flex items-center px-4 border-b border-base-300">
+        <a href="{% url 'accounts:dashboard' %}" class="sidebar-brand flex items-center gap-2">
+            <img src="{% static 'images/dpm-logo-light.webp' %}" alt="DPM Service"
+                 class="h-8 w-auto"
+                 x-show="theme === 'light'" />
+            <img src="{% static 'images/dpm-logo-dark.webp' %}" alt="DPM Service"
+                 class="h-8 w-auto"
+                 x-show="theme === 'dark'" />
+            <span class="text-xl font-bold text-primary hidden">DPM Service</span>
+        </a>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto py-4">
+        <ul class="menu menu-md w-full px-2 gap-1">
+            <li class="menu-title"><span>Main</span></li>
+            <li>
+                <a href="{% url 'dashboard:dashboard' %}"
+                   class="{% if request.resolver_match.app_name == 'dashboard' %}active{% endif %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0L2 9.586V17a1 1 0 001 1h4a1 1 0 001-1v-3a1 1 0 011-1h2a1 1 0 011 1v3a1 1 0 001 1h4a1 1 0 001-1V9.586l-7.293-7.293z"/></svg>
+                    Dashboard
+                </a>
+            </li>
+            {% if user.is_admin or user.is_manager or user.is_superuser %}
+                <li>
+                    <a href="{% url 'accounts:user_list' %}"
+                       class="{% if 'user' in request.resolver_match.url_name %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
+                        Users
+                    </a>
+                </li>
+            {% endif %}
+
+
+            {% if user.is_admin or user.is_manager or user.is_superuser %}
+                <li class="menu-title mt-4"><span>Company</span></li>
+                <li x-data="{ open: false }">
+                    <button type="button" @click="open = !open"
+                            class="flex items-center justify-between w-full"
+                            :class="{ 'active': open || '{% if request.resolver_match.app_name == 'clients' %}true{% endif %}' === 'true' }">
+                        <span class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"/></svg>
+                            Company
+                        </span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform" :class="{ 'rotate-180': open }" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                    </button>
+                    <ul x-show="open" x-collapse
+                        class="ml-4 mt-1 space-y-1">
+                        <li>
+                            <a href="{% url 'clients:client_list' %}"
+                               class="{% if request.resolver_match.url_name == 'client_list' %}active{% endif %}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+                                Clients
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'clients:employee_list' %}"
+                               class="{% if request.resolver_match.url_name == 'employee_list' %}active{% endif %}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
+                                Employees
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'clients:homeworker_list' %}"
+                               class="{% if request.resolver_match.url_name == 'homeworker_list' %}active{% endif %}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+                                Homeworkers
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            {% endif %}
+
+            {% if user.is_client %}
+                <li class="menu-title mt-4"><span>Company</span></li>
+                <li>
+                    <a href="{% url 'clients:homeworker_list' %}"
+                       class="{% if request.resolver_match.app_name == 'clients' %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+                        Homeworkers
+                    </a>
+                </li>
+            {% endif %}
+
+            {% if user.is_admin or user.is_manager or user.is_superuser %}
+                <li class="menu-title mt-4"><span>Domain &amp; Hosting</span></li>
+                <li>
+                    <a href="{% url 'hosting:hosting_list' %}"
+                       class="{% if request.resolver_match.app_name == 'hosting' %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.497-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z" clip-rule="evenodd"/></svg>
+                        Domain and Hosting
+                    </a>
+                </li>
+            {% endif %}
+
+            {% if user.is_admin or user.is_manager or user.is_superuser or user.is_client %}
+                <li class="menu-title mt-4"><span>Inventory</span></li>
+                <li>
+                    <a href="{% url 'assets:asset_list' %}"
+                       class="{% if request.resolver_match.app_name == 'assets' %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"/><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"/></svg>
+                        Assets
+                    </a>
+                </li>
+            {% endif %}
+
+            {% if user.is_admin or user.is_manager or user.is_superuser %}
+                <li class="menu-title mt-4"><span>Network</span></li>
+                <li>
+                    <a href="{% url 'network:device_list' %}" class="{% if request.resolver_match.app_name == 'network' %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm14 1H4v8h12V6z" clip-rule="evenodd"/></svg>
+                        Devices
+                    </a>
+                </li>
+            {% endif %}
+
+            {% if user.is_admin or user.is_manager or user.is_staff or user.is_client or user.is_superuser %}
+                <li class="menu-title mt-4"><span>Operations</span></li>
+                <li>
+                    <a href="{% url 'tickets:ticket_list' %}"
+                       class="{% if request.resolver_match.app_name == 'tickets' %}active{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"/></svg>
+                        Service Tickets
+                    </a>
+                </li>
+            {% endif %}
+
+            {% if user.is_admin or user.is_manager or user.is_superuser %}
+                <li class="menu-title mt-4"><span>Settings</span></li>
+                <li x-data="{ open: false }">
+                    <button type="button" @click="open = !open"
+                            class="flex items-center justify-between w-full"
+                            :class="{ 'active': open || '{% if request.resolver_match.app_name == 'masters' %}true{% endif %}' === 'true' }">
+                        <span class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+                            Settings
+                        </span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform" :class="{ 'rotate-180': open }" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                    </button>
+                    <ul x-show="open" x-collapse
+                        class="ml-4 mt-1 space-y-1">
+                        <li>
+                            <a href="{% url 'masters:state_list' %}"
+                               class="{% if request.resolver_match.url_name == 'state_list' %}active{% endif %}">
+                                States
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'masters:city_list' %}"
+                               class="{% if request.resolver_match.url_name == 'city_list' %}active{% endif %}">
+                                Cities
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'masters:service_type_list' %}"
+                               class="{% if request.resolver_match.url_name == 'service_type_list' %}active{% endif %}">
+                                Service Types
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'masters:asset_type_list' %}"
+                               class="{% if request.resolver_match.url_name == 'asset_type_list' %}active{% endif %}">
+                                Asset Types
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'masters:transport_type_list' %}"
+                               class="{% if request.resolver_match.url_name == 'transport_type_list' %}active{% endif %}">
+                                Transport Types
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            {% endif %}
+
+            {% if user.is_superuser %}
+                <li class="menu-title mt-4"><span>Authorization &amp; Roles</span></li>
+                <li x-data="{ open: false }">
+                    <button type="button" @click="open = !open"
+                            class="flex items-center justify-between w-full"
+                            :class="{ 'active': open || '{% if request.resolver_match.app_name == 'authorization' %}true{% endif %}' === 'true' }">
+                        <span class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                            Authorization &amp; Roles
+                        </span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform" :class="{ 'rotate-180': open }" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                    </button>
+                    <ul x-show="open" x-collapse
+                        class="ml-4 mt-1 space-y-1">
+                        <li>
+                            <a href="{% url 'authorization:auth_dashboard' %}"
+                               class="{% if request.resolver_match.url_name == 'auth_dashboard' %}active{% endif %}">
+                                Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'authorization:group_list' %}"
+                               class="{% if 'group' in request.resolver_match.url_name %}active{% endif %}">
+                                Groups
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'authorization:role_list' %}"
+                               class="{% if 'role' in request.resolver_match.url_name %}active{% endif %}">
+                                Roles
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'authorization:module_perm_matrix' %}"
+                               class="{% if request.resolver_match.url_name == 'module_perm_matrix' %}active{% endif %}">
+                                Module Permissions
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'authorization:model_perm_matrix' %}"
+                               class="{% if request.resolver_match.url_name == 'model_perm_matrix' %}active{% endif %}">
+                                Model Permissions
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'authorization:field_perm_matrix' %}"
+                               class="{% if request.resolver_match.url_name == 'field_perm_matrix' %}active{% endif %}">
+                                Field Permissions
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'authorization:menu_perm_matrix' %}"
+                               class="{% if request.resolver_match.url_name == 'menu_perm_matrix' %}active{% endif %}">
+                                Menu Permissions
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'authorization:user_assignment_list' %}"
+                               class="{% if 'assignment' in request.resolver_match.url_name %}active{% endif %}">
+                                User Assignments
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'authorization:audit_log_list' %}"
+                               class="{% if request.resolver_match.url_name == 'audit_log_list' %}active{% endif %}">
+                                Audit Log
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <div class="p-3 border-t border-base-300">
+        <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-ghost btn-block justify-start gap-2 text-error">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/></svg>
+                Logout
+            </button>
+        </form>
+    </div>
+</aside>

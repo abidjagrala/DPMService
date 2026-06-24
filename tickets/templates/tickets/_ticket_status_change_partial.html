@@ -1,0 +1,41 @@
+{% load i18n %}
+
+<form hx-post="{% url 'tickets:ticket_status' pk=obj.pk %}"
+      hx-target="this"
+      hx-swap="outerHTML"
+      class="space-y-3">
+    {% csrf_token %}
+    <div class="form-control">
+        <label class="label">
+            <span class="label-text font-medium">{% trans "Status" %}</span>
+        </label>
+        <div x-data="searchableSelect({name: 'status', value: '{{ obj.status }}', placeholder: '{% trans "Select status" %}', options: [{% for val, label in statuses %}{value: '{{ val }}', label: '{{ label|escapejs }}'}{% if not forloop.last %},{% endif %}{% endfor %}]})" @click.outside="open = false" class="ss-wrapper">
+            <input type="hidden" :name="name" :value="value">
+            <div class="ss-input-wrap">
+                <input type="text" x-model="search" @focus="onFocus()" @input="open = true"
+                       class="input input-bordered input-sm w-full" :placeholder="placeholder">
+                <span x-show="search" @click="clear()" class="ss-clear-btn">&#10005;</span>
+            </div>
+            <div x-show="open" x-cloak class="ss-dropdown">
+                <template x-if="filtered.length > 0">
+                    <div>
+                        <template x-for="(opt, idx) in filtered" :key="idx">
+                            <div @click="select(opt)"
+                                 class="ss-item"
+                                 :class="{'ss-active': value == opt.value}"
+                                 x-text="opt.label"></div>
+                        </template>
+                    </div>
+                </template>
+                <template x-if="filtered.length === 0">
+                    <div class="ss-empty">No results found</div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex justify-end gap-2 pt-2">
+        <button type="button" class="btn btn-ghost btn-sm" @click="$dispatch('close-drawer')">{% trans "Cancel" %}</button>
+        <button type="submit" class="btn btn-primary btn-sm">{% trans "Update" %}</button>
+    </div>
+</form>

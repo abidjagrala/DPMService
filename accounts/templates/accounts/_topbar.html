@@ -1,0 +1,58 @@
+<header class="navbar bg-base-100 border-b border-base-300 sticky top-0 z-50 min-h-16 h-16 px-4">
+    <div class="flex-1 gap-2 flex items-center">
+        <button class="btn btn-ghost btn-square btn-sm lg:hidden" @click="toggleSidebar()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm1 4a1 1 0 100 2h12a1 1 0 100-2H4z" clip-rule="evenodd"/></svg>
+        </button>
+        <h1 class="text-lg font-semibold">{% block page_title %}{% endblock %}</h1>
+    </div>
+
+    <div class="flex-none gap-2">
+        {% include "notifications/_notification_bell.html" %}
+
+        <div class="relative">
+            <button class="btn btn-ghost btn-square btn-sm" @click.stop="toggleThemeDropdown()" title="Change theme">
+                <svg x-show="themeIcon === 'sun'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
+                <svg x-show="themeIcon === 'moon'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+            </button>
+            <div x-show="themeOpen" @click.outside="closeThemeDropdown()" x-cloak x-transition
+                 class="fixed top-14 right-4 w-56 max-h-80 overflow-y-auto bg-base-100 border border-base-300 rounded-box shadow-xl z-[999] p-2">
+                <p class="text-xs font-semibold text-base-content/50 px-2 py-1">Theme</p>
+                <div class="flex flex-col gap-0.5">
+                    <template x-for="t in DAISYUI_THEMES" :key="t.id">
+                        <button class="btn btn-xs btn-ghost justify-start gap-2 normal-case"
+                                :class="{ 'btn-active': theme === t.id }"
+                                @click="setTheme(t.id)">
+                            <span x-text="t.icon" class="text-sm"></span>
+                            <span x-text="t.label" class="text-xs"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <div class="dropdown dropdown-end">
+            <label tabindex="0" class="btn btn-ghost btn-sm gap-2 normal-case">
+                <div class="avatar placeholder">
+                    <div class="bg-primary text-primary-content rounded-full w-8">
+                        <span class="text-sm font-medium">{{ user.first_name|slice:":1"|upper|default:user.email|slice:":1"|upper }}</span>
+                    </div>
+                </div>
+                <span class="hidden md:inline text-sm font-medium">{{ user.get_short_name }}</span>
+            </label>
+            <ul tabindex="0" class="menu dropdown-content z-40 mt-2 p-2 shadow-lg bg-base-100 rounded-box w-56 border border-base-300">
+                <li class="menu-title">
+                    <span class="text-xs">{{ user.email }}</span>
+                </li>
+                <li><a href="{% url 'accounts:profile' %}">My profile</a></li>
+                <li><a href="{% url 'accounts:password_change' %}">Change password</a></li>
+                <li><div class="divider my-1"></div></li>
+                <li>
+                    <form method="post" action="{% url 'accounts:logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="text-error">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</header>

@@ -1,0 +1,66 @@
+{% load i18n %}
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    {% if user.is_admin or user.is_manager %}
+    <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
+        <div class="stat-title text-xs">{% trans "Clients" %}</div>
+        <div class="stat-value text-2xl">{{ total_clients }}</div>
+    </div>
+    <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
+        <div class="stat-title text-xs">{% trans "Employees" %}</div>
+        <div class="stat-value text-2xl">{{ total_employees }}</div>
+    </div>
+    {% endif %}
+    {% if not user.is_staff_member %}
+    <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
+        <div class="stat-title text-xs">{% trans "Homeworkers" %}</div>
+        <div class="stat-value text-2xl">{{ total_homeworkers }}</div>
+    </div>
+    {% endif %}
+    <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
+        <div class="stat-title text-xs">{% trans "Total Tickets" %}</div>
+        <div class="stat-value text-2xl">{{ total_tickets }}</div>
+        <div class="stat-desc text-xs">{% trans "Today" %}: {{ tickets_today }}</div>
+    </div>
+    <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
+        <div class="stat-title text-xs">{% trans "Open / In Progress" %}</div>
+        <div class="stat-value text-2xl text-warning">{{ open_tickets }}</div>
+        <div class="stat-desc text-xs">{{ in_progress_tickets }} {% trans "in progress" %}</div>
+    </div>
+    <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
+        <div class="stat-title text-xs">{% trans "Completed" %}</div>
+        <div class="stat-value text-2xl text-success">{{ completed_tickets }}</div>
+    </div>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mt-4">
+    {% if not user.is_staff_member %}
+    <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
+        <div class="stat-title text-xs">{% trans "Assets" %}</div>
+        <div class="stat-value text-2xl">{{ total_assets }}</div>
+        <div class="stat-desc text-xs">{{ assigned_assets }} {% trans "assigned" %}</div>
+    </div>
+    <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
+        <div class="stat-title text-xs">{% trans "Available Assets" %}</div>
+        <div class="stat-value text-2xl text-success">{{ available_assets }}</div>
+    </div>
+    <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
+        <div class="stat-title text-xs">{% trans "Under Maintenance" %}</div>
+        <div class="stat-value text-2xl text-warning">{{ maintenance_assets }}</div>
+    </div>
+    {% endif %}
+    {% if user.is_admin or user.is_manager %}
+    <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
+        <div class="stat-title text-xs">{% trans "Devices" %}</div>
+        <div class="stat-value text-2xl">{{ total_devices }}</div>
+    </div>
+    <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
+        <div class="stat-title text-xs">{% trans "Domains" %}</div>
+        <div class="stat-value text-2xl">{{ total_domains }}</div>
+        <div class="stat-desc text-xs">{{ expiring_domains_30 }} {% trans "expiring" %}</div>
+    </div>
+    <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
+        <div class="stat-title text-xs">{% trans "Hosting" %}</div>
+        <div class="stat-value text-2xl">{{ total_hosting }}</div>
+        <div class="stat-desc text-xs">{{ expiring_hosting_30 }} {% trans "expiring" %}</div>
+    </div>
+    {% endif %}
+</div>

@@ -1,0 +1,16 @@
+{% load i18n %}
+<div class="max-w-lg mx-auto">
+    <div class="card bg-base-100 border border-error shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-error">{% trans "Delete Group" %}</h2>
+            <p>{% blocktrans with name=group.name %}Are you sure you want to delete "{{ name }}"?{% endblocktrans %}</p>
+            <div class="card-actions justify-end mt-4">
+                <a href="{% url 'authorization:group_list' %}" class="btn btn-ghost btn-sm" hx-get="{% url 'authorization:group_list' %}" hx-target="#group-list-container" hx-swap="innerHTML">{% trans "Cancel" %}</a>
+                <form method="post" hx-post="{% url 'authorization:group_delete' group.pk %}" hx-target="#page-content">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-error btn-sm">{% trans "Delete" %}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

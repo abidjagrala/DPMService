@@ -1,0 +1,16 @@
+{% load i18n %}
+<div class="max-w-lg mx-auto">
+    <div class="card bg-base-100 border border-error shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-error">{% trans "Delete Role" %}</h2>
+            <p>{% blocktrans with name=role.name %}Delete "{{ name }}"? All assigned users will lose this role's permissions.{% endblocktrans %}</p>
+            <div class="card-actions justify-end mt-4">
+                <a href="{% url 'authorization:role_list' %}" class="btn btn-ghost btn-sm">{% trans "Cancel" %}</a>
+                <form method="post" hx-post="{% url 'authorization:role_delete' role.pk %}" hx-target="#page-content">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-error btn-sm">{% trans "Delete" %}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

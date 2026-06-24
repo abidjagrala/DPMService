@@ -1,0 +1,31 @@
+{% load daisy %}
+
+<form hx-post="{% if mode == 'create' %}{% url 'accounts:user_create' %}{% else %}{% url 'accounts:user_update' user_obj.pk %}{% endif %}"
+      hx-target="this"
+      hx-swap="outerHTML"
+      class="space-y-3">
+    {% csrf_token %}
+    {% daisy_form_errors form %}
+    {% daisy_field form.email %}
+    <div class="grid grid-cols-2 gap-3">
+        {% daisy_field form.first_name %}
+        {% daisy_field form.last_name %}
+    </div>
+    {% daisy_field form.role %}
+    <div class="grid grid-cols-2 gap-3">
+        {% daisy_field form.is_active %}
+        {% daisy_field form.is_staff %}
+    </div>
+    <div class="divider text-xs text-base-content/50">
+        {% if mode == 'create' %}Set password{% else %}Reset password (optional){% endif %}
+    </div>
+    {% daisy_field form.password1 %}
+    {% daisy_field form.password2 %}
+
+    <div class="flex justify-end gap-2 pt-2">
+        <button type="button" class="btn btn-ghost btn-sm" @click="$dispatch('close-drawer')">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm">
+            {% if mode == 'create' %}Create user{% else %}Save changes{% endif %}
+        </button>
+    </div>
+</form>

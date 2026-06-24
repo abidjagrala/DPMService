@@ -1,0 +1,66 @@
+{% load i18n %}
+<div class="overflow-x-auto">
+    <table class="table table-zebra w-full">
+        <thead>
+            <tr>
+                <th>{% trans "Name" %}</th>
+                <th>{% trans "Group" %}</th>
+                <th>{% trans "Description" %}</th>
+                <th>{% trans "Status" %}</th>
+                <th>{% trans "Users" %}</th>
+                <th class="text-right">{% trans "Actions" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for role in roles %}
+            <tr>
+                <td>
+                    <a href="{% url 'authorization:role_detail' role.pk %}" class="font-medium link link-primary">{{ role.name }}</a>
+                </td>
+                <td class="text-sm">{{ role.group|default:"—" }}</td>
+                <td class="text-sm text-base-content/60 max-w-xs truncate">{{ role.description|default:"—" }}</td>
+                <td>
+                    {% if role.is_active %}
+                        <span class="badge badge-success badge-sm">{% trans "Active" %}</span>
+                    {% else %}
+                        <span class="badge badge-ghost badge-sm">{% trans "Inactive" %}</span>
+                    {% endif %}
+                </td>
+                <td class="text-sm">{{ role.user_assignments.count }}</td>
+                <td class="text-right">
+                    <div class="dropdown dropdown-end">
+                        <label tabindex="0" class="btn btn-ghost btn-xs">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01"/></svg>
+                        </label>
+                        <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-40 z-10">
+                            <li><a href="{% url 'authorization:role_detail' role.pk %}"
+                                   hx-get="{% url 'authorization:role_detail' role.pk %}"
+                                   hx-target="#page-content"
+                                   hx-push-url="true">{% trans "View Details" %}</a></li>
+                            <li><a href="{% url 'authorization:role_edit' role.pk %}"
+                                   hx-get="{% url 'authorization:role_edit' role.pk %}"
+                                   hx-target="#page-content"
+                                   hx-push-url="true">{% trans "Edit" %}</a></li>
+                            <li>
+                                <a href="#" hx-post="{% url 'authorization:role_clone' role.pk %}"
+                                   hx-target="#page-content"
+                                   hx-vals='{"name": "{{ role.name }} (Clone)"}'
+                                   hx-confirm="Clone this role?">{% trans "Clone" %}</a>
+                            </li>
+                            <li><a href="{% url 'authorization:role_delete' role.pk %}"
+                                   hx-get="{% url 'authorization:role_delete' role.pk %}"
+                                   hx-target="#page-content"
+                                   hx-push-url="true"
+                                   class="text-error">{% trans "Delete" %}</a></li>
+                        </ul>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center py-8 text-base-content/40">{% trans "No roles found." %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

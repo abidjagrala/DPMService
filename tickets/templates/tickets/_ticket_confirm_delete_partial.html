@@ -1,0 +1,17 @@
+{% load i18n %}
+
+<div class="p-6">
+    <h3 class="text-lg font-bold mb-2">{% trans "Delete Ticket" %} {{ obj.ticket_number }}?</h3>
+    <p class="text-sm text-base-content/70 mb-4">{% trans "This action cannot be undone. All comments and history will be permanently removed." %}</p>
+    <form method="post" action="{% url 'tickets:ticket_delete' pk=obj.pk %}"
+          hx-post="{% url 'tickets:ticket_delete' pk=obj.pk %}"
+          hx-target="#page-content"
+          hx-swap="innerHTML"
+          _="on htmx:afterRequest if event.detail.xhr.status == 204 trigger ticket-saved on body">
+        {% csrf_token %}
+        <div class="flex justify-end gap-2">
+            <button class="btn btn-ghost btn-sm" type="button" @click="$dispatch('close-modal')">{% trans "Cancel" %}</button>
+            <button class="btn btn-error btn-sm" type="submit">{% trans "Yes, Delete" %}</button>
+        </div>
+    </form>
+</div>

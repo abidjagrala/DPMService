@@ -1,0 +1,52 @@
+{% load i18n %}
+<div class="overflow-x-auto">
+    <table class="table table-zebra w-full">
+        <thead>
+            <tr>
+                <th>{% trans "Name" %}</th>
+                <th>{% trans "Description" %}</th>
+                <th>{% trans "Status" %}</th>
+                <th>{% trans "Created" %}</th>
+                <th class="text-right">{% trans "Actions" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for group in groups %}
+            <tr>
+                <td class="font-medium">{{ group.name }}</td>
+                <td class="text-sm text-base-content/60 max-w-xs truncate">{{ group.description|default:"—" }}</td>
+                <td>
+                    {% if group.is_active %}
+                        <span class="badge badge-success badge-sm">{% trans "Active" %}</span>
+                    {% else %}
+                        <span class="badge badge-ghost badge-sm">{% trans "Inactive" %}</span>
+                    {% endif %}
+                </td>
+                <td class="text-sm text-base-content/60">{{ group.created_at|date:"d M Y" }}</td>
+                <td class="text-right">
+                    <div class="dropdown dropdown-end">
+                        <label tabindex="0" class="btn btn-ghost btn-xs">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01"/></svg>
+                        </label>
+                        <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-36 z-10">
+                            <li><a href="{% url 'authorization:group_edit' group.pk %}"
+                                   hx-get="{% url 'authorization:group_edit' group.pk %}"
+                                   hx-target="#page-content"
+                                   hx-push-url="true">{% trans "Edit" %}</a></li>
+                            <li><a href="{% url 'authorization:group_delete' group.pk %}"
+                                   hx-get="{% url 'authorization:group_delete' group.pk %}"
+                                   hx-target="#page-content"
+                                   hx-push-url="true"
+                                   class="text-error">{% trans "Delete" %}</a></li>
+                        </ul>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center py-8 text-base-content/40">{% trans "No groups found." %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

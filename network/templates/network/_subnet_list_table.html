@@ -1,0 +1,55 @@
+{% load i18n %}
+
+<div class="overflow-x-auto">
+    <table class="table table-zebra table-sm">
+        <thead>
+            <tr>
+                <th>{% trans "Name" %}</th>
+                <th>{% trans "CIDR" %}</th>
+                <th>{% trans "Gateway" %}</th>
+                <th>{% trans "VLAN" %}</th>
+                <th>{% trans "Client" %}</th>
+                <th>{% trans "Status" %}</th>
+                <th class="text-right">{% trans "Actions" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in subnets %}
+            <tr>
+                <td class="font-medium">
+                    <a href="{% url 'network:subnet_detail' pk=s.pk %}" class="link link-primary">{{ s.name }}</a>
+                </td>
+                <td><code class="text-sm">{{ s.cidr }}</code></td>
+                <td>{{ s.gateway|default:"—" }}</td>
+                <td>{{ s.vlan_id|default:"—" }}</td>
+                <td>{{ s.client.company_name|default:"—" }}</td>
+                <td>
+                    {% if s.is_active %}
+                        <span class="badge badge-success badge-sm">{% trans "Active" %}</span>
+                    {% else %}
+                        <span class="badge badge-ghost badge-sm">{% trans "Inactive" %}</span>
+                    {% endif %}
+                </td>
+                <td class="text-right space-x-1">
+                    <button type="button"
+                            hx-get="{% url 'network:subnet_update' pk=s.pk %}"
+                            hx-target="#drawer-body"
+                            hx-swap="innerHTML"
+                            @click="$dispatch('open-drawer', { title: 'Edit {{ s.cidr|escapejs }}' })"
+                            class="btn btn-ghost btn-xs">{% trans "Edit" %}</button>
+                    <button type="button"
+                            hx-get="{% url 'network:subnet_delete' pk=s.pk %}"
+                            hx-target="#modal-body"
+                            hx-swap="innerHTML"
+                            @click="$dispatch('open-modal')"
+                            class="btn btn-ghost btn-xs text-error">{% trans "Delete" %}</button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center text-base-content/60 py-8">{% trans "No subnets found." %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

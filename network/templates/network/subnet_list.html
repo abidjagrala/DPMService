@@ -1,0 +1,103 @@
+{% extends "network/base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div x-data="netCrud('subnet')"
+     @open-drawer.window="openDrawer($event.detail.title)"
+     @open-modal.window="openModal()"
+     @close-drawer.window="closeDrawer()"
+     @close-modal.window="closeModal()"
+     @network-saved.window="closeDrawer(); closeModal()"
+     class="space-y-4">
+
+    <div class="flex items-center justify-between flex-wrap gap-2">
+        <div>
+            <h1 class="text-2xl font-semibold">Subnets</h1>
+            <p class="text-sm text-base-content/60">{{ subnets|length }} {% trans "total subnet" %}{{ subnets|length|pluralize }}</p>
+        </div>
+        <button type="button"
+                hx-get="{% url 'network:subnet_create' %}"
+                hx-target="#drawer-body"
+                hx-swap="innerHTML"
+                @click="$dispatch('open-drawer', { title: '{% trans "New subnet" %}' })"
+                class="btn btn-primary btn-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+            {% trans "Add Subnet" %}
+        </button>
+    </div>
+
+    <div class="card bg-base-100 border border-base-300">
+        <div class="card-body p-0">
+            <div class="flex items-center gap-3 p-4 border-b border-base-300">
+                <form hx-get="{% url 'network:subnet_list' %}"
+                      hx-target="#subnet-table-wrapper"
+                      hx-trigger="submit"
+                      hx-swap="outerHTML"
+                      class="flex items-center gap-3 flex-1">
+                    <input type="text" name="search" value="{{ search|default:'' }}"
+                           placeholder="{% trans 'Search subnets...' %}"
+                           class="input input-bordered input-sm flex-1 max-w-xs">
+                    <button type="submit" class="btn btn-ghost btn-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+                    </button>
+                    {% if search %}
+                        <a href="{% url 'network:subnet_list' %}" class="btn btn-ghost btn-sm">{% trans "Clear" %}</a>
+                    {% endif %}
+                </form>
+            </div>
+            <div id="subnet-table-wrapper"
+                 hx-get="{% url 'network:subnet_list' %}{% if search %}?search={{ search }}{% endif %}"
+                 hx-trigger="network-saved from:body"
+                 hx-swap="outerHTML">
+                {% include "network/_subnet_list_table.html" %}
+            </div>
+        </div>
+    </div>
+
+    <div x-show="drawerOpen" x-cloak class="fixed inset-0 z-40 bg-black/50" @click="closeDrawer()"></div>
+    <aside x-show="drawerOpen" x-cloak
+           class="fixed top-0 right-0 z-50 h-full w-full max-w-lg bg-base-100 shadow-2xl overflow-y-auto"
+           x-transition:enter="transform transition ease-out duration-200"
+           x-transition:enter-start="translate-x-full"
+           x-transition:enter-end="translate-x-0"
+           x-transition:leave="transform transition ease-in duration-150"
+           x-transition:leave-start="translate-x-0"
+           x-transition:leave-end="translate-x-full">
+        <div class="sticky top-0 bg-base-100 border-b border-base-300 px-4 h-14 flex items-center justify-between z-10">
+            <h2 class="font-semibold" x-text="drawerTitle">Form</h2>
+            <button type="button" class="btn btn-ghost btn-sm btn-square" @click="closeDrawer()" aria-label="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+            </button>
+        </div>
+        <div id="drawer-body" class="p-4"></div>
+    </aside>
+
+    <div x-show="modalOpen" x-cloak class="fixed inset-0 z-40 bg-black/50" @click="closeModal()"></div>
+    <div x-show="modalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="bg-base-100 rounded-box shadow-2xl w-full max-w-md border border-base-300" @click.outside="closeModal()" x-transition>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function netCrud() {
+    return {
+        drawerOpen: false,
+        drawerTitle: 'Form',
+        modalOpen: false,
+        init() {
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') { this.closeDrawer(); this.closeModal(); }
+            });
+        },
+        openDrawer(title) { this.drawerTitle = title || 'Form'; this.drawerOpen = true; },
+        closeDrawer() { this.drawerOpen = false; const b = document.getElementById('drawer-body'); if (b) b.innerHTML = ''; },
+        openModal() { this.modalOpen = true; },
+        closeModal() { this.modalOpen = false; const b = document.getElementById('modal-body'); if (b) b.innerHTML = ''; },
+    };
+}
+</script>
+{% endblock %}

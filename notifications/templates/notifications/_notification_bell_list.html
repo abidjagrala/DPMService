@@ -1,0 +1,28 @@
+{% load comments %}
+<div class="divide-y divide-base-300">
+  {% for n in notifications|slice:":5" %}
+  <div class="p-3 hover:bg-base-200 transition-colors {% if not n.is_read %}bg-base-200/50{% endif %}">
+    <div class="flex items-start gap-2">
+      <div class="flex-1 min-w-0">
+        <p class="text-sm truncate">{{ n.verb }}</p>
+        <div class="text-xs text-base-content/50 mt-0.5">
+          {{ n.created_at|timesince }} ago
+        </div>
+      </div>
+      {% if not n.is_read %}
+      <form method="post" action="{% url 'notifications:mark_read' pk=n.pk %}"
+            hx-post="{% url 'notifications:mark_read' pk=n.pk %}"
+            hx-target="closest div"
+            hx-swap="outerHTML">
+        {% csrf_token %}
+        <button class="btn btn-ghost btn-xs" type="submit">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+        </button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  {% empty %}
+  <div class="p-4 text-center text-sm text-base-content/50">No notifications</div>
+  {% endfor %}
+</div>

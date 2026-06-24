@@ -1,0 +1,48 @@
+{% load i18n %}
+<div class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body">
+        <h2 class="card-title text-base">{% trans "Recent Tickets" %}</h2>
+        <div class="overflow-x-auto">
+            <table class="table table-zebra table-sm">
+                <thead>
+                    <tr>
+                        <th>{% trans "Ticket" %}</th>
+                        <th>{% trans "Client" %}</th>
+                        <th>{% trans "Assigned" %}</th>
+                        <th>{% trans "Status" %}</th>
+                        <th>{% trans "Updated" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in recent_tickets %}
+                    <tr class="hover">
+                        <td>
+                            <a href="{% url 'tickets:ticket_detail' pk=t.pk %}" class="link link-primary font-medium">{{ t.ticket_number }}</a>
+                        </td>
+                        <td>{{ t.client.company_name|truncatewords:3 }}</td>
+                        <td>{% if t.assigned_to %}{{ t.assigned_to.user.get_full_name|default:"—" }}{% else %}—{% endif %}</td>
+                        <td>
+                            {% if t.status == 'new' %}
+                                <span class="badge badge-info badge-sm">{% trans "New" %}</span>
+                            {% elif t.status == 'assigned' %}
+                                <span class="badge badge-warning badge-sm">{% trans "Assigned" %}</span>
+                            {% elif t.status == 'in_progress' %}
+                                <span class="badge badge-accent badge-sm">{% trans "In Progress" %}</span>
+                            {% elif t.status == 'completed' %}
+                                <span class="badge badge-success badge-sm">{% trans "Completed" %}</span>
+                            {% elif t.status == 'cancelled' %}
+                                <span class="badge badge-ghost badge-sm">{% trans "Cancelled" %}</span>
+                            {% else %}
+                                <span class="badge badge-sm">{{ t.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-xs text-base-content/60">{{ t.updated_at|timesince }} ago</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center text-base-content/60 py-4">{% trans "No tickets yet." %}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

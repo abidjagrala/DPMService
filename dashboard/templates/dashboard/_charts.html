@@ -1,0 +1,51 @@
+{% load i18n %}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-base">{% trans "Monthly Ticket Trend" %}</h2>
+            <div class="h-72"><canvas id="monthlyTrendChart"></canvas></div>
+        </div>
+    </div>
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-base">{% trans "Tickets by Status" %}</h2>
+            <div class="h-72"><canvas id="ticketsByStatusChart"></canvas></div>
+        </div>
+    </div>
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-base">{% trans "Client Wise Ticket Count" %}</h2>
+            <div class="h-72"><canvas id="clientWiseChart"></canvas></div>
+        </div>
+    </div>
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-base">{% trans "Staff Productivity" %}</h2>
+            <div class="h-72"><canvas id="staffProductivityChart"></canvas></div>
+        </div>
+    </div>
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-base">{% trans "Asset Status Distribution" %}</h2>
+            <div class="h-72"><canvas id="assetStatusChart"></canvas></div>
+        </div>
+    </div>
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-base">{% trans "Device Category Distribution" %}</h2>
+            <div class="h-72"><canvas id="deviceCategoryChart"></canvas></div>
+        </div>
+    </div>
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-base">{% trans "Domain & Hosting Overview" %}</h2>
+            <div class="h-72"><canvas id="domainHostingChart"></canvas></div>
+        </div>
+    </div>
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-base">{% trans "Client Distribution by State" %}</h2>
+            <div class="h-72"><canvas id="clientStateChart"></canvas></div>
+        </div>
+    </div>
+</div>

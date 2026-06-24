@@ -1,0 +1,29 @@
+{% load i18n %}
+<div class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body">
+        <h2 class="card-title text-base">{% trans "Recent Activities" %}</h2>
+        <div class="overflow-y-auto max-h-96 space-y-3">
+            {% for a in recent_activities %}
+            <div class="flex items-start gap-3">
+                <div class="flex-shrink-0 mt-1">
+                    {% if a.level == 'success' %}
+                        <span class="badge badge-success badge-xs">{% trans "OK" %}</span>
+                    {% elif a.level == 'warning' %}
+                        <span class="badge badge-warning badge-xs">{% trans "!" %}</span>
+                    {% elif a.level == 'error' %}
+                        <span class="badge badge-error badge-xs">{% trans "!" %}</span>
+                    {% else %}
+                        <span class="badge badge-info badge-xs">{% trans "i" %}</span>
+                    {% endif %}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm">{{ a.verb }}</p>
+                    <p class="text-xs text-base-content/50">{{ a.actor }} &middot; {{ a.created_at|timesince }} ago</p>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-sm text-base-content/60 text-center py-4">{% trans "No recent activities." %}</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>

@@ -1,0 +1,53 @@
+{% load i18n %}
+<div class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body">
+        <h2 class="card-title text-base">{% trans "Expiry Alerts" %}</h2>
+        <div class="space-y-4">
+            <div>
+                <h3 class="font-medium text-sm mb-2">{% trans "Domains" %}</h3>
+                <div class="flex gap-2 flex-wrap mb-2">
+                    <span class="badge badge-warning badge-sm">{% blocktrans count counter=expiry_alerts.domains_30|length %}{{ counter }} expiring in 30 days{% plural %}{{ counter }} expiring in 30 days{% endblocktrans %}</span>
+                    <span class="badge badge-error badge-sm">{% blocktrans count counter=expiry_alerts.domains_15|length %}{{ counter }} expiring in 15 days{% plural %}{{ counter }} expiring in 15 days{% endblocktrans %}</span>
+                    <span class="badge badge-error badge-xs">{% blocktrans count counter=expiry_alerts.domains_7|length %}{{ counter }} expiring in 7 days{% plural %}{{ counter }} expiring in 7 days{% endblocktrans %}</span>
+                </div>
+                {% for s in expiry_alerts.domains_30 %}
+                <div class="flex items-center justify-between text-sm py-1 {% if s.days_until_expiry <= 7 %}text-error font-semibold{% elif s.days_until_expiry <= 15 %}text-warning{% endif %}">
+                    <span>{{ s.service_name }} <span class="text-base-content/50">({{ s.client.company_name }})</span></span>
+                    <span class="badge {% if s.days_until_expiry <= 7 %}badge-error{% elif s.days_until_expiry <= 15 %}badge-warning{% else %}badge-warning{% endif %} badge-sm">{{ s.expiry_date }}</span>
+                </div>
+                {% empty %}
+                <p class="text-xs text-base-content/50">{% trans "No domains expiring soon." %}</p>
+                {% endfor %}
+            </div>
+            <div class="divider my-1"></div>
+            <div>
+                <h3 class="font-medium text-sm mb-2">{% trans "Hosting" %}</h3>
+                <div class="flex gap-2 flex-wrap mb-2">
+                    <span class="badge badge-warning badge-sm">{% blocktrans count counter=expiry_alerts.hosting_30|length %}{{ counter }} expiring in 30 days{% plural %}{{ counter }} expiring in 30 days{% endblocktrans %}</span>
+                    <span class="badge badge-error badge-sm">{% blocktrans count counter=expiry_alerts.hosting_15|length %}{{ counter }} expiring in 15 days{% plural %}{{ counter }} expiring in 15 days{% endblocktrans %}</span>
+                    <span class="badge badge-error badge-xs">{% blocktrans count counter=expiry_alerts.hosting_7|length %}{{ counter }} expiring in 7 days{% plural %}{{ counter }} expiring in 7 days{% endblocktrans %}</span>
+                </div>
+                {% for s in expiry_alerts.hosting_30 %}
+                <div class="flex items-center justify-between text-sm py-1 {% if s.days_until_expiry <= 7 %}text-error font-semibold{% elif s.days_until_expiry <= 15 %}text-warning{% endif %}">
+                    <span>{{ s.service_name }} <span class="text-base-content/50">({{ s.client.company_name }})</span></span>
+                    <span class="badge {% if s.days_until_expiry <= 7 %}badge-error{% elif s.days_until_expiry <= 15 %}badge-warning{% else %}badge-warning{% endif %} badge-sm">{{ s.expiry_date }}</span>
+                </div>
+                {% empty %}
+                <p class="text-xs text-base-content/50">{% trans "No hosting expiring soon." %}</p>
+                {% endfor %}
+            </div>
+            {% if warranty_alerts %}
+            <div class="divider my-1"></div>
+            <div>
+                <h3 class="font-medium text-sm mb-2">{% trans "Asset Warranty" %}</h3>
+                {% for a in warranty_alerts %}
+                <div class="flex items-center justify-between text-sm py-1">
+                    <span>{{ a.asset_tag }} — {{ a.brand }} {{ a.model_name }} <span class="text-base-content/50">({{ a.client.company_name|default:"—" }})</span></span>
+                    <span class="badge badge-warning badge-sm">{{ a.warranty_expiry }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>

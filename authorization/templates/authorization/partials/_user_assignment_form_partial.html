@@ -1,0 +1,30 @@
+{% load i18n %}
+<form method="post" hx-post="{{ request.path }}" hx-target="#page-content" hx-push-url="true">
+    {% csrf_token %}
+    <div class="space-y-4">
+        <div class="form-control">
+            <label class="label"><span class="label-text font-medium">{% trans "User" %}</span></label>
+            {{ form.user }}
+            {% if form.user.errors %}<label class="label"><span class="label-text-alt text-error">{{ form.user.errors.0 }}</span></label>{% endif %}
+        </div>
+        <div class="form-control">
+            <label class="label"><span class="label-text font-medium">{% trans "Role" %}</span></label>
+            {{ form.role }}
+            {% if form.role.errors %}<label class="label"><span class="label-text-alt text-error">{{ form.role.errors.0 }}</span></label>{% endif %}
+        </div>
+        <div class="form-control">
+            <label class="label"><span class="label-text font-medium">{% trans "Group (optional)" %}</span></label>
+            {{ form.group }}
+        </div>
+        <div class="form-control">
+            <label class="label cursor-pointer justify-start gap-2">
+                {{ form.is_active }}
+                <span class="label-text">{% trans "Active" %}</span>
+            </label>
+        </div>
+        <div class="flex justify-end gap-2 mt-4">
+            <a href="{% url 'authorization:user_assignment_list' %}" class="btn btn-ghost" hx-get="{% url 'authorization:user_assignment_list' %}" hx-target="#page-content" hx-push-url="true">{% trans "Cancel" %}</a>
+            <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+        </div>
+    </div>
+</form>

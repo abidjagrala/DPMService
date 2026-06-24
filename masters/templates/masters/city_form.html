@@ -1,0 +1,21 @@
+{% extends "masters/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">{{ page_title }}</h1>
+
+<div class="card bg-base-100 shadow w-full max-w-lg">
+    <div class="card-body">
+        <form hx-post="{% url 'masters:city_create' %}"
+              hx-target="#modal-container"
+              hx-swap="innerHTML">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <div class="flex justify-end gap-2 mt-4">
+                <a href="{% url 'masters:city_list' %}" class="btn btn-ghost">{% trans "Cancel" %}</a>
+                <button type="submit" class="btn btn-primary">{% trans "Create" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

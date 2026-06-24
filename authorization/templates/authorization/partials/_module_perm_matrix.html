@@ -1,0 +1,80 @@
+{% load i18n auth_tags %}
+<div class="space-y-4">
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <div class="flex items-end gap-4">
+                <div class="form-control flex-1">
+                    <label class="label"><span class="label-text font-medium">{% trans "Select Role" %}</span></label>
+                    <select name="role" class="select select-bordered w-full"
+                            onchange="if(this.value){htmx.ajax('GET','{% url "authorization:module_perm_matrix" %}?role='+this.value,{target:'#module-perm-container',swap:'innerHTML'})}">
+                        <option value="">{% trans "Choose a role..." %}</option>
+                        {% for role in roles %}
+                        <option value="{{ role.pk }}" {% if selected_role and selected_role.pk == role.pk %}selected{% endif %}>{{ role.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if selected_role %}
+    <form hx-post="{% url 'authorization:module_perm_save' %}" hx-target="#module-perm-container" hx-swap="innerHTML">
+        {% csrf_token %}
+        <input type="hidden" name="role" value="{{ selected_role.pk }}">
+
+        <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body p-0">
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full">
+                        <thead>
+                            <tr>
+                                <th class="w-48">{% trans "Module" %}</th>
+                                {% for perm in perm_labels %}
+                                <th class="text-center text-xs">
+                                    <label class="cursor-pointer">
+                                        <input type="checkbox" class="checkbox checkbox-xs checkbox-primary" data-check-all="{{ perm }}">
+                                        <span class="ml-1">{{ perm|title }}</span>
+                                    </label>
+                                </th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for module in modules %}
+                            <tr>
+                                <td class="font-medium">{{ module.name }}</td>
+                                {% for perm in perm_labels %}
+                                <td class="text-center">
+                                    {% with mod_perms=matrix|dict_get:module.code %}
+                                    <input type="checkbox" name="mod_{{ module.code }}_{{ perm }}"
+                                           class="checkbox checkbox-xs checkbox-primary"
+                                           {% if mod_perms %}{% if mod_perms|dict_get_bool:perm %}checked{% endif %}{% endif %}>
+                                    {% endwith %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end mt-4">
+            <button type="submit" class="btn btn-primary">{% trans "Save Module Permissions" %}</button>
+        </div>
+    </form>
+    {% endif %}
+</div>
+
+<script>
+document.querySelectorAll('[data-check-all]').forEach(function(checkbox) {
+    checkbox.addEventListener('change', function() {
+        var perm = this.getAttribute('data-check-all');
+        var table = this.closest('table');
+        table.querySelectorAll('input[name*="_' + perm + '"]').forEach(function(cb) {
+            cb.checked = checkbox.checked;
+        });
+    });
+});
+</script>

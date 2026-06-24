@@ -1,0 +1,54 @@
+{% load comments %}
+<div id="comments-section-{{ model_name }}-{{ obj.pk }}" class="card bg-base-200">
+  <div class="card-body p-4">
+    <h2 class="card-title text-sm mb-4">Comments ({{ comments|length }})</h2>
+
+    <div class="comments-list space-y-3 mb-4">
+      {% for c in comments %}
+      <div class="bg-base-100 rounded-lg p-3 text-sm">
+        <div class="flex justify-between mb-1">
+          <div class="flex items-center gap-2">
+            <span class="font-semibold">{{ c.created_by.get_full_name|default:c.created_by.email }}</span>
+            {% if c.is_internal %}<span class="badge badge-warning badge-xs">Internal</span>{% endif %}
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-base-content/50">{{ c.created_at|date:"d M Y H:i" }}</span>
+            {% if user.is_admin or user.is_manager or user.is_superuser or c.created_by == user %}
+            <button class="btn btn-ghost btn-xs text-error"
+                    hx-delete="{% url 'comments:comment_delete' pk=c.pk %}"
+                    hx-confirm="Delete this comment?"
+                    hx-target="#comments-section-{{ model_name }}-{{ obj.pk }}"
+                    hx-swap="innerHTML">
+              ✕
+            </button>
+            {% endif %}
+          </div>
+        </div>
+        <p class="whitespace-pre-wrap">{{ c.body }}</p>
+      </div>
+      {% empty %}
+      <p class="text-base-content/50 text-sm">No comments yet.</p>
+      {% endfor %}
+    </div>
+
+    <form method="post"
+          action="{% url 'comments:comment_add' app_label=app_label model_name=model_name object_id=obj.pk %}"
+          hx-post="{% url 'comments:comment_add' app_label=app_label model_name=model_name object_id=obj.pk %}"
+          hx-target="#comments-section-{{ model_name }}-{{ obj.pk }}"
+          hx-swap="innerHTML">
+      {% csrf_token %}
+      <div class="form-control mb-2">{{ comment_form.body }}</div>
+      {% if user.is_admin or user.is_manager or user.is_superuser %}
+      <div class="form-control mb-2">
+        <label class="label cursor-pointer justify-start gap-2">
+          {{ comment_form.is_internal }}
+          <span class="label-text text-sm">Internal note (staff only)</span>
+        </label>
+      </div>
+      {% endif %}
+      <div class="flex justify-end">
+        <button class="btn btn-primary btn-sm" type="submit">Add Comment</button>
+      </div>
+    </form>
+  </div>
+</div>

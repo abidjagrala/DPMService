@@ -1,0 +1,28 @@
+{% extends "accounts/base.html" %}
+{% load daisy %}
+
+{% block title %}Edit Profile &mdash; DPM Service{% endblock %}
+{% block page_title %}Edit Profile{% endblock %}
+
+{% block content %}
+<div class="card bg-base-100 border border-base-300 shadow-sm max-w-xl mx-auto">
+    <div class="card-body">
+        <h2 class="card-title mb-2">Update your details</h2>
+
+        <form method="post" novalidate class="space-y-3">
+            {% csrf_token %}
+            {% daisy_form_errors form %}
+            {% daisy_field form.email %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {% daisy_field form.first_name %}
+                {% daisy_field form.last_name %}
+            </div>
+
+            <div class="card-actions justify-end mt-4">
+                <a href="{% url 'accounts:profile' %}" class="btn btn-ghost">Cancel</a>
+                <button type="submit" class="btn btn-primary">Save changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

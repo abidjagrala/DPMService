@@ -1,0 +1,48 @@
+{% extends "accounts/base.html" %}
+{% load daisy %}
+
+{% block title %}{% if mode == 'create' %}New user{% else %}Edit {{ user_obj.email }}{% endif %} &mdash; DPM Service{% endblock %}
+{% block page_title %}{% if mode == 'create' %}New user{% else %}Edit {{ user_obj.email }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="mb-3">
+        <a href="{% if mode == 'create' %}{% url 'accounts:user_list' %}{% else %}{% url 'accounts:user_detail' user_obj.pk %}{% endif %}"
+           class="btn btn-ghost btn-sm">&larr; Back</a>
+    </div>
+
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title">{% if mode == 'create' %}Create user{% else %}Edit {{ user_obj.email }}{% endif %}</h2>
+
+            <form method="post" novalidate class="space-y-3">
+                {% csrf_token %}
+                {% daisy_form_errors form %}
+                {% daisy_field form.email %}
+                <div class="grid grid-cols-2 gap-3">
+                    {% daisy_field form.first_name %}
+                    {% daisy_field form.last_name %}
+                </div>
+                {% daisy_field form.role %}
+                <div class="grid grid-cols-2 gap-3">
+                    {% daisy_field form.is_active %}
+                    {% daisy_field form.is_staff %}
+                </div>
+                <div class="divider text-xs text-base-content/50">
+                    {% if mode == 'create' %}Set password{% else %}Reset password (optional){% endif %}
+                </div>
+                {% daisy_field form.password1 %}
+                {% daisy_field form.password2 %}
+
+                <div class="card-actions justify-end mt-2">
+                    <a href="{% if mode == 'create' %}{% url 'accounts:user_list' %}{% else %}{% url 'accounts:user_detail' user_obj.pk %}{% endif %}"
+                       class="btn btn-ghost">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        {% if mode == 'create' %}Create user{% else %}Save changes{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

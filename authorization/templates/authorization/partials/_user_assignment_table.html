@@ -1,0 +1,47 @@
+{% load i18n %}
+<div class="overflow-x-auto">
+    <table class="table table-zebra w-full">
+        <thead>
+            <tr>
+                <th>{% trans "User" %}</th>
+                <th>{% trans "Role" %}</th>
+                <th>{% trans "Group" %}</th>
+                <th>{% trans "Status" %}</th>
+                <th>{% trans "Assigned" %}</th>
+                <th>{% trans "Assigned By" %}</th>
+                <th class="text-right">{% trans "Actions" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in assignments %}
+            <tr>
+                <td>
+                    <div class="font-medium">{{ a.user.email }}</div>
+                    <div class="text-xs text-base-content/60">{{ a.user.get_full_name }}</div>
+                </td>
+                <td><span class="badge badge-primary badge-sm">{{ a.role.name }}</span></td>
+                <td class="text-sm">{{ a.group|default:"—" }}</td>
+                <td>
+                    {% if a.is_active %}
+                        <span class="badge badge-success badge-sm">{% trans "Active" %}</span>
+                    {% else %}
+                        <span class="badge badge-ghost badge-sm">{% trans "Inactive" %}</span>
+                    {% endif %}
+                </td>
+                <td class="text-sm text-base-content/60">{{ a.assigned_at|date:"d M Y H:i" }}</td>
+                <td class="text-sm">{{ a.assigned_by|default:"—" }}</td>
+                <td class="text-right">
+                    <a href="{% url 'authorization:user_assignment_edit' a.pk %}" class="btn btn-ghost btn-xs"
+                       hx-get="{% url 'authorization:user_assignment_edit' a.pk %}" hx-target="#page-content" hx-push-url="true">{% trans "Edit" %}</a>
+                    <a href="{% url 'authorization:user_assignment_delete' a.pk %}" class="btn btn-ghost btn-xs text-error"
+                       hx-get="{% url 'authorization:user_assignment_delete' a.pk %}" hx-target="#page-content" hx-push-url="true">{% trans "Revoke" %}</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center py-8 text-base-content/40">{% trans "No assignments found." %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

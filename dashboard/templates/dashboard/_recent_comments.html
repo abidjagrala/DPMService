@@ -1,0 +1,19 @@
+{% load i18n %}
+<div class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body">
+        <h2 class="card-title text-base">{% trans "Recent Comments" %}</h2>
+        <div class="overflow-y-auto max-h-96 space-y-3">
+            {% for c in recent_comments %}
+            <div class="border-l-2 border-base-300 pl-3">
+                <div class="flex items-center gap-2">
+                    <span class="font-medium text-sm">{% if c.created_by %}{{ c.created_by.get_full_name|default:c.created_by.email }}{% else %}<span class="text-base-content/40">{% trans "Deleted user" %}</span>{% endif %}</span>
+                    <span class="text-xs text-base-content/50">{{ c.created_at|timesince }} ago</span>
+                </div>
+                <p class="text-sm mt-1">{{ c.body|truncatewords:30 }}</p>
+            </div>
+            {% empty %}
+            <p class="text-sm text-base-content/60 text-center py-4">{% trans "No comments yet." %}</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>

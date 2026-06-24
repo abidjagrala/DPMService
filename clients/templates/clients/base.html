@@ -1,0 +1,14 @@
+{% extends "accounts/base.html" %}
+{% load i18n %}
+
+{% block title %}{{ page_title }} — Clients{% endblock %}
+
+{% block breadcrumbs %}
+<div class="text-sm breadcrumbs mb-4">
+    <ul>
+        <li><a href="{% url 'accounts:dashboard' %}">Dashboard</a></li>
+        <li><a href="{% url 'clients:client_list' %}">Clients</a></li>
+        <li>{{ page_title }}</li>
+    </ul>
+</div>
+{% endblock %}

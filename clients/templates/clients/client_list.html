@@ -1,0 +1,133 @@
+{% extends "clients/base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div x-data="clientCrud()"
+     @open-modal.window="openModal()"
+     @close-modal.window="closeModal()"
+     @client-saved.window="closeModal()"
+     class="space-y-4">
+
+    <div class="flex items-center justify-between flex-wrap gap-2">
+        <div>
+            <h1 class="text-2xl font-semibold">Clients</h1>
+            <p class="text-sm text-base-content/60">{{ clients|length }} {% trans "total client" %}{{ clients|length|pluralize }}</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="{% url 'clients:client_export_csv' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+               class="btn btn-ghost btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                {% trans "Export CSV" %}
+            </a>
+            <a href="{% url 'clients:client_import' %}"
+               class="btn btn-ghost btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" transform="rotate(180 10 10)"/></svg>
+                {% trans "Import CSV" %}
+            </a>
+            <a href="{% url 'clients:client_create' %}"
+               class="btn btn-primary btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+                {% trans "Add Client" %}
+            </a>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 border border-base-300">
+        <div class="card-body p-0">
+            <form method="get" class="flex items-center gap-3 p-4 border-b border-base-300 flex-wrap">
+                <input type="text" name="search" value="{{ search|default:'' }}"
+                       placeholder="{% trans 'Search by company, contact or phone...' %}"
+                       class="input input-bordered input-sm flex-1 min-w-[200px]">
+                <div x-data="searchableSelect({name: 'city', value: '{{ selected_city|default:'' }}', placeholder: '{% trans "All cities" %}', options: [{value: '', label: '{% trans "All cities" %}'}, {% for city in cities %}{value: '{{ city.pk }}', label: '{{ city.name|escapejs }}'}{% if not forloop.last %},{% endif %}{% endfor %}]})" @click.outside="open = false" class="ss-wrapper">
+                    <input type="hidden" :name="name" :value="value">
+                    <div class="ss-input-wrap">
+                        <input type="text" x-model="search" @focus="onFocus()" @input="open = true"
+                               class="input input-bordered input-sm w-full" :placeholder="placeholder">
+                        <span x-show="search" @click="clear()" class="ss-clear-btn">&#10005;</span>
+                    </div>
+                    <div x-show="open" x-cloak class="ss-dropdown">
+                        <template x-if="filtered.length > 0">
+                            <div>
+                                <template x-for="(opt, idx) in filtered" :key="idx">
+                                    <div @click="select(opt)"
+                                         class="ss-item"
+                                         :class="{'ss-active': value == opt.value}"
+                                         x-text="opt.label"></div>
+                                </template>
+                            </div>
+                        </template>
+                        <template x-if="filtered.length === 0">
+                            <div class="ss-empty">No results found</div>
+                        </template>
+                    </div>
+                </div>
+                <div x-data="searchableSelect({name: 'status', value: '{{ selected_status|default:'' }}', placeholder: '{% trans "All statuses" %}', options: [{value: '', label: '{% trans "All statuses" %}'}, {value: 'active', label: '{% trans "Active" %}'}, {value: 'inactive', label: '{% trans "Inactive" %}'}]})" @click.outside="open = false" class="ss-wrapper">
+                    <input type="hidden" :name="name" :value="value">
+                    <div class="ss-input-wrap">
+                        <input type="text" x-model="search" @focus="onFocus()" @input="open = true"
+                               class="input input-bordered input-sm w-full" :placeholder="placeholder">
+                        <span x-show="search" @click="clear()" class="ss-clear-btn">&#10005;</span>
+                    </div>
+                    <div x-show="open" x-cloak class="ss-dropdown">
+                        <template x-if="filtered.length > 0">
+                            <div>
+                                <template x-for="(opt, idx) in filtered" :key="idx">
+                                    <div @click="select(opt)"
+                                         class="ss-item"
+                                         :class="{'ss-active': value == opt.value}"
+                                         x-text="opt.label"></div>
+                                </template>
+                            </div>
+                        </template>
+                        <template x-if="filtered.length === 0">
+                            <div class="ss-empty">No results found</div>
+                        </template>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">{% trans "Filter" %}</button>
+                {% if search or selected_city or selected_status %}
+                    <a href="{% url 'clients:client_list' %}" class="btn btn-ghost btn-sm">{% trans "Clear" %}</a>
+                {% endif %}
+            </form>
+
+            <div id="client-table-wrapper"
+                 hx-get="{% url 'clients:client_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+                 hx-trigger="client-saved from:body"
+                 hx-swap="outerHTML">
+                {% include "clients/_client_list_table.html" %}
+            </div>
+        </div>
+    </div>
+
+    <div x-show="modalOpen" x-cloak class="fixed inset-0 z-40 bg-black/50" @click="closeModal()"></div>
+    <div x-show="modalOpen" x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="bg-base-100 rounded-box shadow-2xl w-full max-w-md border border-base-300"
+             @click.outside="closeModal()"
+             x-transition>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function clientCrud() {
+    return {
+        modalOpen: false,
+        init() {
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') this.closeModal();
+            });
+        },
+        openModal() { this.modalOpen = true; },
+        closeModal() {
+            this.modalOpen = false;
+            const body = document.getElementById('modal-body');
+            if (body) body.innerHTML = '';
+        },
+    };
+}
+</script>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "assets/base.html" %}
+{% load i18n crispy_forms_tags %}
+
+{% block content %}
+<h1 class="text-2xl font-semibold mb-6">{{ page_title }}</h1>
+
+<div class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body">
+        <p class="mb-4">{% trans "Assigning" %} <strong>{{ obj.asset_tag }}</strong> — {{ obj.brand }} {{ obj.model_name }}</p>
+        <form method="post" novalidate class="space-y-3">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <div class="card-actions justify-end mt-2">
+                <a href="{% url 'assets:asset_detail' pk=obj.pk %}" class="btn btn-ghost">{% trans "Cancel" %}</a>
+                <button type="submit" class="btn btn-primary">{% trans "Assign Asset" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

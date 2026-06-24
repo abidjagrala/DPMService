@@ -1,0 +1,41 @@
+{% extends "accounts/base.html" %}
+{% load i18n %}
+
+{% block title %}{{ page_title|default:"Groups" }} - Authorization{% endblock %}
+
+{% block breadcrumbs %}
+<div class="text-sm breadcrumbs">
+    <ul>
+        <li><a href="{% url 'accounts:dashboard' %}">Home</a></li>
+        <li><a href="{% url 'authorization:auth_dashboard' %}">Authorization</a></li>
+        <li>Groups</li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-semibold">{% trans "Groups" %}</h1>
+        <p class="text-sm text-base-content/60">{% trans "Manage user groups" %}</p>
+    </div>
+    <a href="{% url 'authorization:group_create' %}"
+       class="btn btn-primary btn-sm"
+       hx-get="{% url 'authorization:group_create' %}"
+       hx-target="#page-content"
+       hx-push-url="true">
+        + {% trans "New Group" %}
+    </a>
+</div>
+
+<div class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body p-0">
+        <div id="group-list-container"
+             hx-get="{% url 'authorization:group_list' %}"
+             hx-trigger="auth-saved from:body"
+             hx-swap="innerHTML">
+            {% include "authorization/partials/_group_list_table.html" %}
+        </div>
+    </div>
+</div>
+{% endblock %}

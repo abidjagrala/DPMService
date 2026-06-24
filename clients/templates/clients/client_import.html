@@ -1,0 +1,57 @@
+{% extends "clients/base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between flex-wrap gap-2">
+        <div>
+            <h1 class="text-2xl font-semibold">{% trans "Import Clients" %}</h1>
+            <p class="text-sm text-base-content/60">{% trans "Upload a CSV file to bulk import clients" %}</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="{% url 'clients:client_download_template' %}" class="btn btn-ghost btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                {% trans "Download Template" %}
+            </a>
+            <a href="{% url 'clients:client_list' %}" class="btn btn-ghost btn-sm">
+                {% trans "Back to Clients" %}
+            </a>
+        </div>
+    </div>
+
+    {% if rows %}
+        <div id="import-preview">
+            {% include "clients/_client_import_preview.html" %}
+        </div>
+    {% else %}
+        <div class="card bg-base-100 border border-base-300">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data"
+                      hx-post="{% url 'clients:client_import' %}"
+                      hx-target="#import-preview"
+                      hx-swap="innerHTML">
+                    {% csrf_token %}
+                    <div class="form-control w-full">
+                        <label class="label">
+                            <span class="label-text font-medium">{% trans "Select CSV File" %}</span>
+                        </label>
+                        <input type="file" name="csv_file" accept=".csv"
+                               class="file-input file-input-bordered w-full" required />
+                        <label class="label">
+                            <span class="label-text-alt text-base-content/60">
+                                {% trans "File must be CSV format. Download the template for the correct column structure." %}
+                            </span>
+                        </label>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                            {% trans "Upload & Preview" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

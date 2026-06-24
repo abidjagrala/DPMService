@@ -1,0 +1,37 @@
+{% extends "accounts/base.html" %}
+
+{% block title %}Admin Dashboard &mdash; DPM Service{% endblock %}
+{% block page_title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body flex-row items-center justify-between">
+        <div>
+            <h2 class="card-title">Welcome, {{ user.get_short_name }}</h2>
+            <p class="text-sm text-base-content/60">Signed in as an administrator.</p>
+        </div>
+        <span class="badge badge-error badge-lg">{{ role }}</span>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+    <a href="{% url 'accounts:user_list' %}" class="card bg-base-100 border border-base-300 hover:border-primary hover:shadow-md transition">
+        <div class="card-body">
+            <h3 class="card-title text-primary">Users</h3>
+            <p class="text-sm text-base-content/60">Manage all users and roles.</p>
+        </div>
+    </a>
+    <a href="/admin/" target="_blank" rel="noopener" class="card bg-base-100 border border-base-300 hover:border-primary hover:shadow-md transition">
+        <div class="card-body">
+            <h3 class="card-title text-primary">Django Admin</h3>
+            <p class="text-sm text-base-content/60">Full administrative interface.</p>
+        </div>
+    </a>
+    <a href="{% url 'accounts:profile' %}" class="card bg-base-100 border border-base-300 hover:border-primary hover:shadow-md transition">
+        <div class="card-body">
+            <h3 class="card-title text-primary">Profile</h3>
+            <p class="text-sm text-base-content/60">Update your account details.</p>
+        </div>
+    </a>
+</div>
+{% endblock %}

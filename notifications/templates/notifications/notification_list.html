@@ -1,0 +1,19 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-xl font-bold">{{ page_title }}</h1>
+  <form method="post" action="{% url 'notifications:mark_all_read' %}"
+        hx-post="{% url 'notifications:mark_all_read' %}"
+        hx-target="body">
+    {% csrf_token %}
+    <button class="btn btn-ghost btn-sm" type="submit">Mark all as read</button>
+  </form>
+</div>
+
+<div id="notification-list"
+     hx-get="{% url 'notifications:notification_list' %}"
+     hx-trigger="notification-updated from:body"
+     hx-swap="innerHTML">
+  {% include "notifications/_notification_list_partial.html" %}
+</div>
+{% endblock %}

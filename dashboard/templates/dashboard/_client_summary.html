@@ -1,0 +1,38 @@
+{% load i18n %}
+<div class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body">
+        <h2 class="card-title text-base">{% trans "Client Summary" %}</h2>
+        <div class="overflow-x-auto">
+            <table class="table table-zebra table-sm">
+                <thead>
+                    <tr>
+                        <th>{% trans "Client" %}</th>
+                        <th class="text-center">{% trans "HW" %}</th>
+                        <th class="text-center">{% trans "Assets" %}</th>
+                        <th class="text-center">{% trans "Open" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in client_summary %}
+                    <tr class="hover">
+                        <td>
+                            <a href="{% url 'clients:client_detail' pk=c.pk %}" class="link link-primary font-medium text-sm">{{ c.company_name }}</a>
+                        </td>
+                        <td class="text-center text-sm">{{ c.homeworker_count }}</td>
+                        <td class="text-center text-sm">{{ c.asset_count }}</td>
+                        <td class="text-center">
+                            {% if c.open_ticket_count > 0 %}
+                                <span class="badge badge-warning badge-sm">{{ c.open_ticket_count }}</span>
+                            {% else %}
+                                <span class="text-sm text-base-content/40">0</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center text-base-content/60 py-4">{% trans "No clients." %}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,61 @@
+{% load i18n %}
+<div class="space-y-4">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-xl font-semibold">{{ obj.company_name }}</h2>
+            <p class="text-sm text-base-content/60">{{ obj.contact_person }}</p>
+        </div>
+        {% if obj.is_active %}
+            <span class="badge badge-success">{% trans "Active" %}</span>
+        {% else %}
+            <span class="badge badge-ghost">{% trans "Inactive" %}</span>
+        {% endif %}
+    </div>
+
+    <div class="divider my-1"></div>
+
+    <dl class="grid grid-cols-1 gap-y-3 text-sm">
+        <dt class="text-base-content/60">{% trans "Email" %}</dt>
+        <dd class="font-medium">{{ obj.email }}</dd>
+
+        <dt class="text-base-content/60">{% trans "Phone" %}</dt>
+        <dd class="font-medium">{{ obj.phone }}</dd>
+
+        <dt class="text-base-content/60">{% trans "Alt Phone" %}</dt>
+        <dd class="font-medium">{{ obj.alt_phone|default:"—" }}</dd>
+
+        <dt class="text-base-content/60">{% trans "Address" %}</dt>
+        <dd class="font-medium">{{ obj.address }}</dd>
+
+        <dt class="text-base-content/60">{% trans "City" %}</dt>
+        <dd class="font-medium">{{ obj.city.name|default:"—" }}</dd>
+
+        <dt class="text-base-content/60">{% trans "State" %}</dt>
+        <dd class="font-medium">{{ obj.state.name|default:"—" }}</dd>
+
+        <dt class="text-base-content/60">{% trans "Pincode" %}</dt>
+        <dd class="font-medium">{{ obj.pincode|default:"—" }}</dd>
+
+        <dt class="text-base-content/60">{% trans "GST Number" %}</dt>
+        <dd class="font-medium">{{ obj.gst_number|default:"—" }}</dd>
+
+        <dt class="text-base-content/60">{% trans "PAN Number" %}</dt>
+        <dd class="font-medium">{{ obj.pan_number|default:"—" }}</dd>
+    </dl>
+
+    <div class="divider my-1"></div>
+
+    <div class="flex gap-2">
+        <a href="{% url 'clients:client_update' pk=obj.pk %}" class="btn btn-primary btn-sm">
+            {% trans "Edit" %}
+        </a>
+        <button type="button"
+                hx-get="{% url 'clients:client_delete' pk=obj.pk %}"
+                hx-target="#modal-body"
+                hx-swap="innerHTML"
+                @click="$dispatch('open-modal')"
+                class="btn btn-error btn-sm">
+            {% trans "Delete" %}
+        </button>
+    </div>
+</div>

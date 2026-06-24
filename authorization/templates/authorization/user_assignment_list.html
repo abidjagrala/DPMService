@@ -1,0 +1,38 @@
+{% extends "accounts/base.html" %}
+{% load i18n %}
+
+{% block title %}User Role Assignments - Authorization{% endblock %}
+
+{% block breadcrumbs %}
+<div class="text-sm breadcrumbs">
+    <ul>
+        <li><a href="{% url 'accounts:dashboard' %}">Home</a></li>
+        <li><a href="{% url 'authorization:auth_dashboard' %}">Authorization</a></li>
+        <li>User Assignments</li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-semibold">{% trans "User Role Assignments" %}</h1>
+        <p class="text-sm text-base-content/60">{% trans "Assign roles to users" %}</p>
+    </div>
+    <a href="{% url 'authorization:user_assignment_create' %}" class="btn btn-primary btn-sm"
+       hx-get="{% url 'authorization:user_assignment_create' %}" hx-target="#page-content" hx-push-url="true">
+        + {% trans "Assign Role" %}
+    </a>
+</div>
+
+<div class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body p-0">
+        <div id="user-assignment-list"
+             hx-get="{% url 'authorization:user_assignment_list' %}"
+             hx-trigger="auth-saved from:body"
+             hx-swap="innerHTML">
+            {% include "authorization/partials/_user_assignment_table.html" %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% load i18n %}
+<div class="overflow-x-auto">
+    <table class="table table-zebra w-full">
+        <thead>
+            <tr>
+                <th>{% trans "Timestamp" %}</th>
+                <th>{% trans "User" %}</th>
+                <th>{% trans "Action" %}</th>
+                <th>{% trans "Model" %}</th>
+                <th>{% trans "Object" %}</th>
+                <th>{% trans "IP Address" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td class="text-sm whitespace-nowrap">{{ log.timestamp|date:"d M Y H:i:s" }}</td>
+                <td class="text-sm">{{ log.user|default:"System" }}</td>
+                <td>
+                    <span class="badge badge-sm
+                        {% if log.action == 'create' %}badge-success
+                        {% elif log.action == 'delete' %}badge-error
+                        {% elif log.action == 'update' %}badge-warning
+                        {% elif log.action == 'assign' %}badge-info
+                        {% elif log.action == 'revoke' %}badge-error
+                        {% else %}badge-ghost{% endif %}">
+                        {{ log.get_action_display }}
+                    </span>
+                </td>
+                <td class="text-sm">{{ log.model_name }}</td>
+                <td class="text-sm max-w-xs truncate">{{ log.object_repr|default:log.object_id }}</td>
+                <td class="text-sm text-base-content/60">{{ log.ip_address|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center py-8 text-base-content/40">{% trans "No audit log entries found." %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

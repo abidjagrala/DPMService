@@ -1,0 +1,251 @@
+{% extends "hosting/base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div x-data="invoiceCrud()" @invoice-saved.window="closeModal(); reloadInvoices()" class="space-y-6">
+
+    <div class="flex items-center justify-between flex-wrap gap-2">
+        <div>
+            <h1 class="text-2xl font-semibold">{{ obj.service_name }}</h1>
+            <p class="text-sm text-base-content/60">{{ obj.get_service_type_display }} — {{ obj.client.company_name }}</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <button type="button"
+                    hx-get="{% url 'hosting:hosting_update' pk=obj.pk %}"
+                    hx-target="#drawer-body"
+                    hx-swap="innerHTML"
+                    @click="$dispatch('open-drawer', { title: 'Edit {{ obj.service_name|escapejs }}' })"
+                    class="btn btn-ghost btn-sm">
+                {% trans "Edit" %}
+            </button>
+            <a href="{% url 'hosting:hosting_list' %}" class="btn btn-ghost btn-sm">{% trans "Back to list" %}</a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card bg-base-100 border border-base-300">
+            <div class="card-body">
+                <h2 class="card-title text-lg">{% trans "Service Details" %}</h2>
+                <dl class="grid grid-cols-2 gap-y-3 gap-x-6 text-sm">
+                    <dt class="text-base-content/60">{% trans "Client" %}</dt>
+                    <dd><a href="{% url 'clients:client_detail' pk=obj.client.pk %}" class="link link-primary">{{ obj.client.company_name }}</a></dd>
+
+                    <dt class="text-base-content/60">{% trans "Service Type" %}</dt>
+                    <dd>
+                        {% if obj.service_type == 'domain' %}
+                            <span class="badge badge-info badge-sm">{% trans "Domain" %}</span>
+                        {% else %}
+                            <span class="badge badge-accent badge-sm">{% trans "Hosting" %}</span>
+                        {% endif %}
+                    </dd>
+
+                    <dt class="text-base-content/60">{% trans "Provider" %}</dt>
+                    <dd>{{ obj.provider|default:"—" }}</dd>
+
+                    <dt class="text-base-content/60">{% trans "Status" %}</dt>
+                    <dd>
+                        {% if obj.status == 'active' %}
+                            <span class="badge badge-success badge-sm">{% trans "Active" %}</span>
+                        {% elif obj.status == 'expired' %}
+                            <span class="badge badge-error badge-sm">{% trans "Expired" %}</span>
+                        {% elif obj.status == 'suspended' %}
+                            <span class="badge badge-warning badge-sm">{% trans "Suspended" %}</span>
+                        {% else %}
+                            <span class="badge badge-ghost badge-sm">{% trans "Pending" %}</span>
+                        {% endif %}
+                    </dd>
+
+                    <dt class="text-base-content/60">{% trans "Nameserver" %}</dt>
+                    <dd>{{ obj.nameserver|default:"—" }}</dd>
+
+                    <dt class="text-base-content/60">{% trans "IP Address" %}</dt>
+                    <dd>{{ obj.ip_address|default:"—" }}</dd>
+
+                    <dt class="text-base-content/60">{% trans "Notes" %}</dt>
+                    <dd>{{ obj.notes|default:"—" }}</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card bg-base-100 border border-base-300">
+            <div class="card-body">
+                <h2 class="card-title text-lg">{% trans "Billing & Expiry" %}</h2>
+                <dl class="grid grid-cols-2 gap-y-3 gap-x-6 text-sm">
+                    <dt class="text-base-content/60">{% trans "Registration Date" %}</dt>
+                    <dd>{{ obj.registration_date }}</dd>
+
+                    <dt class="text-base-content/60">{% trans "Expiry Date" %}</dt>
+                    <dd>
+                        {{ obj.expiry_date }}
+                        {% if obj.is_expired %}
+                            <span class="badge badge-error badge-sm ml-2">{% trans "EXPIRED" %}</span>
+                        {% elif obj.is_expiring_soon %}
+                            <span class="badge badge-warning badge-sm ml-2">{{ obj.days_until_expiry }} {% trans "days left" %}</span>
+                        {% endif %}
+                    </dd>
+
+                    <dt class="text-base-content/60">{% trans "Days Until Expiry" %}</dt>
+                    <dd>
+                        {% if obj.is_expired %}
+                            <span class="text-error font-semibold">{% trans "Expired" %} {{ obj.days_until_expiry|add:"0"|cut:"-" }} {% trans "days ago" %}</span>
+                        {% else %}
+                            <span class="font-semibold">{{ obj.days_until_expiry }} {% trans "days" %}</span>
+                        {% endif %}
+                    </dd>
+
+                    <dt class="text-base-content/60">{% trans "Renewal Amount" %}</dt>
+                    <dd>₹{{ obj.renewal_amount }}</dd>
+
+                    <dt class="text-base-content/60">{% trans "GST %" %}</dt>
+                    <dd>{{ obj.gst_percent }}%</dd>
+
+                    <dt class="text-base-content/60">{% trans "Total with GST" %}</dt>
+                    <dd class="font-semibold text-primary">₹{{ obj.renewal_with_gst }}</dd>
+
+                    <dt class="text-base-content/60">{% trans "Reminder Sent" %}</dt>
+                    <dd>
+                        {% if obj.reminder_sent %}
+                            <span class="badge badge-success badge-sm">{% trans "Yes" %}</span>
+                        {% else %}
+                            <span class="badge badge-ghost badge-sm">{% trans "No" %}</span>
+                        {% endif %}
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 border border-base-300">
+        <div class="card-body">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="card-title text-lg">{% trans "Invoices" %}</h2>
+                <button type="button"
+                        hx-get="{% url 'hosting:invoice_create' service_pk=obj.pk %}"
+                        hx-target="#drawer-body"
+                        hx-swap="innerHTML"
+                        @click="$dispatch('open-drawer', { title: '{% trans "Add Invoice" %}' })"
+                        class="btn btn-primary btn-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+                    {% trans "Add Invoice" %}
+                </button>
+            </div>
+
+            <div id="invoice-table-wrapper">
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra table-sm">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Invoice #" %}</th>
+                                <th>{% trans "Date" %}</th>
+                                <th>{% trans "Amount" %}</th>
+                                <th>{% trans "Paid" %}</th>
+                                <th>{% trans "Paid Date" %}</th>
+                                <th>{% trans "Notes" %}</th>
+                                <th class="text-right">{% trans "Actions" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inv in invoices %}
+                            <tr>
+                                <td class="font-medium">{{ inv.invoice_number|default:"—" }}</td>
+                                <td>{{ inv.invoice_date }}</td>
+                                <td>₹{{ inv.amount }}</td>
+                                <td>
+                                    {% if inv.paid %}
+                                        <span class="badge badge-success badge-sm">{% trans "Paid" %}</span>
+                                    {% else %}
+                                        <span class="badge badge-warning badge-sm">{% trans "Unpaid" %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ inv.paid_date|default:"—" }}</td>
+                                <td>{{ inv.notes|truncatewords:8|default:"—" }}</td>
+                                <td class="text-right">
+                                    <button type="button"
+                                            hx-get="{% url 'hosting:invoice_delete' service_pk=obj.pk pk=inv.pk %}"
+                                            hx-target="#modal-body"
+                                            hx-swap="innerHTML"
+                                            @click="$dispatch('open-modal')"
+                                            class="btn btn-ghost btn-xs text-error">
+                                        {% trans "Delete" %}
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-base-content/60 py-8">{% trans "No invoices yet." %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="drawerOpen" x-cloak class="fixed inset-0 z-40 bg-black/50" @click="closeDrawer()"></div>
+    <aside x-show="drawerOpen" x-cloak
+           class="fixed top-0 right-0 z-50 h-full w-full max-w-lg bg-base-100 shadow-2xl overflow-y-auto"
+           x-transition:enter="transform transition ease-out duration-200"
+           x-transition:enter-start="translate-x-full"
+           x-transition:enter-end="translate-x-0"
+           x-transition:leave="transform transition ease-in duration-150"
+           x-transition:leave-start="translate-x-0"
+           x-transition:leave-end="translate-x-full">
+        <div class="sticky top-0 bg-base-100 border-b border-base-300 px-4 h-14 flex items-center justify-between z-10">
+            <h2 class="font-semibold" x-text="drawerTitle">Form</h2>
+            <button type="button" class="btn btn-ghost btn-sm btn-square" @click="closeDrawer()" aria-label="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+            </button>
+        </div>
+        <div id="drawer-body" class="p-4"></div>
+    </aside>
+
+    <div x-show="modalOpen" x-cloak class="fixed inset-0 z-40 bg-black/50" @click="closeModal()"></div>
+    <div x-show="modalOpen" x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="bg-base-100 rounded-box shadow-2xl w-full max-w-md border border-base-300"
+             @click.outside="closeModal()"
+             x-transition>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function invoiceCrud() {
+    return {
+        drawerOpen: false,
+        drawerTitle: 'Form',
+        modalOpen: false,
+        init() {
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    this.closeDrawer();
+                    this.closeModal();
+                }
+            });
+        },
+        openDrawer(title) {
+            this.drawerTitle = title || 'Form';
+            this.drawerOpen = true;
+        },
+        closeDrawer() {
+            this.drawerOpen = false;
+            const body = document.getElementById('drawer-body');
+            if (body) body.innerHTML = '';
+        },
+        openModal() { this.modalOpen = true; },
+        closeModal() {
+            this.modalOpen = false;
+            const body = document.getElementById('modal-body');
+            if (body) body.innerHTML = '';
+        },
+        reloadInvoices() {
+            location.reload();
+        },
+    };
+}
+</script>
+{% endblock %}

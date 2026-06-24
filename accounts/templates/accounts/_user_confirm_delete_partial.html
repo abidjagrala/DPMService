@@ -1,0 +1,22 @@
+<div class="p-4">
+    <h3 class="font-semibold text-lg">Delete user</h3>
+    <p class="text-sm text-base-content/60 mt-1">This action cannot be undone.</p>
+
+    <dl class="grid grid-cols-3 gap-y-2 gap-x-4 text-sm mt-4">
+        <dt class="text-base-content/60">Email</dt>
+        <dd class="col-span-2 font-medium">{{ user_obj.email }}</dd>
+        <dt class="text-base-content/60">Name</dt>
+        <dd class="col-span-2 font-medium">{{ user_obj.get_full_name|default:"—" }}</dd>
+        <dt class="text-base-content/60">Role</dt>
+        <dd class="col-span-2 font-medium">{{ user_obj.get_role_display }}</dd>
+    </dl>
+
+    <form hx-post="{% url 'accounts:user_delete' user_obj.pk %}"
+          hx-target="this"
+          hx-swap="outerHTML"
+          class="flex justify-end gap-2 mt-6">
+        {% csrf_token %}
+        <button type="button" class="btn btn-ghost btn-sm" @click="$dispatch('close-modal')">Cancel</button>
+        <button type="submit" class="btn btn-error btn-sm">Yes, delete</button>
+    </form>
+</div>

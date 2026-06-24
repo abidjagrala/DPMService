@@ -1,0 +1,71 @@
+{% extends "accounts/base.html" %}
+
+{% block title %}{{ user_obj.email }} &mdash; DPM Service{% endblock %}
+{% block page_title %}User details{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-4">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-semibold">{{ user_obj.email }}</h1>
+            <p class="text-sm text-base-content/60">{{ user_obj.get_full_name|default:"—" }}</p>
+        </div>
+        {% if user_obj.role == 'admin' %}
+            <span class="badge badge-error">{{ user_obj.get_role_display }}</span>
+        {% elif user_obj.role == 'manager' %}
+            <span class="badge badge-warning">{{ user_obj.get_role_display }}</span>
+        {% elif user_obj.role == 'staff' %}
+            <span class="badge badge-info">{{ user_obj.get_role_display }}</span>
+        {% else %}
+            <span class="badge badge-success">{{ user_obj.get_role_display }}</span>
+        {% endif %}
+    </div>
+
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-base">Details</h2>
+            <div class="divider my-1"></div>
+            <dl class="grid grid-cols-1 sm:grid-cols-3 gap-y-3 gap-x-4 text-sm">
+                <dt class="text-base-content/60">First name</dt>
+                <dd class="sm:col-span-2 font-medium">{{ user_obj.first_name|default:"—" }}</dd>
+
+                <dt class="text-base-content/60">Last name</dt>
+                <dd class="sm:col-span-2 font-medium">{{ user_obj.last_name|default:"—" }}</dd>
+
+                <dt class="text-base-content/60">Active</dt>
+                <dd class="sm:col-span-2">
+                    {% if user_obj.is_active %}
+                        <span class="badge badge-success badge-sm">Active</span>
+                    {% else %}
+                        <span class="badge badge-error badge-sm">Inactive</span>
+                    {% endif %}
+                </dd>
+
+                <dt class="text-base-content/60">Staff access</dt>
+                <dd class="sm:col-span-2 font-medium">{{ user_obj.is_staff|yesno:"Yes,No" }}</dd>
+
+                <dt class="text-base-content/60">Superuser</dt>
+                <dd class="sm:col-span-2 font-medium">{{ user_obj.is_superuser|yesno:"Yes,No" }}</dd>
+
+                <dt class="text-base-content/60">Last login</dt>
+                <dd class="sm:col-span-2 font-medium">{{ user_obj.last_login|date:"F j, Y, g:i a"|default:"Never" }}</dd>
+
+                <dt class="text-base-content/60">Joined</dt>
+                <dd class="sm:col-span-2 font-medium">{{ user_obj.date_joined|date:"F j, Y" }}</dd>
+            </dl>
+
+            <div class="card-actions justify-between mt-4">
+                <a href="{% url 'accounts:user_list' %}" class="btn btn-ghost">&larr; Back to users</a>
+                {% if request.user.is_admin or request.user.is_superuser %}
+                    <div class="flex gap-2">
+                        <a href="{% url 'accounts:user_update' user_obj.pk %}" class="btn btn-primary">Edit</a>
+                        {% if user_obj.pk != request.user.pk %}
+                            <a href="{% url 'accounts:user_delete' user_obj.pk %}" class="btn btn-error">Delete</a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

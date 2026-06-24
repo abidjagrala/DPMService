@@ -1,0 +1,28 @@
+{% extends "hosting/base.html" %}
+{% load i18n %}
+
+{% block content %}
+<h1 class="text-2xl font-semibold mb-6">{{ page_title }}</h1>
+
+<div class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body">
+        <h3 class="font-semibold text-lg">{% trans "Are you sure you want to delete this service?" %}</h3>
+        <p class="text-sm text-base-content/60 mt-1">{% trans "This action cannot be undone." %}</p>
+
+        <dl class="grid grid-cols-3 gap-y-2 gap-x-4 text-sm mt-4">
+            <dt class="text-base-content/60">{% trans "Client" %}</dt>
+            <dd class="col-span-2 font-medium">{{ obj.client.company_name }}</dd>
+            <dt class="text-base-content/60">{% trans "Type" %}</dt>
+            <dd class="col-span-2 font-medium">{{ obj.get_service_type_display }}</dd>
+            <dt class="text-base-content/60">{% trans "Service Name" %}</dt>
+            <dd class="col-span-2 font-medium">{{ obj.service_name }}</dd>
+        </dl>
+
+        <form method="post" class="flex justify-end gap-2 mt-6">
+            {% csrf_token %}
+            <a href="{% url 'hosting:hosting_list' %}" class="btn btn-ghost">{% trans "Cancel" %}</a>
+            <button type="submit" class="btn btn-error">{% trans "Yes, delete" %}</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

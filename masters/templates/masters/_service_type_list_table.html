@@ -1,0 +1,53 @@
+{% load i18n %}
+
+<div class="overflow-x-auto">
+    <table class="table table-zebra table-sm">
+        <thead>
+            <tr>
+                <th>{% trans "Name" %}</th>
+                <th>{% trans "Description" %}</th>
+                <th>{% trans "Status" %}</th>
+                <th>{% trans "Created" %}</th>
+                <th class="text-right">{% trans "Actions" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for st in service_types %}
+            <tr>
+                <td class="font-medium">{{ st.name }}</td>
+                <td>{{ st.description|truncatewords:10 }}</td>
+                <td>
+                    {% if st.is_active %}
+                        <span class="badge badge-success badge-sm">{% trans "Active" %}</span>
+                    {% else %}
+                        <span class="badge badge-ghost badge-sm">{% trans "Inactive" %}</span>
+                    {% endif %}
+                </td>
+                <td class="text-base-content/60">{{ st.created_at|date:"M j, Y" }}</td>
+                <td class="text-right space-x-1">
+                    <button type="button"
+                            hx-get="{% url 'masters:service_type_update' pk=st.pk %}"
+                            hx-target="#drawer-body"
+                            hx-swap="innerHTML"
+                            @click="$dispatch('open-drawer', { title: 'Edit {{ st.name|escapejs }}' })"
+                            class="btn btn-ghost btn-xs">
+                        {% trans "Edit" %}
+                    </button>
+                    <button type="button"
+                            hx-get="{% url 'masters:service_type_delete' pk=st.pk %}"
+                            hx-target="#modal-body"
+                            hx-swap="innerHTML"
+                            @click="$dispatch('open-modal')"
+                            class="btn btn-ghost btn-xs text-error">
+                        {% trans "Delete" %}
+                    </button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center text-base-content/60 py-8">{% trans "No service types found." %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

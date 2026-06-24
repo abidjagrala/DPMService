@@ -1,0 +1,16 @@
+{% load i18n %}
+<div class="max-w-lg mx-auto">
+    <div class="card bg-base-100 border border-error shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-error">{% trans "Revoke Role Assignment" %}</h2>
+            <p>{% blocktrans with user=assignment.user.email role=assignment.role.name %}Revoke "{{ role }}" from {{ user }}?{% endblocktrans %}</p>
+            <div class="card-actions justify-end mt-4">
+                <a href="{% url 'authorization:user_assignment_list' %}" class="btn btn-ghost btn-sm">{% trans "Cancel" %}</a>
+                <form method="post" hx-post="{% url 'authorization:user_assignment_delete' assignment.pk %}" hx-target="#page-content">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-error btn-sm">{% trans "Revoke" %}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,20 @@
+{% extends "clients/base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-error">{% trans "Delete Homeworker" %}</h2>
+            <p>{% blocktrans with name=obj.name %}Are you sure you want to delete <strong>{{ name }}</strong>? This action cannot be undone.{% endblocktrans %}</p>
+            <form method="post">
+                {% csrf_token %}
+                <div class="flex justify-end gap-2 mt-4">
+                    <a href="{% url 'clients:homeworker_list' %}" class="btn btn-ghost">{% trans "Cancel" %}</a>
+                    <button type="submit" class="btn btn-error">{% trans "Delete" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

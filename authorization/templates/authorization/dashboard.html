@@ -1,0 +1,33 @@
+{% extends "accounts/base.html" %}
+{% load i18n %}
+
+{% block title %}Authorization & Roles{% endblock %}
+
+{% block breadcrumbs %}
+<div class="text-sm breadcrumbs">
+    <ul>
+        <li><a href="{% url 'accounts:dashboard' %}">Home</a></li>
+        <li>Authorization &amp; Roles</li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-semibold">{% trans "Authorization & Roles" %}</h1>
+        <p class="text-sm text-base-content/60">{% trans "Manage groups, roles, permissions, and access control" %}</p>
+    </div>
+    <form method="post" hx-post="{% url 'authorization:seed_defaults' %}" hx-target="#page-content">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline btn-sm">{% trans "Seed Defaults" %}</button>
+    </form>
+</div>
+
+<div id="auth-dashboard"
+     hx-get="{% url 'authorization:auth_dashboard' %}"
+     hx-trigger="auth-saved from:body"
+     hx-swap="innerHTML">
+    {% include "authorization/partials/_dashboard_content.html" %}
+</div>
+{% endblock %}

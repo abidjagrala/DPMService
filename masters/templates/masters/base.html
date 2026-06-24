@@ -1,0 +1,14 @@
+{% extends "accounts/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ page_title }} — Masters{% endblock %}
+
+{% block breadcrumbs %}
+<div class="text-sm breadcrumbs mb-4">
+    <ul>
+        <li><a href="{% url 'accounts:dashboard' %}">Dashboard</a></li>
+        <li><a href="{% url 'masters:state_list' %}">Masters</a></li>
+        <li>{{ page_title }}</li>
+    </ul>
+</div>
+{% endblock %}

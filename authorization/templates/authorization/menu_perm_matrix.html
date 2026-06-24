@@ -1,0 +1,32 @@
+{% extends "accounts/base.html" %}
+{% load i18n %}
+
+{% block title %}Menu Permissions - Authorization{% endblock %}
+
+{% block breadcrumbs %}
+<div class="text-sm breadcrumbs">
+    <ul>
+        <li><a href="{% url 'accounts:dashboard' %}">Home</a></li>
+        <li><a href="{% url 'authorization:auth_dashboard' %}">Authorization</a></li>
+        <li>Menu Permissions</li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-semibold">{% trans "Menu Permissions" %}</h1>
+        <p class="text-sm text-base-content/60">{% trans "Control sidebar menu visibility per role" %}</p>
+    </div>
+    <a href="{% url 'authorization:auth_dashboard' %}" class="btn btn-ghost btn-sm"
+       hx-get="{% url 'authorization:auth_dashboard' %}" hx-target="#page-content" hx-push-url="true">{% trans "Back" %}</a>
+</div>
+
+<div id="menu-perm-container"
+     hx-get="{% url 'authorization:menu_perm_matrix' %}"
+     hx-trigger="auth-saved from:body"
+     hx-swap="innerHTML">
+    {% include "authorization/partials/_menu_perm_matrix.html" %}
+</div>
+{% endblock %}
