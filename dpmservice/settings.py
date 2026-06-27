@@ -21,10 +21,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-6wm*4r=(njrnm^m%jg+rv=ntfna$@3+2n2^&(dquhca4#&%_5='
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-6wm*4r=(njrnm^m%jg+rv=ntfna$@3+2n2^&(dquhca4#&%_5=',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver']
 
@@ -57,6 +60,7 @@ INSTALLED_APPS = [
     'api',
     'notifications',
     'authorization',
+    'captcha',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
@@ -96,7 +100,7 @@ ROOT_URLCONF = 'dpmservice.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -115,12 +119,27 @@ WSGI_APPLICATION = 'dpmservice.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+DJANGO_MODE = os.environ.get('DJANGO_MODE', 'development')
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+if DJANGO_MODE == 'production':
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.environ.get('DB_NAME', ''),
+        'USER': os.environ.get('DB_USER', ''),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
+        'PORT': os.environ.get('DB_PORT', '3306'),
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+        },
+    }
 
 
 # Password validation
@@ -179,9 +198,4 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'DPM Service <noreply@dpm.com>')
 
-# ---------------------------------------------------------------------------
-# MSG91 SMS Configuration
-# ---------------------------------------------------------------------------
-MSG91_API_KEY = os.environ.get('MSG91_API_KEY', '')
-MSG91_SENDER_ID = os.environ.get('MSG91_SENDER_ID', 'DPMSE')
-MSG91_TEMPLATE_ID = os.environ.get('MSG91_TEMPLATE_ID', '')
+

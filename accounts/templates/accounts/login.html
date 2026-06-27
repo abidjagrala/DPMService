@@ -19,6 +19,7 @@
             {% daisy_form_errors form %}
             {% daisy_field form.email %}
             {% daisy_field form.password %}
+            {% daisy_field form.captcha %}
             {% if request.GET.next %}
                 <input type="hidden" name="next" value="{{ request.GET.next }}">
             {% endif %}

@@ -20,7 +20,7 @@
                         <th class="text-right">{% trans "Actions" %}</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="hosting-table-body">
                     {% for s in services %}
                     <tr>
                         <td class="font-medium">
@@ -87,6 +87,7 @@
                 </tbody>
             </table>
         </div>
+        {% include "shared/_pagination.html" %}
     </div>
 
     <div x-show="viewMode === 'card'" x-cloak>
@@ -164,5 +165,6 @@
             </div>
             {% endfor %}
         </div>
+        {% include "shared/_pagination.html" %}
     </div>
 </div>

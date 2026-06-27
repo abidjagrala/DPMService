@@ -70,7 +70,7 @@ def asset_list_view(request):
         'page_title': 'Assets',
     }
     if is_htmx(request):
-        return render(request, 'assets/_asset_list_page.html', context)
+        return render(request, 'assets/_asset_list_content.html', context)
     return render(request, 'assets/asset_list.html', context)
 
 

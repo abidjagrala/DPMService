@@ -29,6 +29,8 @@ def daisy_field(field, add_label=True, help_as_label_alt=False):
     has_error = bool(field.errors)
     if has_error and 'input-bordered' in css:
         new_class = new_class.replace('input-bordered', 'input-bordered input-error')
+    elif has_error:
+        new_class = new_class + ' input-error'
 
     rendered = field.as_widget(attrs={'class': new_class})
     parts = []
@@ -61,10 +63,11 @@ def daisy_field(field, add_label=True, help_as_label_alt=False):
 
 @register.simple_tag
 def daisy_form_errors(form):
-    if not form.non_field_errors() and not any(f.errors for f in form):
+    non_field = form.non_field_errors()
+    if not non_field:
         return ''
     parts = []
-    for err in form.non_field_errors():
+    for err in non_field:
         parts.append(f'<li>{err}</li>')
     return mark_safe(
         '<div class="alert alert-error mb-4"><ul class="list-disc list-inside text-sm">'

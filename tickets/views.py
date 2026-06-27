@@ -112,7 +112,7 @@ def ticket_list_view(request):
         'page_title': 'Service Tickets',
     }
     if is_htmx(request):
-        return render(request, 'tickets/_ticket_list_page.html', context)
+        return render(request, 'tickets/_ticket_list_content.html', context)
     return render(request, 'tickets/ticket_list.html', context)
 
 

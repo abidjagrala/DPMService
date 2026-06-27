@@ -66,7 +66,7 @@ def device_list_view(request):
         'page_title': 'Network Devices',
     }
     if is_htmx(request):
-        return render(request, 'network/_device_list_page.html', context)
+        return render(request, 'network/_device_list_content.html', context)
     return render(request, 'network/device_list.html', context)
 
 

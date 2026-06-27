@@ -69,17 +69,7 @@
                 </tbody>
             </table>
         </div>
-        {% if page_obj.has_next %}
-        <div id="table-sentinel"
-             hx-get="{% url 'assets:asset_list' %}?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
-             hx-trigger="revealed"
-             hx-swap="outerHTML"
-             hx-indicator="#table-spinner">
-        </div>
-        {% endif %}
-        <div id="table-spinner" class="htmx-indicator flex justify-center py-4">
-            <span class="loading loading-spinner loading-sm"></span>
-        </div>
+        {% include "shared/_pagination.html" %}
     </div>
 
     <div x-show="viewMode === 'card'" x-cloak>
@@ -147,16 +137,6 @@
             </div>
             {% endfor %}
         </div>
-        {% if page_obj.has_next %}
-        <div id="card-sentinel"
-             hx-get="{% url 'assets:asset_list' %}?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
-             hx-trigger="revealed"
-             hx-swap="outerHTML"
-             hx-indicator="#card-spinner">
-        </div>
-        {% endif %}
-        <div id="card-spinner" class="htmx-indicator flex justify-center py-4">
-            <span class="loading loading-spinner loading-sm"></span>
-        </div>
+        {% include "shared/_pagination.html" %}
     </div>
 </div>

@@ -1,0 +1,37 @@
+{% load i18n %}
+{% if page_obj.has_other_pages %}
+<nav class="flex items-center justify-between flex-wrap gap-2 py-3 px-4 border-t border-base-300">
+    <div class="text-sm text-base-content/60">
+        {% trans "Showing" %} {{ page_obj.start_index }}–{{ page_obj.end_index }} {% trans "of" %} {{ page_obj.paginator.count }} {% trans "results" %}
+    </div>
+    <div class="join">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+               class="join-item btn btn-sm">{% trans "Previous" %}</a>
+        {% else %}
+            <span class="join-item btn btn-sm btn-disabled">{% trans "Previous" %}</span>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <span class="join-item btn btn-sm btn-active">{{ num }}</span>
+            {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+                <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                   class="join-item btn btn-sm">{{ num }}</a>
+            {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                   class="join-item btn btn-sm">{{ num }}</a>
+            {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}
+                <span class="join-item btn btn-sm btn-disabled">...</span>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+               class="join-item btn btn-sm">{% trans "Next" %}</a>
+        {% else %}
+            <span class="join-item btn btn-sm btn-disabled">{% trans "Next" %}</span>
+        {% endif %}
+    </div>
+</nav>
+{% endif %}
