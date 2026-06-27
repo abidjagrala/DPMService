@@ -139,6 +139,9 @@
                     {% block content %}{% endblock %}
                 </div>
             </main>
+            <footer class="border-t border-base-300 bg-base-100 px-4 py-3 text-center text-xs text-base-content/50">
+                &copy; {{ "now"|date:"Y" }} DPM Service. Developed by <a href="https://www.arwasys.com" target="_blank" rel="noopener" class="link link-primary">Arwasys Technokraft Pvt. Ltd.</a>
+            </footer>
         </div>
     {% else %}
         <main class="flex-1 flex items-center justify-center p-4">
