@@ -1,5 +1,5 @@
 {% extends "accounts/base_auth.html" %}
-{% load daisy %}
+{% load daisy static %}
 
 {% block title %}Sign in &mdash; DPM Service{% endblock %}
 
@@ -7,7 +7,8 @@
 <div class="card bg-base-100 shadow-xl border border-base-300">
     <div class="card-body">
         <div class="flex items-center gap-3 mb-4">
-            <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary text-primary-content font-bold">DP</span>
+            <img x-show="$root.theme === 'light' || $root.theme === 'corporate'" src="{% static 'dist/images/dpm-logo-light.webp' %}" alt="DPM Service" class="h-12 w-auto">
+            <img x-show="$root.theme === 'dark' || $root.theme === 'autumn' || $root.theme === 'coffee' || $root.theme === 'sunset' || $root.theme === 'dim'" src="{% static 'dist/images/dpm-logo-dark.webp' %}" alt="DPM Service" class="h-12 w-auto">
             <div>
                 <h1 class="card-title text-lg">DPM Service</h1>
                 <p class="text-xs text-base-content/60">Sign in to continue</p>
