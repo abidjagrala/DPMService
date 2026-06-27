@@ -112,6 +112,15 @@
         [x-cloak] { display: none !important; }
         .app-shell { min-height: 100vh; }
         .sidebar-brand { letter-spacing: 0.02em; }
+        .logo-light { display: none; }
+        .logo-dark { display: none; }
+        [data-theme="light"] .logo-light,
+        [data-theme="corporate"] .logo-light { display: block; }
+        [data-theme="dark"] .logo-dark,
+        [data-theme="autumn"] .logo-dark,
+        [data-theme="coffee"] .logo-dark,
+        [data-theme="sunset"] .logo-dark,
+        [data-theme="dim"] .logo-dark { display: block; }
         .ss-wrapper { position: relative; }
         .ss-input-wrap { position: relative; display: flex; align-items: center; }
         .ss-input-wrap input { width: 100%; padding-right: 2rem; }
