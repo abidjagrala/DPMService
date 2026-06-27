@@ -200,3 +200,10 @@ def device_delete_view(request, pk):
 def device_detail_view(request, pk):
     device = get_object_or_404(NetworkDevice.objects.select_related('client'), pk=pk)
     return render(request, 'network/device_detail.html', {'obj': device, 'page_title': device.name})
+
+
+@role_required('admin', 'manager', 'staff')
+@require_http_methods(['GET'])
+def device_credentials_view(request, pk):
+    device = get_object_or_404(NetworkDevice, pk=pk)
+    return render(request, 'network/_device_credentials_partial.html', {'obj': device})
