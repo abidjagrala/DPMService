@@ -5,6 +5,11 @@ from masters.models import City, State
 
 from .models import Client, Employee, Homeworker
 
+EMPLOYEE_PHOTO_MAX = 1 * 1024 * 1024  # 1 MB
+AADHAR_CARD_MAX = 1 * 1024 * 1024  # 1 MB
+EMPLOYEE_PHOTO_TYPES = ['image/png', 'image/jpeg']
+AADHAR_CARD_TYPES = ['image/png', 'image/jpeg', 'application/pdf']
+
 
 class ClientForm(forms.ModelForm):
     """Form for creating and updating Client records."""
@@ -83,6 +88,7 @@ class EmployeeForm(forms.ModelForm):
         fields = [
             'employee_id', 'designation', 'department', 'phone', 'alt_phone',
             'address', 'state', 'city', 'pincode', 'joining_date', 'is_active',
+            'employee_photo', 'aadhar_card',
         ]
         widgets = {
             'employee_id': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
@@ -96,6 +102,8 @@ class EmployeeForm(forms.ModelForm):
             'pincode': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
             'joining_date': forms.DateInput(attrs={'class': 'input input-bordered w-full', 'type': 'date'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'checkbox checkbox-primary'}),
+            'employee_photo': forms.ClearableFileInput(attrs={'class': 'file-input file-input-bordered file-input-sm w-full', 'accept': 'image/png,image/jpeg'}),
+            'aadhar_card': forms.ClearableFileInput(attrs={'class': 'file-input file-input-bordered file-input-sm w-full', 'accept': 'image/png,image/jpeg,application/pdf'}),
         }
 
     def __init__(self, *args, is_create: bool = True, **kwargs):
@@ -126,6 +134,24 @@ class EmployeeForm(forms.ModelForm):
         if qs.exists():
             raise forms.ValidationError(_('An employee with this ID already exists.'))
         return employee_id
+
+    def clean_employee_photo(self):
+        photo = self.cleaned_data.get('employee_photo')
+        if photo:
+            if photo.size > EMPLOYEE_PHOTO_MAX:
+                raise forms.ValidationError(_('File size must be under 1 MB.'))
+            if photo.content_type not in EMPLOYEE_PHOTO_TYPES:
+                raise forms.ValidationError(_('Only PNG and JPG files are allowed.'))
+        return photo
+
+    def clean_aadhar_card(self):
+        aadhar = self.cleaned_data.get('aadhar_card')
+        if aadhar:
+            if aadhar.size > AADHAR_CARD_MAX:
+                raise forms.ValidationError(_('File size must be under 1 MB.'))
+            if aadhar.content_type not in AADHAR_CARD_TYPES:
+                raise forms.ValidationError(_('Only PNG, JPG, and PDF files are allowed.'))
+        return aadhar
 
     def clean(self) -> dict:
         cleaned_data = super().clean()

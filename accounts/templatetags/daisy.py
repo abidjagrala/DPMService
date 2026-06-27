@@ -81,6 +81,14 @@ def get_item(d, key):
     return d.get(key) if hasattr(d, 'get') else None
 
 
+@register.filter
+def basename(value):
+    """Return the filename from a file path."""
+    if hasattr(value, 'name'):
+        return value.name.split('/')[-1]
+    return str(value).split('/')[-1]
+
+
 def _render_searchable_select(name, selected, options, placeholder='Search...'):
     """Build the HTML for a searchable select component.
 

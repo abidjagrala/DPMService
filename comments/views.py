@@ -52,7 +52,7 @@ def comment_add_view(request, app_label: str, model_name: str, object_id: int):
     content_type = get_object_or_404(ContentType, app_label=app_label, model=model_name)
     content_object = get_object_or_404(content_type.model_class(), pk=object_id)
 
-    form = CommentForm(request.POST)
+    form = CommentForm(request.POST, request.FILES)
     if form.is_valid():
         comment = form.save(commit=False)
         comment.content_type = content_type

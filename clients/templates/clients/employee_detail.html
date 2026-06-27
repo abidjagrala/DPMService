@@ -1,5 +1,5 @@
 {% extends "clients/base.html" %}
-{% load i18n %}
+{% load i18n daisy %}
 
 {% block content %}
 <div class="max-w-2xl mx-auto space-y-4">
@@ -27,26 +27,54 @@
                 <dd class="sm:col-span-2 font-medium">{{ obj.phone }}</dd>
 
                 <dt class="text-base-content/60">{% trans "Alt Phone" %}</dt>
-                <dd class="sm:col-span-2 font-medium">{{ obj.alt_phone|default:"—" }}</dd>
+                <dd class="sm:col-span-2 font-medium">{{ obj.alt_phone|default:"-" }}</dd>
 
                 <dt class="text-base-content/60">{% trans "Department" %}</dt>
                 <dd class="sm:col-span-2 font-medium">{{ obj.get_department_display }}</dd>
 
                 <dt class="text-base-content/60">{% trans "Address" %}</dt>
-                <dd class="sm:col-span-2 font-medium">{{ obj.address|default:"—" }}</dd>
+                <dd class="sm:col-span-2 font-medium">{{ obj.address|default:"-" }}</dd>
 
                 <dt class="text-base-content/60">{% trans "City" %}</dt>
-                <dd class="sm:col-span-2 font-medium">{{ obj.city.name|default:"—" }}</dd>
+                <dd class="sm:col-span-2 font-medium">{{ obj.city.name|default:"-" }}</dd>
 
                 <dt class="text-base-content/60">{% trans "State" %}</dt>
-                <dd class="sm:col-span-2 font-medium">{{ obj.state.name|default:"—" }}</dd>
+                <dd class="sm:col-span-2 font-medium">{{ obj.state.name|default:"-" }}</dd>
 
                 <dt class="text-base-content/60">{% trans "Pincode" %}</dt>
-                <dd class="sm:col-span-2 font-medium">{{ obj.pincode|default:"—" }}</dd>
+                <dd class="sm:col-span-2 font-medium">{{ obj.pincode|default:"-" }}</dd>
 
                 <dt class="text-base-content/60">{% trans "Joining Date" %}</dt>
                 <dd class="sm:col-span-2 font-medium">{{ obj.joining_date|date:"F j, Y" }}</dd>
             </dl>
+
+            {% if obj.employee_photo or obj.aadhar_card %}
+            <div class="divider my-1"></div>
+            <h2 class="card-title text-base">{% trans "Documents" %}</h2>
+            <dl class="grid grid-cols-1 sm:grid-cols-3 gap-y-3 gap-x-4 text-sm">
+                {% if obj.employee_photo %}
+                <dt class="text-base-content/60">{% trans "Employee Photo" %}</dt>
+                <dd class="sm:col-span-2">
+                    <a href="{{ obj.employee_photo.url }}" target="_blank" class="link link-primary">
+                        <img src="{{ obj.employee_photo.url }}" alt="Employee Photo" class="w-24 h-24 object-cover rounded-lg border border-base-300">
+                    </a>
+                </dd>
+                {% endif %}
+
+                {% if obj.aadhar_card %}
+                <dt class="text-base-content/60">{% trans "Aadhar Card" %}</dt>
+                <dd class="sm:col-span-2">
+                    <a href="{{ obj.aadhar_card.url }}" target="_blank" class="link link-primary">
+                        {% if '.pdf' in obj.aadhar_card.url %}
+                            <span class="btn btn-outline btn-sm">{{ obj.aadhar_card.name|basename }}</span>
+                        {% else %}
+                            <img src="{{ obj.aadhar_card.url }}" alt="Aadhar Card" class="w-24 h-24 object-cover rounded-lg border border-base-300">
+                        {% endif %}
+                    </a>
+                </dd>
+                {% endif %}
+            </dl>
+            {% endif %}
 
             <div class="card-actions justify-between mt-4">
                 <a href="{% url 'clients:employee_list' %}" class="btn btn-ghost">{% trans "Back to employees" %}</a>

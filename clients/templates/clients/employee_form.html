@@ -6,7 +6,7 @@
 
 <div class="card bg-base-100 border border-base-300 shadow-sm">
     <div class="card-body">
-        <form method="post" novalidate class="space-y-3">
+        <form method="post" novalidate class="space-y-3" enctype="multipart/form-data">
             {% csrf_token %}
             {% daisy_form_errors form %}
             {% for field in form %}

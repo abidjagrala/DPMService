@@ -444,7 +444,7 @@ def employee_export_csv(request):
 @transaction.atomic
 def employee_create_view(request):
     if request.method == 'POST':
-        form = EmployeeForm(request.POST, is_create=True)
+        form = EmployeeForm(request.POST, request.FILES, is_create=True)
         if form.is_valid():
             email = form.cleaned_data['email']
             password = form.cleaned_data['password1']
@@ -478,7 +478,7 @@ def employee_create_view(request):
 def employee_update_view(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     if request.method == 'POST':
-        form = EmployeeForm(request.POST, instance=employee, is_create=False)
+        form = EmployeeForm(request.POST, request.FILES, instance=employee, is_create=False)
         if form.is_valid():
             user = employee.user
             user.first_name = form.cleaned_data['first_name']

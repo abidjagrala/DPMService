@@ -1,4 +1,4 @@
-{% load comments %}
+{% load comments daisy %}
 <div id="comments-section-{{ model_name }}-{{ obj.pk }}" class="card bg-base-200">
   <div class="card-body p-4">
     <h2 class="card-title text-sm mb-4">Comments ({{ comments|length }})</h2>
@@ -25,6 +25,17 @@
           </div>
         </div>
         <p class="whitespace-pre-wrap">{{ c.body }}</p>
+        {% if c.attachment %}
+        <div class="mt-2">
+          <a href="{{ c.attachment.url }}" target="_blank" class="link link-primary text-xs">
+            {% if '.jpg' in c.attachment.url or '.jpeg' in c.attachment.url or '.png' in c.attachment.url %}
+              <img src="{{ c.attachment.url }}" alt="Attachment" class="w-20 h-20 object-cover rounded border border-base-300 mt-1">
+            {% else %}
+              {{ c.attachment.name|basename }}
+            {% endif %}
+          </a>
+        </div>
+        {% endif %}
       </div>
       {% empty %}
       <p class="text-base-content/50 text-sm">No comments yet.</p>
@@ -35,9 +46,19 @@
           action="{% url 'comments:comment_add' app_label=app_label model_name=model_name object_id=obj.pk %}"
           hx-post="{% url 'comments:comment_add' app_label=app_label model_name=model_name object_id=obj.pk %}"
           hx-target="#comments-section-{{ model_name }}-{{ obj.pk }}"
-          hx-swap="innerHTML">
+          hx-swap="innerHTML"
+          enctype="multipart/form-data">
       {% csrf_token %}
       <div class="form-control mb-2">{{ comment_form.body }}</div>
+      <div class="form-control mb-2">
+        <label class="label py-1">
+          <span class="label-text text-sm font-medium">Attachment <span class="text-base-content/50">(optional, PNG/JPG, max 1MB)</span></span>
+        </label>
+        {{ comment_form.attachment }}
+        {% if comment_form.attachment.errors %}
+          <label class="label"><span class="label-text-alt text-error">{{ comment_form.attachment.errors.0 }}</span></label>
+        {% endif %}
+      </div>
       {% if user.is_admin or user.is_manager or user.is_superuser %}
       <div class="form-control mb-2">
         <label class="label cursor-pointer justify-start gap-2">

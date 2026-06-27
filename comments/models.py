@@ -17,6 +17,12 @@ class Comment(models.Model):
     content_object = GenericForeignKey('content_type', 'object_id')
 
     body = models.TextField(_('comment'))
+    attachment = models.FileField(
+        _('attachment'),
+        upload_to='comments/attachments/',
+        blank=True,
+        null=True,
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

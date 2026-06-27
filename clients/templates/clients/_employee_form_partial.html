@@ -3,6 +3,7 @@
 <form hx-post="{% if mode == 'create' %}{% url 'clients:employee_create' %}{% else %}{% url 'clients:employee_update' pk=obj.pk %}{% endif %}"
       hx-target="this"
       hx-swap="outerHTML"
+      enctype="multipart/form-data"
       class="space-y-3">
     {% csrf_token %}
     {% daisy_form_errors form %}

@@ -150,6 +150,18 @@ class Employee(models.Model):
         blank=True,
         default='',
     )
+    employee_photo = models.ImageField(
+        _('employee photo'),
+        upload_to='employees/photos/',
+        blank=True,
+        null=True,
+    )
+    aadhar_card = models.FileField(
+        _('Aadhar card'),
+        upload_to='employees/aadhar/',
+        blank=True,
+        null=True,
+    )
     joining_date = models.DateField(
         _('joining date'),
     )
