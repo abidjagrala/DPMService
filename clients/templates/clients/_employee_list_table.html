@@ -4,6 +4,7 @@
     <table class="table table-zebra table-sm">
         <thead>
             <tr>
+                <th>{% trans "Photo" %}</th>
                 <th>{% trans "ID" %}</th>
                 <th>{% trans "Name" %}</th>
                 <th>{% trans "Email" %}</th>
@@ -16,6 +17,17 @@
         <tbody>
             {% for emp in employees %}
             <tr>
+                <td>
+                    {% if emp.employee_photo %}
+                        <img src="{{ emp.employee_photo.url }}" alt="{{ emp.user.get_full_name }}" class="w-10 h-10 rounded-full object-cover border border-base-300">
+                    {% else %}
+                        <div class="avatar placeholder">
+                            <div class="bg-primary text-primary-content rounded-full w-10">
+                                <span class="text-sm">{{ emp.user.first_name|first|upper }}{{ emp.user.last_name|first|upper }}</span>
+                            </div>
+                        </div>
+                    {% endif %}
+                </td>
                 <td class="font-medium">{{ emp.employee_id }}</td>
                 <td>
                     <a href="{% url 'clients:employee_detail' pk=emp.pk %}" class="link link-primary">{{ emp.user.get_full_name }}</a>
@@ -47,7 +59,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="7" class="text-center text-base-content/60 py-8">{% trans "No employees found." %}</td>
+                <td colspan="8" class="text-center text-base-content/60 py-8">{% trans "No employees found." %}</td>
             </tr>
             {% endfor %}
         </tbody>

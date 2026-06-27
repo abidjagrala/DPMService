@@ -1,7 +1,10 @@
 import random
+import os
 from datetime import timedelta
+from io import BytesIO
 
 from django.contrib.auth import get_user_model
+from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
@@ -208,7 +211,7 @@ class Command(BaseCommand):
         employees = []
         for i, user in enumerate(users.get('staff', [])):
             city = random.choice(all_cities)
-            emp, _ = Employee.objects.get_or_create(
+            emp, created = Employee.objects.get_or_create(
                 user=user,
                 defaults={
                     'employee_id': f'DPM{1001 + i}',
@@ -221,8 +224,51 @@ class Command(BaseCommand):
                     'is_active': True,
                 }
             )
+            if created or not emp.employee_photo:
+                photo = self._generate_avatar(user.first_name, user.last_name)
+                emp.employee_photo.save(
+                    f'{user.email.split("@")[0]}_avatar.png',
+                    photo,
+                    save=True,
+                )
             employees.append(emp)
         return employees
+
+    def _generate_avatar(self, first_name, last_name):
+        """Generate a colored circle avatar with initials using Pillow."""
+        from PIL import Image, ImageDraw, ImageFont
+
+        size = 200
+        img = Image.new('RGB', (size, size), '#e0e0e0')
+        draw = ImageDraw.Draw(img)
+
+        colors = ['#1E88E5', '#43A047', '#FB8C00', '#E53935', '#8E24AA',
+                  '#00ACC1', '#F4511E', '#3949AB', '#7CB342', '#D81B60']
+        color = random.choice(colors)
+
+        draw.ellipse([0, 0, size - 1, size - 1], fill=color)
+
+        initials = f'{first_name[0].upper()}{last_name[0].upper()}' if last_name else first_name[0].upper()
+        try:
+            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 80)
+        except (IOError, OSError):
+            try:
+                font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 80)
+            except (IOError, OSError):
+                font = ImageFont.load_default()
+
+        bbox = draw.textbbox((0, 0), initials, font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+        x = (size - text_width) // 2
+        y = (size - text_height) // 2 - 10
+
+        draw.text((x, y), initials, fill='white', font=font)
+
+        buffer = BytesIO()
+        img.save(buffer, format='PNG')
+        buffer.seek(0)
+        return ContentFile(buffer.read())
 
     def _create_assets(self, clients):
         self.stdout.write('Creating assets...')
