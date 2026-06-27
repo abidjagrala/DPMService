@@ -99,6 +99,18 @@ class Asset(models.Model):
         blank=True,
         default='',
     )
+    username = models.CharField(
+        _('username'),
+        max_length=150,
+        blank=True,
+        default='',
+    )
+    password = models.CharField(
+        _('password'),
+        max_length=255,
+        blank=True,
+        default='',
+    )
     is_active = models.BooleanField(_('active'), default=True)
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)

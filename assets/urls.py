@@ -9,6 +9,7 @@ urlpatterns = [
     path('assets/export/', views.asset_export_csv, name='asset_export_csv'),
     path('assets/new/', views.asset_create_view, name='asset_create'),
     path('assets/<int:pk>/', views.asset_detail_view, name='asset_detail'),
+    path('assets/<int:pk>/credentials/', views.asset_credentials_view, name='asset_credentials'),
     path('assets/<int:pk>/pdf/', views.asset_detail_pdf, name='asset_detail_pdf'),
     path('assets/<int:pk>/edit/', views.asset_update_view, name='asset_update'),
     path('assets/<int:pk>/delete/', views.asset_delete_view, name='asset_delete'),

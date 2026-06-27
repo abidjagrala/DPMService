@@ -15,7 +15,8 @@ class AssetForm(forms.ModelForm):
         fields = [
             'asset_tag', 'serial_number', 'asset_type', 'brand', 'model_name',
             'specifications', 'purchase_date', 'purchase_price', 'warranty_expiry',
-            'status', 'client', 'homeworker', 'location', 'notes', 'is_active',
+            'status', 'client', 'homeworker', 'location', 'notes',
+            'username', 'password', 'is_active',
         ]
         widgets = {
             'asset_tag': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
@@ -32,6 +33,8 @@ class AssetForm(forms.ModelForm):
             'homeworker': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'location': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
             'notes': forms.Textarea(attrs={'class': 'textarea textarea-bordered w-full', 'rows': 2}),
+            'username': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
+            'password': forms.PasswordInput(attrs={'class': 'input input-bordered w-full'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'checkbox checkbox-primary'}),
         }
 

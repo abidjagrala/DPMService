@@ -230,6 +230,17 @@ def asset_detail_view(request, pk):
     })
 
 
+@role_required('admin', 'manager', 'staff', 'client')
+@require_http_methods(['GET'])
+def asset_credentials_view(request, pk):
+    asset = get_object_or_404(Asset, pk=pk)
+
+    if request.user.is_client and (not asset.client or asset.client.user != request.user):
+        return HttpResponseForbidden('You do not have access to this asset.')
+
+    return render(request, 'assets/_asset_credentials_partial.html', {'obj': asset})
+
+
 @role_required('admin', 'manager')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
