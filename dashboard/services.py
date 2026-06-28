@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, timezone as dt_timezone
 from collections import Counter
 
 from django.contrib.auth import get_user_model
@@ -188,11 +188,11 @@ def get_monthly_ticket_trend(user=None):
     result = {'labels': [], 'open': [], 'completed': [], 'total': []}
 
     for m in months:
-        start = timezone.datetime(m['year'], m['month'], 1, tzinfo=timezone.utc)
+        start = timezone.datetime(m['year'], m['month'], 1, tzinfo=dt_timezone.utc)
         if m['month'] == 12:
-            end = timezone.datetime(m['year'] + 1, 1, 1, tzinfo=timezone.utc)
+            end = timezone.datetime(m['year'] + 1, 1, 1, tzinfo=dt_timezone.utc)
         else:
-            end = timezone.datetime(m['year'], m['month'] + 1, 1, tzinfo=timezone.utc)
+            end = timezone.datetime(m['year'], m['month'] + 1, 1, tzinfo=dt_timezone.utc)
 
         month_tickets = tickets.filter(created_at__gte=start, created_at__lt=end)
         result['labels'].append(m['label'])
