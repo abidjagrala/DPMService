@@ -86,12 +86,11 @@ class EmployeeForm(forms.ModelForm):
     class Meta:
         model = Employee
         fields = [
-            'employee_id', 'designation', 'department', 'phone', 'alt_phone',
+            'designation', 'department', 'phone', 'alt_phone',
             'address', 'state', 'city', 'pincode', 'joining_date', 'is_active',
             'employee_photo', 'aadhar_card',
         ]
         widgets = {
-            'employee_id': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
             'designation': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
             'department': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'phone': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
@@ -125,15 +124,6 @@ class EmployeeForm(forms.ModelForm):
         if qs.exists():
             raise forms.ValidationError(_('A user with this email already exists.'))
         return email
-
-    def clean_employee_id(self) -> str:
-        employee_id = self.cleaned_data['employee_id'].strip()
-        qs = Employee.objects.filter(employee_id__iexact=employee_id)
-        if self.instance.pk:
-            qs = qs.exclude(pk=self.instance.pk)
-        if qs.exists():
-            raise forms.ValidationError(_('An employee with this ID already exists.'))
-        return employee_id
 
     def clean_employee_photo(self):
         photo = self.cleaned_data.get('employee_photo')

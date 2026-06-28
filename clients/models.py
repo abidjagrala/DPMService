@@ -102,6 +102,7 @@ class Employee(models.Model):
         _('employee ID'),
         max_length=20,
         unique=True,
+        blank=True,
     )
     designation = models.CharField(
         _('designation'),
@@ -176,6 +177,22 @@ class Employee(models.Model):
 
     def __str__(self) -> str:
         return f'{self.user.get_full_name()} ({self.employee_id})'
+
+    def save(self, *args, **kwargs):
+        if not self.employee_id:
+            self.employee_id = self._generate_employee_id()
+        super().save(*args, **kwargs)
+
+    def _generate_employee_id(self) -> str:
+        last = Employee.objects.filter(
+            employee_id__startswith='EMP-'
+        ).order_by('-employee_id').values_list('employee_id', flat=True).first()
+
+        if last:
+            seq = int(last.split('-')[1]) + 1
+        else:
+            seq = 1001
+        return f'EMP-{seq:04d}'
 
 
 class Homeworker(models.Model):
