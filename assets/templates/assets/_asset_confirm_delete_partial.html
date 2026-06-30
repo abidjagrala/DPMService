@@ -10,7 +10,7 @@
         <dt class="text-base-content/60">{% trans "Type" %}</dt>
         <dd class="col-span-2 font-medium">{{ obj.asset_type.name }}</dd>
         <dt class="text-base-content/60">{% trans "Brand / Model" %}</dt>
-        <dd class="col-span-2 font-medium">{{ obj.brand }} {{ obj.model_name }}</dd>
+        <dd class="col-span-2 font-medium">{{ obj.brand_model }}</dd>
     </dl>
 
     <form hx-post="{% url 'assets:asset_delete' pk=obj.pk %}"

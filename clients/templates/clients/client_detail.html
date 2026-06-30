@@ -23,6 +23,11 @@
                 <dt class="text-base-content/60">{% trans "Email" %}</dt>
                 <dd class="sm:col-span-2 font-medium">{{ obj.email }}</dd>
 
+                {% if obj.user %}
+                <dt class="text-base-content/60">{% trans "Login Email" %}</dt>
+                <dd class="sm:col-span-2 font-medium">{{ obj.user.email }}</dd>
+                {% endif %}
+
                 <dt class="text-base-content/60">{% trans "Phone" %}</dt>
                 <dd class="sm:col-span-2 font-medium">{{ obj.phone }}</dd>
 

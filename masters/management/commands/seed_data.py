@@ -220,7 +220,6 @@ class Command(BaseCommand):
                     'phone': f'+91 {random.randint(70000, 99999)} {random.randint(10000, 99999)}',
                     'city': city,
                     'address': f'{random.randint(1, 100)}, {random.choice(["MG Road", "Station Road"])}',
-                    'joining_date': timezone.now().date() - timedelta(days=random.randint(30, 730)),
                     'is_active': True,
                 }
             )
@@ -293,15 +292,11 @@ class Command(BaseCommand):
                 defaults={
                     'serial_number': f'SN{random.randint(100000, 999999)}',
                     'asset_type': asset_type,
-                    'brand': brand,
-                    'model_name': model,
+                    'brand_model': f'{brand} {model}',
                     'status': status,
-                    'location': random.choice(['Mumbai Office', 'Pune DC', 'Bangalore Hub', 'Delhi Office']),
                     'client': client,
                     'purchase_date': purchase_date,
-                    'purchase_price': round(random.uniform(15000, 150000), 2),
                     'warranty_expiry': purchase_date + timedelta(days=random.choice([365, 730, 1095])),
-                    'specifications': f'RAM: {random.choice(["8GB", "16GB", "32GB"])} | Storage: {random.choice(["256GB SSD", "512GB SSD", "1TB HDD"])} | OS: {random.choice(["Windows 11", "macOS"])}',
                     'is_active': True,
                 }
             )

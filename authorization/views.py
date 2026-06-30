@@ -462,12 +462,12 @@ FIELD_MAP = {
     ],
     'employee': [
         'user', 'employee_id', 'designation', 'department', 'phone',
-        'alt_phone', 'address', 'city', 'state', 'pincode', 'joining_date', 'is_active',
+        'alt_phone', 'address', 'city', 'state', 'pincode', 'is_active',
     ],
     'asset': [
-        'asset_tag', 'serial_number', 'asset_type', 'brand', 'model_name',
-        'specifications', 'purchase_date', 'purchase_price', 'warranty_expiry',
-        'status', 'client', 'homeworker', 'location', 'notes', 'is_active',
+        'asset_tag', 'serial_number', 'asset_type', 'brand_model',
+        'ip_address', 'mac_address', 'purchase_date', 'warranty_expiry',
+        'status', 'client', 'homeworker', 'notes', 'is_active',
     ],
     'user': [
         'email', 'first_name', 'last_name', 'role', 'is_active', 'is_staff',

@@ -18,7 +18,6 @@ router.register(r'assets', views.AssetViewSet)
 router.register(r'assignments', views.AssetAssignmentViewSet)
 router.register(r'subnets', views.SubnetViewSet)
 router.register(r'ip-addresses', views.IPAddressViewSet)
-router.register(r'devices', views.NetworkDeviceViewSet)
 router.register(r'tickets', views.ServiceTicketViewSet)
 router.register(r'comments', views.TicketCommentViewSet)
 

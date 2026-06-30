@@ -26,7 +26,6 @@ urlpatterns = [
     path('api/client-wise-tickets/', views.chart_client_wise_tickets, name='chart_client_wise_tickets'),
     path('api/staff-productivity/', views.chart_staff_productivity, name='chart_staff_productivity'),
     path('api/asset-status/', views.chart_asset_status, name='chart_asset_status'),
-    path('api/device-categories/', views.chart_device_categories, name='chart_device_categories'),
     path('api/domain-hosting/', views.chart_domain_hosting, name='chart_domain_hosting'),
     path('api/client-state/', views.chart_client_state, name='chart_client_state'),
 ]

@@ -13,25 +13,23 @@ class AssetForm(forms.ModelForm):
     class Meta:
         model = Asset
         fields = [
-            'asset_tag', 'serial_number', 'asset_type', 'brand', 'model_name',
-            'specifications', 'purchase_date', 'purchase_price', 'warranty_expiry',
-            'status', 'client', 'homeworker', 'location', 'notes',
-            'username', 'password', 'is_active',
+            'asset_tag', 'serial_number', 'asset_type', 'brand_model',
+            'purchase_date', 'warranty_expiry',
+            'status', 'client', 'homeworker', 'ip_address', 'mac_address',
+            'notes', 'username', 'password', 'is_active',
         ]
         widgets = {
             'asset_tag': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
             'serial_number': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
             'asset_type': forms.Select(attrs={'class': 'select select-bordered w-full'}),
-            'brand': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
-            'model_name': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
-            'specifications': forms.Textarea(attrs={'class': 'textarea textarea-bordered w-full', 'rows': 3}),
+            'brand_model': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
             'purchase_date': forms.DateInput(attrs={'class': 'input input-bordered w-full', 'type': 'date'}),
-            'purchase_price': forms.NumberInput(attrs={'class': 'input input-bordered w-full', 'step': '0.01'}),
             'warranty_expiry': forms.DateInput(attrs={'class': 'input input-bordered w-full', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'client': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'homeworker': forms.Select(attrs={'class': 'select select-bordered w-full'}),
-            'location': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
+            'ip_address': forms.TextInput(attrs={'class': 'input input-bordered w-full', 'placeholder': '192.168.1.10'}),
+            'mac_address': forms.TextInput(attrs={'class': 'input input-bordered w-full', 'placeholder': 'AA:BB:CC:DD:EE:FF'}),
             'notes': forms.Textarea(attrs={'class': 'textarea textarea-bordered w-full', 'rows': 2}),
             'username': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
             'password': forms.PasswordInput(attrs={'class': 'input input-bordered w-full'}),
@@ -107,22 +105,21 @@ class ClientAssetForm(forms.ModelForm):
     class Meta:
         model = Asset
         fields = [
-            'serial_number', 'asset_type', 'brand', 'model_name',
-            'specifications', 'purchase_date', 'purchase_price', 'warranty_expiry',
-            'status', 'homeworker', 'location', 'notes',
+            'serial_number', 'asset_type', 'brand_model',
+            'purchase_date', 'warranty_expiry',
+            'status', 'homeworker', 'ip_address', 'mac_address',
+            'notes',
         ]
         widgets = {
             'serial_number': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
             'asset_type': forms.Select(attrs={'class': 'select select-bordered w-full'}),
-            'brand': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
-            'model_name': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
-            'specifications': forms.Textarea(attrs={'class': 'textarea textarea-bordered w-full', 'rows': 3}),
+            'brand_model': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
             'purchase_date': forms.DateInput(attrs={'class': 'input input-bordered w-full', 'type': 'date'}),
-            'purchase_price': forms.NumberInput(attrs={'class': 'input input-bordered w-full', 'step': '0.01'}),
             'warranty_expiry': forms.DateInput(attrs={'class': 'input input-bordered w-full', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'homeworker': forms.Select(attrs={'class': 'select select-bordered w-full'}),
-            'location': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
+            'ip_address': forms.TextInput(attrs={'class': 'input input-bordered w-full', 'placeholder': '192.168.1.10'}),
+            'mac_address': forms.TextInput(attrs={'class': 'input input-bordered w-full', 'placeholder': 'AA:BB:CC:DD:EE:FF'}),
             'notes': forms.Textarea(attrs={'class': 'textarea textarea-bordered w-full', 'rows': 2}),
         }
 
@@ -134,10 +131,9 @@ class ClientAssetForm(forms.ModelForm):
         else:
             self.fields['homeworker'].queryset = Homeworker.objects.filter(is_active=True)
         self.fields['homeworker'].required = False
-        self.fields['purchase_date'].required = False
-        self.fields['purchase_price'].required = False
         self.fields['warranty_expiry'].required = False
-        self.fields['location'].required = False
+        self.fields['ip_address'].required = False
+        self.fields['mac_address'].required = False
         self.fields['notes'].required = False
 
     def save(self, commit=True):

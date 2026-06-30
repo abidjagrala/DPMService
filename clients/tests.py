@@ -1,5 +1,3 @@
-from datetime import date
-
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
@@ -52,7 +50,7 @@ class EmployeeModelTest(TestCase):
         emp = Employee.objects.create(
             user=self.user, employee_id='E001',
             designation='Engineer', department='technical',
-            phone='12345', joining_date=date.today(),
+            phone='12345',
         )
         self.assertEqual(str(emp), 'John Doe (E001)')
         self.assertTrue(emp.is_active)
@@ -61,12 +59,12 @@ class EmployeeModelTest(TestCase):
         Employee.objects.create(
             user=self.user, employee_id='E001',
             designation='Engineer', department='technical',
-            phone='12345', joining_date=date.today(),
+            phone='12345',
         )
         user2 = User.objects.create_user(email='e2@test.com', password='pass123')
         with self.assertRaises(Exception):
             Employee.objects.create(
                 user=user2, employee_id='E001',
                 designation='Lead', department='operations',
-                phone='67890', joining_date=date.today(),
+                phone='67890',
             )

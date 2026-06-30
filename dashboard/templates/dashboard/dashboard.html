@@ -125,7 +125,6 @@ function dashboardApp() {
             loadClientWiseTickets();
             loadStaffProductivity();
             loadAssetStatus();
-            loadDeviceCategories();
             loadDomainHostingOverview();
             loadClientStateDist();
         }
@@ -219,21 +218,6 @@ function loadAssetStatus() {
                     datasets: [{ data: data.values, backgroundColor: ['#10b981','#3b82f6','#f59e0b','#6b7280','#ef4444'] }]
                 },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-            });
-        });
-}
-
-function loadDeviceCategories() {
-    fetch('{% url "dashboard:chart_device_categories" %}')
-        .then(r => r.json())
-        .then(data => {
-            getOrCreate('deviceCategoryChart', {
-                type: 'bar',
-                data: {
-                    labels: data.labels,
-                    datasets: [{ label: 'Devices', data: data.values, backgroundColor: '#8b5cf6' }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         });
 }

@@ -134,17 +134,32 @@ def client_export_csv(request):
 @role_required('admin', 'manager')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
+@transaction.atomic
 def client_create_view(request):
     if request.method == 'POST':
-        form = ClientForm(request.POST)
+        form = ClientForm(request.POST, is_create=True)
         if form.is_valid():
-            client = form.save()
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password1']
+
+            user = User.objects.create_user(
+                email=email,
+                password=password,
+                first_name=form.cleaned_data.get('first_name', ''),
+                last_name=form.cleaned_data.get('last_name', ''),
+                role=User.Role.CLIENT,
+            )
+
+            client = form.save(commit=False)
+            client.user = user
+            client.save()
+
             if is_htmx(request):
                 return _hx_toast('success', f'Client {client.company_name} created.', status=204, extra_events={'client-saved': True})
             messages.success(request, f'Client {client.company_name} created successfully.')
             return redirect('clients:client_list')
     else:
-        form = ClientForm()
+        form = ClientForm(is_create=True)
 
     template = 'clients/_client_form_partial.html' if is_htmx(request) else 'clients/client_form.html'
     return render(request, template, {'form': form, 'mode': 'create', 'page_title': 'Add Client'})
@@ -156,15 +171,28 @@ def client_create_view(request):
 def client_update_view(request, pk):
     client = get_object_or_404(Client, pk=pk)
     if request.method == 'POST':
-        form = ClientForm(request.POST, instance=client)
+        form = ClientForm(request.POST, instance=client, is_create=False)
         if form.is_valid():
+            user = client.user
+            if user:
+                user.first_name = form.cleaned_data.get('first_name', '')
+                user.last_name = form.cleaned_data.get('last_name', '')
+                user.email = form.cleaned_data['email']
+                user.save()
+
             form.save()
             if is_htmx(request):
                 return _hx_toast('success', f'Client {client.company_name} updated.', status=204, extra_events={'client-saved': True})
             messages.success(request, f'Client {client.company_name} updated successfully.')
             return redirect('clients:client_list')
     else:
-        form = ClientForm(instance=client)
+        initial = {}
+        if client.user:
+            initial = {
+                'first_name': client.user.first_name,
+                'last_name': client.user.last_name,
+            }
+        form = ClientForm(instance=client, is_create=False, initial=initial)
 
     template = 'clients/_client_form_partial.html' if is_htmx(request) else 'clients/client_form.html'
     return render(request, template, {'form': form, 'mode': 'update', 'obj': client, 'page_title': f'Edit Client — {client.company_name}'})
@@ -321,11 +349,20 @@ def client_import_csv(request):
 
     if confirm == 'yes' and valid_count > 0:
         created = 0
+        default_password = 'Client@123'
         with transaction.atomic():
             for r in rows:
                 if r['errors']:
                     continue
+                user = User.objects.create_user(
+                    email=r['email'],
+                    password=default_password,
+                    first_name=r['contact_person'],
+                    last_name='',
+                    role=User.Role.CLIENT,
+                )
                 Client.objects.create(
+                    user=user,
                     company_name=r['company_name'],
                     contact_person=r['contact_person'],
                     email=r['email'],

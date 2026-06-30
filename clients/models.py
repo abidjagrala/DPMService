@@ -163,9 +163,6 @@ class Employee(models.Model):
         blank=True,
         null=True,
     )
-    joining_date = models.DateField(
-        _('joining date'),
-    )
     is_active = models.BooleanField(_('active'), default=True)
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)

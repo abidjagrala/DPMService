@@ -4,7 +4,7 @@ from accounts.models import User
 from assets.models import Asset, AssetAssignment
 from clients.models import Client, Employee, Homeworker
 from masters.models import AssetType, City, ServiceType, State, TransportType
-from network.models import IPAddress, NetworkDevice, Subnet
+from network.models import IPAddress, Subnet
 from tickets.models import ServiceTicket, TicketComment, TicketHistory
 
 
@@ -79,7 +79,7 @@ class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = [
-            'id', 'company_name', 'contact_person', 'email', 'phone', 'alt_phone',
+            'id', 'user', 'company_name', 'contact_person', 'email', 'phone', 'alt_phone',
             'address', 'city', 'city_name', 'state', 'state_name', 'pincode',
             'gst_number', 'pan_number', 'is_active', 'created_at',
         ]
@@ -128,9 +128,9 @@ class AssetSerializer(serializers.ModelSerializer):
         model = Asset
         fields = [
             'id', 'asset_tag', 'serial_number', 'asset_type', 'asset_type_name',
-            'brand', 'model_name', 'status', 'status_display', 'location',
-            'client', 'client_name', 'purchase_date', 'purchase_price',
-            'warranty_expiry', 'specifications', 'notes', 'is_active',
+            'brand_model', 'status', 'status_display', 'ip_address', 'mac_address',
+            'client', 'client_name', 'purchase_date',
+            'warranty_expiry', 'notes', 'is_active',
             'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
@@ -157,18 +157,6 @@ class IPAddressSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'ip_address', 'subnet', 'subnet_name', 'hostname',
             'status', 'status_display', 'notes', 'is_active',
-        ]
-        read_only_fields = ['id']
-
-
-class NetworkDeviceSerializer(serializers.ModelSerializer):
-    device_type_display = serializers.CharField(source='get_device_type_display', read_only=True)
-
-    class Meta:
-        model = NetworkDevice
-        fields = [
-            'id', 'name', 'device_type', 'device_type_display', 'ip_address',
-            'mac_address', 'location', 'notes', 'is_active',
         ]
         read_only_fields = ['id']
 

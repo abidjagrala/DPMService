@@ -6,7 +6,7 @@
 
 <div class="card bg-base-100 border border-base-300 shadow-sm">
     <div class="card-body">
-        <p class="mb-4">{% trans "Assigning" %} <strong>{{ obj.asset_tag }}</strong> — {{ obj.brand }} {{ obj.model_name }}</p>
+        <p class="mb-4">{% trans "Assigning" %} <strong>{{ obj.asset_tag }}</strong> — {{ obj.brand_model }}</p>
         <form method="post" novalidate class="space-y-3">
             {% csrf_token %}
             {{ form|crispy }}

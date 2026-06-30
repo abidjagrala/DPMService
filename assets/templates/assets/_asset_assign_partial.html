@@ -2,7 +2,7 @@
 
 <div class="p-4">
     <h3 class="font-semibold text-lg">{% trans "Assign Asset" %}</h3>
-    <p class="text-sm text-base-content/60 mt-1">{{ obj.asset_tag }} — {{ obj.brand }} {{ obj.model_name }}</p>
+    <p class="text-sm text-base-content/60 mt-1">{{ obj.asset_tag }} — {{ obj.brand_model }}</p>
 
     <form hx-post="{% url 'assets:asset_assign' pk=obj.pk %}"
           hx-target="this"

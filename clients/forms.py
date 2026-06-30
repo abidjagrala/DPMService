@@ -1,9 +1,12 @@
 from django import forms
+from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 
 from masters.models import City, State
 
 from .models import Client, Employee, Homeworker
+
+User = get_user_model()
 
 EMPLOYEE_PHOTO_MAX = 1 * 1024 * 1024  # 1 MB
 AADHAR_CARD_MAX = 1 * 1024 * 1024  # 1 MB
@@ -13,6 +16,28 @@ AADHAR_CARD_TYPES = ['image/png', 'image/jpeg', 'application/pdf']
 
 class ClientForm(forms.ModelForm):
     """Form for creating and updating Client records."""
+
+    first_name = forms.CharField(
+        label=_('First name'),
+        max_length=150,
+        widget=forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
+    )
+    last_name = forms.CharField(
+        label=_('Last name'),
+        max_length=150,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
+    )
+    password1 = forms.CharField(
+        label=_('Password'),
+        widget=forms.PasswordInput(attrs={'class': 'input input-bordered w-full'}),
+        required=False,
+    )
+    password2 = forms.CharField(
+        label=_('Confirm password'),
+        widget=forms.PasswordInput(attrs={'class': 'input input-bordered w-full'}),
+        required=False,
+    )
 
     class Meta:
         model = Client
@@ -36,6 +61,15 @@ class ClientForm(forms.ModelForm):
             'is_active': forms.CheckboxInput(attrs={'class': 'checkbox checkbox-primary'}),
         }
 
+    def __init__(self, *args, is_create: bool = True, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.is_create = is_create
+        if not is_create:
+            self.fields['password1'].widget = forms.HiddenInput()
+            self.fields['password2'].widget = forms.HiddenInput()
+            self.fields['password1'].required = False
+            self.fields['password2'].required = False
+
     def clean_email(self) -> str:
         email = self.cleaned_data['email'].strip().lower()
         qs = Client.objects.filter(email__iexact=email)
@@ -47,11 +81,21 @@ class ClientForm(forms.ModelForm):
 
     def clean_phone(self) -> str:
         phone = self.cleaned_data['phone'].strip()
-        # Basic phone validation - digits, spaces, hyphens, plus
         import re
         if not re.match(r'^[\d\s\-\+]+$', phone):
             raise forms.ValidationError(_('Enter a valid phone number.'))
         return phone
+
+    def clean(self) -> dict:
+        cleaned_data = super().clean()
+        if self.is_create:
+            password1 = cleaned_data.get('password1')
+            password2 = cleaned_data.get('password2')
+            if password1 and password2 and password1 != password2:
+                self.add_error('password2', _('Passwords do not match.'))
+            elif not password1:
+                self.add_error('password1', _('Password is required for new clients.'))
+        return cleaned_data
 
 
 class EmployeeForm(forms.ModelForm):
@@ -87,7 +131,7 @@ class EmployeeForm(forms.ModelForm):
         model = Employee
         fields = [
             'designation', 'department', 'phone', 'alt_phone',
-            'address', 'state', 'city', 'pincode', 'joining_date', 'is_active',
+            'address', 'state', 'city', 'pincode', 'is_active',
             'employee_photo', 'aadhar_card',
         ]
         widgets = {
@@ -99,7 +143,6 @@ class EmployeeForm(forms.ModelForm):
             'state': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'city': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'pincode': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
-            'joining_date': forms.DateInput(attrs={'class': 'input input-bordered w-full', 'type': 'date'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'checkbox checkbox-primary'}),
             'employee_photo': forms.ClearableFileInput(attrs={'class': 'file-input file-input-bordered file-input-sm w-full', 'accept': 'image/png,image/jpeg'}),
             'aadhar_card': forms.ClearableFileInput(attrs={'class': 'file-input file-input-bordered file-input-sm w-full', 'accept': 'image/png,image/jpeg,application/pdf'}),

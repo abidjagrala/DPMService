@@ -19,12 +19,11 @@ MODULES_DATA = [
     ('employees', 'Employees', 3),
     ('homeworkers', 'Homeworkers', 4),
     ('assets', 'Assets', 5),
-    ('devices', 'Devices', 6),
-    ('tickets', 'Tickets', 7),
-    ('domain_hosting', 'Domain & Hosting', 8),
-    ('notifications', 'Notifications', 9),
-    ('settings', 'Settings', 10),
-    ('authorization', 'Authorization & Roles', 11),
+    ('tickets', 'Tickets', 6),
+    ('domain_hosting', 'Domain & Hosting', 7),
+    ('notifications', 'Notifications', 8),
+    ('settings', 'Settings', 9),
+    ('authorization', 'Authorization & Roles', 10),
 ]
 
 MENU_DATA = [
@@ -33,7 +32,6 @@ MENU_DATA = [
     ('employees', 'Employees', 'clients:employee_list', '', None, 2),
     ('homeworkers', 'Homeworkers', 'clients:homeworker_list', '', None, 3),
     ('assets', 'Assets', 'assets:asset_list', '', None, 1),
-    ('devices', 'Devices', 'network:device_list', '', None, 1),
     ('tickets', 'Service Tickets', 'tickets:ticket_list', '', None, 1),
     ('domain_hosting', 'Domain & Hosting', 'hosting:hosting_list', '', None, 1),
     ('notifications', 'Notifications', 'notifications:notification_list', '', None, 1),
@@ -44,7 +42,7 @@ MENU_DATA = [
 ALL_PERMS = ['view', 'create', 'edit', 'delete', 'export', 'import', 'approve', 'assign']
 ALL_MODELS = [
     'client', 'employee', 'homeworker', 'asset', 'assetassignment',
-    'subnet', 'ipaddress', 'networkdevice', 'serviceticket', 'ticketcomment',
+    'subnet', 'ipaddress', 'serviceticket', 'ticketcomment',
     'tickethistory', 'domainhosting', 'servicetype', 'assettype', 'state',
     'city', 'user', 'group', 'role',
 ]
@@ -53,7 +51,7 @@ ROLES_DATA = [
     {
         'name': 'Super Admin',
         'description': 'Full system access. Bypasses all permission checks.',
-        'modules': {m: {p: True for p in ALL_PERMS} for m in ['dashboard','clients','employees','homeworkers','assets','devices','tickets','domain_hosting','notifications','settings','authorization']},
+        'modules': {m: {p: True for p in ALL_PERMS} for m in ['dashboard','clients','employees','homeworkers','assets','tickets','domain_hosting','notifications','settings','authorization']},
         'models': {m: {p: True for p in ALL_PERMS} for m in ALL_MODELS},
         'menus': True,
     },
@@ -66,7 +64,6 @@ ROLES_DATA = [
             'employees': {p: True for p in ALL_PERMS},
             'homeworkers': {p: True for p in ALL_PERMS},
             'assets': {p: True for p in ALL_PERMS},
-            'devices': {p: True for p in ALL_PERMS},
             'tickets': {p: True for p in ALL_PERMS},
             'domain_hosting': {p: True for p in ALL_PERMS},
             'notifications': {p: True for p in ALL_PERMS},
@@ -151,18 +148,16 @@ ROLES_DATA = [
     },
     {
         'name': 'Network Manager',
-        'description': 'Manages subnets, IPs, and network devices.',
+        'description': 'Manages subnets and IPs.',
         'modules': {
             'dashboard': {'view': True},
-            'devices': {'view': True, 'create': True, 'edit': True, 'delete': True, 'export': True},
             'notifications': {'view': True},
         },
         'models': {
             'subnet': {'view': True, 'create': True, 'edit': True, 'delete': True, 'export': True},
             'ipaddress': {'view': True, 'create': True, 'edit': True, 'export': True},
-            'networkdevice': {'view': True, 'create': True, 'edit': True, 'delete': True, 'export': True},
         },
-        'menus': {'dashboard', 'devices', 'notifications'},
+        'menus': {'dashboard', 'notifications'},
     },
     {
         'name': 'Billing Executive',

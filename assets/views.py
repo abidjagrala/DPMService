@@ -103,9 +103,10 @@ def asset_export_csv(request):
     response['Content-Disposition'] = 'attachment; filename="assets.csv"'
     writer = csv.writer(response)
     writer.writerow([
-        'Asset Tag', 'Serial Number', 'Type', 'Brand', 'Model',
-        'Specifications', 'Purchase Date', 'Purchase Price', 'Warranty Expiry',
-        'Status', 'Client', 'Homeworker', 'Location', 'Notes', 'Active',
+        'Asset Tag', 'Serial Number', 'Type', 'Brand/Model',
+        'Purchase Date', 'Warranty Expiry',
+        'Status', 'Client', 'Homeworker', 'IP Address', 'MAC Address',
+        'Notes', 'Active',
         'Created At', 'Updated At',
     ])
     for a in assets:
@@ -113,16 +114,14 @@ def asset_export_csv(request):
             a.asset_tag,
             a.serial_number,
             a.asset_type.name,
-            a.brand,
-            a.model_name,
-            a.specifications,
+            a.brand_model,
             a.purchase_date or '',
-            a.purchase_price or '',
             a.warranty_expiry or '',
             a.get_status_display(),
             a.client.company_name if a.client else '',
             a.homeworker.name if a.homeworker else '',
-            a.location,
+            a.ip_address,
+            a.mac_address,
             a.notes,
             'Yes' if a.is_active else 'No',
             a.created_at.strftime('%Y-%m-%d %H:%M') if a.created_at else '',
@@ -390,9 +389,9 @@ def asset_detail_pdf(request, pk):
         field_row('Asset Tag', asset.asset_tag),
         field_row('Serial Number', asset.serial_number),
         field_row('Type', asset.asset_type.name),
-        field_row('Brand', asset.brand),
-        field_row('Model', asset.model_name),
-        field_row('Location', asset.location),
+        field_row('Brand/Model', asset.brand_model),
+        field_row('IP Address', asset.ip_address),
+        field_row('MAC Address', asset.mac_address),
         field_row('Status', asset.get_status_display()),
         field_row('Active', 'Yes' if asset.is_active else 'No'),
     ]
@@ -410,7 +409,6 @@ def asset_detail_pdf(request, pk):
 
     purchase_data = [
         field_row('Purchase Date', asset.purchase_date),
-        field_row('Purchase Price', f'₹{asset.purchase_price}' if asset.purchase_price else ''),
         field_row('Warranty Expiry', asset.warranty_expiry),
         field_row('Holder', asset.holder_name),
     ]
@@ -425,11 +423,6 @@ def asset_detail_pdf(request, pk):
     elements.append(Paragraph('<b>Purchase Info</b>', styles['Heading2']))
     elements.append(t2)
     elements.append(Spacer(1, 6*mm))
-
-    if asset.specifications:
-        elements.append(Paragraph('<b>Specifications</b>', styles['Heading2']))
-        elements.append(Paragraph(asset.specifications.replace('\n', '<br/>'), styles['Normal']))
-        elements.append(Spacer(1, 6*mm))
 
     if asset.notes:
         elements.append(Paragraph('<b>Notes</b>', styles['Heading2']))

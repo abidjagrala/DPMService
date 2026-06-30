@@ -16,7 +16,7 @@
     <div class="flex items-center justify-between flex-wrap gap-2">
         <div>
             <h1 class="text-2xl font-semibold">{{ obj.asset_tag }}</h1>
-            <p class="text-sm text-base-content/60">{{ obj.brand }} {{ obj.model_name }}</p>
+            <p class="text-sm text-base-content/60">{{ obj.brand_model }}</p>
         </div>
         <div class="flex gap-2 items-center">
             <a href="{% url 'assets:asset_detail_pdf' pk=obj.pk %}" class="btn btn-outline btn-sm" download>
@@ -52,14 +52,14 @@
                     <dt class="text-base-content/60">{% trans "Type" %}</dt>
                     <dd class="font-medium">{{ obj.asset_type.name }}</dd>
 
-                    <dt class="text-base-content/60">{% trans "Brand" %}</dt>
-                    <dd class="font-medium">{{ obj.brand }}</dd>
+                    <dt class="text-base-content/60">{% trans "Brand/Model" %}</dt>
+                    <dd class="font-medium">{{ obj.brand_model }}</dd>
 
-                    <dt class="text-base-content/60">{% trans "Model" %}</dt>
-                    <dd class="font-medium">{{ obj.model_name }}</dd>
+                    <dt class="text-base-content/60">{% trans "IP Address" %}</dt>
+                    <dd class="font-medium">{{ obj.ip_address|default:"—" }}</dd>
 
-                    <dt class="text-base-content/60">{% trans "Location" %}</dt>
-                    <dd class="font-medium">{{ obj.location|default:"—" }}</dd>
+                    <dt class="text-base-content/60">{% trans "MAC Address" %}</dt>
+                    <dd class="font-medium">{{ obj.mac_address|default:"—" }}</dd>
                 </dl>
             </div>
         </div>
@@ -72,9 +72,6 @@
                     <dt class="text-base-content/60">{% trans "Purchase Date" %}</dt>
                     <dd class="font-medium">{{ obj.purchase_date|date:"M j, Y"|default:"—" }}</dd>
 
-                    <dt class="text-base-content/60">{% trans "Purchase Price" %}</dt>
-                    <dd class="font-medium">{% if obj.purchase_price %}₹{{ obj.purchase_price }}{% else %}—{% endif %}</dd>
-
                     <dt class="text-base-content/60">{% trans "Warranty Expiry" %}</dt>
                     <dd class="font-medium">{{ obj.warranty_expiry|date:"M j, Y"|default:"—" }}</dd>
 
@@ -84,16 +81,6 @@
             </div>
         </div>
     </div>
-
-    {% if obj.specifications %}
-    <div class="card bg-base-100 border border-base-300 shadow-sm">
-        <div class="card-body">
-            <h2 class="card-title text-base">{% trans "Specifications" %}</h2>
-            <div class="divider my-1"></div>
-            <pre class="text-sm whitespace-pre-wrap">{{ obj.specifications }}</pre>
-        </div>
-    </div>
-    {% endif %}
 
     {% if obj.notes %}
     <div class="card bg-base-100 border border-base-300 shadow-sm">

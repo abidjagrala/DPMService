@@ -35,29 +35,13 @@ class Asset(models.Model):
         related_name='assets',
         verbose_name=_('asset type'),
     )
-    brand = models.CharField(
-        _('brand'),
-        max_length=100,
-    )
-    model_name = models.CharField(
-        _('model name'),
-        max_length=150,
-    )
-    specifications = models.TextField(
-        _('specifications'),
-        blank=True,
+    brand_model = models.CharField(
+        _('brand/model'),
+        max_length=200,
         default='',
-        help_text=_('Technical specifications (RAM, CPU, Storage, etc.).'),
     )
     purchase_date = models.DateField(
         _('purchase date'),
-        null=True,
-        blank=True,
-    )
-    purchase_price = models.DecimalField(
-        _('purchase price'),
-        max_digits=12,
-        decimal_places=2,
         null=True,
         blank=True,
     )
@@ -88,11 +72,18 @@ class Asset(models.Model):
         null=True,
         blank=True,
     )
-    location = models.CharField(
-        _('location'),
-        max_length=200,
+    ip_address = models.CharField(
+        _('IP address'),
+        max_length=45,
         blank=True,
         default='',
+    )
+    mac_address = models.CharField(
+        _('MAC address'),
+        max_length=17,
+        blank=True,
+        default='',
+        help_text=_('Format: AA:BB:CC:DD:EE:FF'),
     )
     notes = models.TextField(
         _('notes'),
@@ -121,7 +112,7 @@ class Asset(models.Model):
         ordering = ['-created_at']
 
     def __str__(self) -> str:
-        return f'{self.asset_tag} — {self.brand} {self.model_name}'
+        return f'{self.asset_tag} — {self.brand_model}'
 
     def save(self, *args, **kwargs):
         if not self.asset_tag:

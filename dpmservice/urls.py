@@ -11,7 +11,6 @@ urlpatterns = [
     path('masters/', include('masters.urls', namespace='masters')),
     path('company/', include('clients.urls', namespace='clients')),
     path('inventory/', include('assets.urls', namespace='assets')),
-    path('network/', include('network.urls', namespace='network')),
     path('', include('tickets.urls', namespace='tickets')),
     path('dashboard/', include('dashboard.urls', namespace='dashboard')),
     path('hosting/', include('hosting.urls', namespace='hosting')),

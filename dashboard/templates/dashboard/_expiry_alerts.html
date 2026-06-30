@@ -42,7 +42,7 @@
                 <h3 class="font-medium text-sm mb-2">{% trans "Asset Warranty" %}</h3>
                 {% for a in warranty_alerts %}
                 <div class="flex items-center justify-between text-sm py-1">
-                    <span>{{ a.asset_tag }} — {{ a.brand }} {{ a.model_name }} <span class="text-base-content/50">({{ a.client.company_name|default:"—" }})</span></span>
+                    <span>{{ a.asset_tag }} — {{ a.brand_model }} <span class="text-base-content/50">({{ a.client.company_name|default:"—" }})</span></span>
                     <span class="badge badge-warning badge-sm">{{ a.warranty_expiry }}</span>
                 </div>
                 {% endfor %}

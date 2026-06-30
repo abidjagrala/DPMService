@@ -9,7 +9,6 @@ from assets.models import Asset
 from clients.models import Client, Employee, Homeworker
 from comments.models import Comment
 from hosting.models import DomainHosting
-from network.models import NetworkDevice
 from tickets.models import ServiceTicket
 
 User = get_user_model()
@@ -114,23 +113,6 @@ def get_asset_counts(user=None):
     }
 
 
-def get_device_counts(user=None):
-    if _is_restricted(user):
-        return {
-            'total_devices': 0,
-            'active_devices': 0,
-            'offline_devices': 0,
-            'repair_devices': 0,
-        }
-    devices = NetworkDevice.objects.filter(is_active=True)
-    return {
-        'total_devices': devices.count(),
-        'active_devices': devices.count(),
-        'offline_devices': 0,
-        'repair_devices': 0,
-    }
-
-
 def get_domain_hosting_counts(user=None):
     if _is_restricted(user):
         return {
@@ -163,7 +145,6 @@ def get_all_kpis(user=None):
     kpis.update(get_entity_counts(user))
     kpis.update(get_ticket_counts(user))
     kpis.update(get_asset_counts(user))
-    kpis.update(get_device_counts(user))
     kpis.update(get_domain_hosting_counts(user))
     return kpis
 
@@ -275,20 +256,6 @@ def get_asset_status_distribution(user=None):
     status_map = dict(Asset.Status.choices)
     return {
         'labels': [status_map.get(r['status'], r['status']) for r in data],
-        'values': [r['count'] for r in data],
-    }
-
-
-def get_device_category_distribution(user=None):
-    """Bar chart of device types."""
-    if _is_restricted(user):
-        return {'labels': [], 'values': []}
-    data = NetworkDevice.objects.filter(is_active=True).values('device_type').annotate(
-        count=Count('id')
-    ).order_by('device_type')
-    type_map = dict(NetworkDevice.DeviceType.choices)
-    return {
-        'labels': [type_map.get(r['device_type'], r['device_type']) for r in data],
         'values': [r['count'] for r in data],
     }
 
@@ -449,14 +416,12 @@ def get_homeworker_summary(user=None):
             return {
                 'total': hw.count(),
                 'assigned_assets': Asset.objects.filter(homeworker__isnull=False, is_active=True, client__user=user).count(),
-                'assigned_devices': NetworkDevice.objects.filter(homeworker__isnull=False, is_active=True, client__user=user).count(),
                 'open_tickets': open_tickets,
                 'closed_tickets': closed_tickets,
             }
         return {
             'total': 0,
             'assigned_assets': 0,
-            'assigned_devices': 0,
             'open_tickets': 0,
             'closed_tickets': 0,
         }
@@ -464,7 +429,6 @@ def get_homeworker_summary(user=None):
     return {
         'total': hw.count(),
         'assigned_assets': Asset.objects.filter(homeworker__isnull=False, is_active=True).count(),
-        'assigned_devices': NetworkDevice.objects.filter(homeworker__isnull=False, is_active=True).count(),
         'open_tickets': ServiceTicket.objects.filter(
             is_active=True, status__in=['new', 'assigned', 'in_progress']
         ).count(),

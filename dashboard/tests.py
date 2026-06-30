@@ -10,13 +10,12 @@ from clients.models import Client, Employee, Homeworker
 from comments.models import Comment
 from hosting.models import DomainHosting
 from masters.models import AssetType, City, ServiceType, State
-from network.models import NetworkDevice
 from tickets.models import ServiceTicket, TicketHistory
 
 from .services import (
     _client_ticket_qs, apply_filters, _is_restricted,
     get_entity_counts, get_ticket_counts, get_asset_counts,
-    get_device_counts, get_domain_hosting_counts, get_all_kpis,
+    get_domain_hosting_counts, get_all_kpis,
     get_tickets_by_status, get_client_wise_tickets,
     get_asset_status_distribution, get_client_state_distribution,
     get_recent_tickets, get_recent_activities, get_expiry_alerts,
@@ -53,7 +52,6 @@ class BaseDashboardTest(TestCase):
         self.employee = Employee.objects.create(
             user=self.employee_user, employee_id='EMP001',
             designation='Technician', phone='999',
-            joining_date=date(2024, 1, 1),
         )
 
         self.ticket = ServiceTicket.objects.create(
@@ -216,12 +214,12 @@ class AssetCountsTest(BaseDashboardTest):
         super().setUp()
         Asset.objects.create(
             asset_tag='AST-001', asset_type=self.asset_type,
-            brand='Dell', model_name='Latitude',
+            brand_model='Dell Latitude',
             status='assigned', client=self.client_obj,
         )
         Asset.objects.create(
             asset_tag='AST-002', asset_type=self.asset_type,
-            brand='HP', model_name='EliteBook',
+            brand_model='HP EliteBook',
             status='available',
         )
 
@@ -239,21 +237,6 @@ class AssetCountsTest(BaseDashboardTest):
     def test_staff_restricted(self):
         counts = get_asset_counts(self.staff_user)
         self.assertEqual(counts['total_assets'], 0)
-
-
-class DeviceCountsTest(BaseDashboardTest):
-    def test_admin_sees_devices(self):
-        NetworkDevice.objects.create(
-            name='Router 1', device_type='router',
-            ip_address='192.168.1.1',
-        )
-        counts = get_device_counts(self.admin)
-        self.assertEqual(counts['total_devices'], 1)
-
-    def test_restricted_returns_zeros(self):
-        counts = get_device_counts(self.staff_user)
-        self.assertEqual(counts['total_devices'], 0)
-        self.assertEqual(counts['active_devices'], 0)
 
 
 class DomainHostingCountsTest(BaseDashboardTest):
@@ -295,7 +278,6 @@ class AllKpisTest(BaseDashboardTest):
         self.assertIn('total_clients', kpis)
         self.assertIn('total_tickets', kpis)
         self.assertIn('total_assets', kpis)
-        self.assertIn('total_devices', kpis)
         self.assertIn('total_domains', kpis)
 
 
@@ -335,7 +317,7 @@ class AssetStatusDistributionTest(BaseDashboardTest):
         super().setUp()
         Asset.objects.create(
             asset_tag='AST-001', asset_type=self.asset_type,
-            brand='Dell', model_name='XPS', status='available',
+            brand_model='Dell XPS', status='available',
         )
 
     def test_admin_sees_assets(self):

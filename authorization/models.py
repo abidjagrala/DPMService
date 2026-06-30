@@ -88,7 +88,6 @@ MODEL_CHOICES = [
     ('assetassignment', _('Asset Assignment')),
     ('subnet', _('Subnet')),
     ('ipaddress', _('IP Address')),
-    ('networkdevice', _('Network Device')),
     ('serviceticket', _('Service Ticket')),
     ('ticketcomment', _('Ticket Comment')),
     ('tickethistory', _('Ticket History')),

@@ -20,7 +20,7 @@ class AssetModelTest(TestCase):
     def test_create_asset(self):
         asset = Asset.objects.create(
             asset_tag='ASSET001', asset_type=self.asset_type,
-            brand='Dell', model_name='Latitude 5520',
+            brand_model='Dell Latitude 5520',
         )
         self.assertEqual(str(asset), 'ASSET001 — Dell Latitude 5520')
         self.assertEqual(asset.status, 'available')
@@ -28,12 +28,12 @@ class AssetModelTest(TestCase):
     def test_unique_asset_tag(self):
         Asset.objects.create(
             asset_tag='ASSET001', asset_type=self.asset_type,
-            brand='Dell', model_name='XPS',
+            brand_model='Dell XPS',
         )
         with self.assertRaises(Exception):
             Asset.objects.create(
                 asset_tag='ASSET001', asset_type=self.asset_type,
-                brand='HP', model_name='EliteBook',
+                brand_model='HP EliteBook',
             )
 
     def test_holder_name_client(self):
@@ -44,14 +44,14 @@ class AssetModelTest(TestCase):
         )
         asset = Asset.objects.create(
             asset_tag='A001', asset_type=self.asset_type,
-            brand='Dell', model_name='XPS', client=client,
+            brand_model='Dell XPS', client=client,
         )
         self.assertEqual(asset.holder_name, 'TCS')
 
     def test_holder_name_none(self):
         asset = Asset.objects.create(
             asset_tag='A002', asset_type=self.asset_type,
-            brand='HP', model_name='ProBook',
+            brand_model='HP ProBook',
         )
         self.assertEqual(asset.holder_name, '—')
 
@@ -63,7 +63,7 @@ class AssetAssignmentModelTest(TestCase):
         self.asset_type = AssetType.objects.create(name='Laptop')
         self.asset = Asset.objects.create(
             asset_tag='A001', asset_type=self.asset_type,
-            brand='Dell', model_name='XPS',
+            brand_model='Dell XPS',
         )
         self.user = User.objects.create_user(email='u@t.com', password='pass123')
 

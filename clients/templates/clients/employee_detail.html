@@ -43,9 +43,6 @@
 
                 <dt class="text-base-content/60">{% trans "Pincode" %}</dt>
                 <dd class="sm:col-span-2 font-medium">{{ obj.pincode|default:"-" }}</dd>
-
-                <dt class="text-base-content/60">{% trans "Joining Date" %}</dt>
-                <dd class="sm:col-span-2 font-medium">{{ obj.joining_date|date:"F j, Y" }}</dd>
             </dl>
 
             {% if obj.employee_photo or obj.aadhar_card %}

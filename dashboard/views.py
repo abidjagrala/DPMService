@@ -32,7 +32,6 @@ def dashboard_view(request):
         'total_tickets': 0, 'open_tickets': 0, 'in_progress_tickets': 0,
         'completed_tickets': 0, 'tickets_today': 0,
         'total_assets': 0, 'assigned_assets': 0, 'available_assets': 0, 'maintenance_assets': 0,
-        'total_devices': 0, 'active_devices': 0, 'offline_devices': 0, 'repair_devices': 0,
         'total_domains': 0, 'active_domains': 0, 'expiring_domains_30': 0,
         'total_hosting': 0, 'active_hosting': 0, 'expiring_hosting_30': 0,
     }, user)
@@ -45,7 +44,7 @@ def dashboard_view(request):
     ctx['warranty_alerts'] = _safe(services.get_asset_warranty_alerts, [], user)
     ctx['client_summary'] = _safe(services.get_client_summary, Client.objects.none(), user)
     ctx['homeworker_summary'] = _safe(services.get_homeworker_summary, {
-        'total': 0, 'assigned_assets': 0, 'assigned_devices': 0,
+        'total': 0, 'assigned_assets': 0,
         'open_tickets': 0, 'closed_tickets': 0,
     }, user)
     ctx['domain_hosting_panel'] = _safe(services.get_domain_hosting_panel, {
@@ -81,7 +80,6 @@ def dashboard_kpis(request):
         'total_tickets': 0, 'open_tickets': 0, 'in_progress_tickets': 0,
         'completed_tickets': 0, 'tickets_today': 0,
         'total_assets': 0, 'assigned_assets': 0, 'available_assets': 0, 'maintenance_assets': 0,
-        'total_devices': 0, 'active_devices': 0, 'offline_devices': 0, 'repair_devices': 0,
         'total_domains': 0, 'active_domains': 0, 'expiring_domains_30': 0,
         'total_hosting': 0, 'active_hosting': 0, 'expiring_hosting_30': 0,
     }
@@ -99,7 +97,6 @@ def dashboard_charts(request):
         'client_wise_tickets': _safe(services.get_client_wise_tickets, empty, user),
         'staff_productivity': _safe(services.get_staff_productivity, {'labels': [], 'assigned': [], 'completed': []}, user),
         'asset_status': _safe(services.get_asset_status_distribution, empty, user),
-        'device_categories': _safe(services.get_device_category_distribution, empty, user),
         'domain_hosting_overview': _safe(services.get_domain_hosting_overview, empty, user),
         'client_state_dist': _safe(services.get_client_state_distribution, empty, user),
     }
@@ -147,7 +144,7 @@ def dashboard_client_summary(request):
 def dashboard_homeworker_summary(request):
     return render(request, 'dashboard/_homeworker_summary.html', {
         'homeworker_summary': _safe(services.get_homeworker_summary, {
-            'total': 0, 'assigned_assets': 0, 'assigned_devices': 0,
+            'total': 0, 'assigned_assets': 0,
             'open_tickets': 0, 'closed_tickets': 0,
         }, request.user),
     })
@@ -225,13 +222,6 @@ def chart_staff_productivity(request):
 def chart_asset_status(request):
     empty = {'labels': [], 'values': []}
     return JsonResponse(_safe(services.get_asset_status_distribution, empty, request.user))
-
-
-@login_required
-@require_http_methods(['GET'])
-def chart_device_categories(request):
-    empty = {'labels': [], 'values': []}
-    return JsonResponse(_safe(services.get_device_category_distribution, empty, request.user))
 
 
 @login_required

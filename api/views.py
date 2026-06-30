@@ -8,7 +8,7 @@ from accounts.models import User
 from assets.models import Asset, AssetAssignment
 from clients.models import Client, Employee
 from masters.models import AssetType, City, ServiceType, State, TransportType
-from network.models import IPAddress, NetworkDevice, Subnet
+from network.models import IPAddress, Subnet
 from tickets.models import ServiceTicket, TicketComment, TicketHistory
 
 from .serializers import (
@@ -19,7 +19,6 @@ from .serializers import (
     ClientSerializer,
     EmployeeSerializer,
     IPAddressSerializer,
-    NetworkDeviceSerializer,
     ServiceTicketSerializer,
     ServiceTypeSerializer,
     StateSerializer,
@@ -183,8 +182,7 @@ class AssetViewSet(viewsets.ModelViewSet):
             qs = qs.filter(
                 Q(asset_tag__icontains=search) |
                 Q(serial_number__icontains=search) |
-                Q(brand__icontains=search) |
-                Q(model_name__icontains=search)
+                Q(brand_model__icontains=search)
             )
         return qs
 
@@ -225,12 +223,6 @@ class IPAddressViewSet(viewsets.ModelViewSet):
         if status_filter:
             qs = qs.filter(status=status_filter)
         return qs
-
-
-class NetworkDeviceViewSet(viewsets.ModelViewSet):
-    queryset = NetworkDevice.objects.all()
-    serializer_class = NetworkDeviceSerializer
-    permission_classes = [IsStaffOrAbove]
 
 
 # ---------------------------------------------------------------------------
@@ -309,10 +301,5 @@ def api_dashboard_view(request):
         'clients': {
             'total': Client.objects.count(),
             'active': Client.objects.filter(is_active=True).count(),
-        },
-        'network': {
-            'subnets': Subnet.objects.count(),
-            'ips': IPAddress.objects.count(),
-            'devices': NetworkDevice.objects.count(),
         },
     })

@@ -15,7 +15,6 @@ from .models import Comment
 
 _DETAIL_URL_MAP = {
     'serviceticket': 'tickets:ticket_detail',
-    'networkdevice': 'network:device_detail',
     'asset': 'assets:asset_detail',
     'client': 'clients:client_detail',
     'subnet': 'network:subnet_detail',
