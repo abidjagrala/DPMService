@@ -2,7 +2,8 @@ from django import forms
 from django.contrib.auth import authenticate, get_user_model, password_validation
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
 from django.utils.translation import gettext_lazy as _
-from captcha.fields import CaptchaField
+
+from .captcha import MathCaptchaField, MathCaptchaWidget
 
 User = get_user_model()
 
@@ -17,7 +18,7 @@ class EmailLoginForm(forms.Form):
         strip=False,
         widget=forms.PasswordInput(attrs={'autocomplete': 'current-password'}),
     )
-    captcha = CaptchaField(label='')
+    captcha = MathCaptchaField(label='', widget=MathCaptchaWidget())
 
     error_messages = {
         'invalid_login': _('Please enter a correct email and password.'),

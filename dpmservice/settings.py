@@ -59,7 +59,6 @@ INSTALLED_APPS = [
     'api',
     'notifications',
     'authorization',
-    'captcha',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
@@ -90,6 +89,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'accounts.middleware.IdleSessionMiddleware',
     'authorization.middleware.AuthorizationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -200,5 +200,14 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='DPM Service <noreply@dpm.com>')
+
+# ---------------------------------------------------------------------------
+# Session Configuration — 20-minute idle timeout
+# ---------------------------------------------------------------------------
+SESSION_COOKIE_AGE = 1200  # 20 minutes in seconds
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = True
 
 

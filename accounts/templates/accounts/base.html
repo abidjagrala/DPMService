@@ -108,6 +108,13 @@
         }
 
     </script>
+    <script>
+        {% if user.is_authenticated %}
+        setInterval(function() {
+            fetch('{% url "accounts:heartbeat" %}', { credentials: 'same-origin' });
+        }, 300000);
+        {% endif %}
+    </script>
     <style>
         [x-cloak] { display: none !important; }
         .app-shell { min-height: 100vh; }

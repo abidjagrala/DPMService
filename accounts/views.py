@@ -14,6 +14,12 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
 from .forms import AdminUserForm, EmailLoginForm, ProfileUpdateForm
+from .services.login_throttle import (
+    get_remaining_attempts,
+    is_locked_out,
+    record_failed_attempt,
+    reset_attempts,
+)
 
 User = get_user_model()
 
@@ -53,6 +59,11 @@ def hx_redirect(url, level=None, message=None):
     return response
 
 
+def _get_client_ip(request):
+    xff = request.META.get('HTTP_X_FORWARDED_FOR')
+    return xff.split(',')[0].strip() if xff else request.META.get('REMOTE_ADDR')
+
+
 @csrf_protect
 @never_cache
 @require_http_methods(['GET', 'POST'])
@@ -61,13 +72,27 @@ def login_view(request):
         return redirect('accounts:dashboard')
 
     if request.method == 'POST':
+        email = request.POST.get('email', '').strip().lower()
+        ip = _get_client_ip(request)
+
+        if is_locked_out(email, ip):
+            messages.error(request, 'Too many failed login attempts. Please try again in 5 minutes.')
+            form = EmailLoginForm(request)
+            return render(request, 'accounts/login.html', {'form': form})
+
         form = EmailLoginForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
+            reset_attempts(email, ip)
             login(request, user)
             messages.success(request, f'Welcome back, {user.get_short_name()}.')
             next_url = request.POST.get('next') or request.GET.get('next')
             return redirect(next_url or 'accounts:dashboard')
+        else:
+            record_failed_attempt(email, ip)
+            remaining = get_remaining_attempts(email, ip)
+            if remaining > 0:
+                messages.warning(request, f'Invalid credentials. {remaining} attempts remaining before lockout.')
     else:
         form = EmailLoginForm(request)
 
@@ -80,6 +105,15 @@ def logout_view(request):
     logout(request)
     messages.info(request, 'You have been logged out.')
     return redirect('accounts:login')
+
+
+@login_required
+@require_http_methods(['GET'])
+def heartbeat_view(request):
+    from django.http import JsonResponse
+    from django.utils import timezone as tz
+    request.session['last_activity'] = tz.now().isoformat()
+    return JsonResponse({'status': 'ok'})
 
 
 @login_required
