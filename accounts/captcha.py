@@ -1,15 +1,13 @@
 import random
+import html as html_mod
 
 from django import forms
-from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy as _
 
 SESSION_KEY = 'captcha_answer'
 
 
 class MathCaptchaWidget(forms.Widget):
-    template_name = 'accounts/math_captcha.html'
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._generate_problem()
@@ -23,14 +21,17 @@ class MathCaptchaWidget(forms.Widget):
         self.answer = self.a + self.b if self.operator == '+' else self.a - self.b
 
     def render(self, name, value, attrs=None, renderer=None):
-        context = {
-            'a': self.a,
-            'b': self.b,
-            'operator': self.operator,
-            'name': name,
-            'attrs': self.build_attrs({}, attrs),
-        }
-        return render_to_string(self.template_name, context)
+        safe_name = html_mod.escape(name, quote=True)
+        return (
+            '<div class="flex items-center gap-3 my-2 p-3 bg-base-200 rounded-lg border border-base-300">'
+            f'<span class="text-lg font-mono font-bold text-base-content select-none">'
+            f'{self.a} {self.operator} {self.b} ='
+            f'</span>'
+            f'<input type="text" name="{safe_name}" '
+            f'class="input input-bordered input-sm w-24 text-center font-mono" '
+            f'autocomplete="off" required placeholder="?" inputmode="numeric">'
+            f'</div>'
+        )
 
     def value_from_datadict(self, data, files, name):
         return data.get(name, '')
@@ -50,7 +51,7 @@ class MathCaptchaField(forms.CharField):
     def clean(self, value):
         value = super().clean(value)
         try:
-            user_answer = int(value.strip())
+            int(value.strip())
         except (ValueError, AttributeError, TypeError):
             raise forms.ValidationError(_('Please enter a valid number.'))
         return value
