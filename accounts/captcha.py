@@ -4,6 +4,8 @@ from django import forms
 from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy as _
 
+SESSION_KEY = 'captcha_answer'
+
 
 class MathCaptchaWidget(forms.Widget):
     template_name = 'accounts/math_captcha.html'
@@ -52,7 +54,20 @@ class MathCaptchaField(forms.CharField):
             user_answer = int(value.strip())
         except (ValueError, AttributeError, TypeError):
             raise forms.ValidationError(_('Please enter a valid number.'))
-        if user_answer != self.captcha_widget.answer:
-            self.captcha_widget._generate_problem()
-            raise forms.ValidationError(_('Incorrect answer. Please try again.'))
         return value
+
+
+def validate_captcha(request, value):
+    """Validate captcha answer against session-stored answer."""
+    expected = request.session.get(SESSION_KEY)
+    if expected is None:
+        return False
+    try:
+        return int(value.strip()) == int(expected)
+    except (ValueError, AttributeError, TypeError):
+        return False
+
+
+def store_captcha_answer(request, answer):
+    """Store the captcha answer in the session."""
+    request.session[SESSION_KEY] = answer

@@ -13,6 +13,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
+from .captcha import validate_captcha, store_captcha_answer
 from .forms import AdminUserForm, EmailLoginForm, ProfileUpdateForm
 from .services.login_throttle import (
     get_remaining_attempts,
@@ -80,10 +81,17 @@ def login_view(request):
             form = EmailLoginForm(request)
             return render(request, 'accounts/login.html', {'form': form})
 
+        captcha_value = request.POST.get('captcha', '')
+        if not validate_captcha(request, captcha_value):
+            messages.error(request, 'Invalid captcha answer. Please try again.')
+            form = EmailLoginForm(request)
+            return render(request, 'accounts/login.html', {'form': form})
+
         form = EmailLoginForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
             reset_attempts(email, ip)
+            store_captcha_answer(request, None)
             login(request, user)
             messages.success(request, f'Welcome back, {user.get_short_name()}.')
             next_url = request.POST.get('next') or request.GET.get('next')
@@ -96,7 +104,15 @@ def login_view(request):
     else:
         form = EmailLoginForm(request)
 
-    return render(request, 'accounts/login.html', {'form': form})
+    from .captcha import MathCaptchaWidget
+    widget = MathCaptchaWidget()
+    store_captcha_answer(request, widget.answer)
+    captcha_html = widget.render('captcha', '', {})
+
+    return render(request, 'accounts/login.html', {
+        'form': form,
+        'captcha_html': captcha_html,
+    })
 
 
 @login_required

@@ -20,7 +20,10 @@
             {% daisy_form_errors form %}
             {% daisy_field form.email %}
             {% daisy_field form.password %}
-            {% daisy_field form.captcha %}
+            <div class="form-control">
+                <label class="label"><span class="label-text font-medium">Verification</span></label>
+                {{ captcha_html|safe }}
+            </div>
             {% if request.GET.next %}
                 <input type="hidden" name="next" value="{{ request.GET.next }}">
             {% endif %}
