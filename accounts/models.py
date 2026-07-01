@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils import timezone
@@ -69,6 +71,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         help_text=_('Designates whether the user can log into the admin site.'),
     )
     date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
+    password_reset_token = models.UUIDField(_('password reset token'), null=True, blank=True, unique=True)
+    password_reset_token_created_at = models.DateTimeField(_('password reset token created at'), null=True, blank=True)
 
     objects = UserManager()
 
@@ -105,3 +109,20 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def is_client(self):
         return self.role == self.Role.CLIENT
+
+    def generate_password_reset_token(self):
+        self.password_reset_token = uuid.uuid4()
+        self.password_reset_token_created_at = timezone.now()
+        self.save(update_fields=['password_reset_token', 'password_reset_token_created_at'])
+        return self.password_reset_token
+
+    def is_password_reset_token_valid(self):
+        if not self.password_reset_token or not self.password_reset_token_created_at:
+            return False
+        age = timezone.now() - self.password_reset_token_created_at
+        return age.total_seconds() < 3600
+
+    def clear_password_reset_token(self):
+        self.password_reset_token = None
+        self.password_reset_token_created_at = None
+        self.save(update_fields=['password_reset_token', 'password_reset_token_created_at'])

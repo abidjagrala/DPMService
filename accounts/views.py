@@ -14,7 +14,7 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
 from .captcha import validate_captcha, store_captcha_answer
-from .forms import AdminUserForm, EmailLoginForm, ProfileUpdateForm
+from .forms import AdminUserForm, EmailLoginForm, PasswordResetConfirmForm, PasswordResetRequestForm, ProfileUpdateForm
 from .services.login_throttle import (
     get_remaining_attempts,
     is_locked_out,
@@ -290,3 +290,88 @@ def user_delete_view(request, user_id):
 
     template = 'accounts/_user_confirm_delete_partial.html' if is_htmx(request) else 'accounts/user_confirm_delete.html'
     return render(request, template, {'user_obj': target_user})
+
+
+@csrf_protect
+@never_cache
+@require_http_methods(['GET', 'POST'])
+def password_reset_request_view(request):
+    if request.method == 'POST':
+        form = PasswordResetRequestForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            try:
+                user = User.objects.get(email__iexact=email, is_active=True)
+                token = user.generate_password_reset_token()
+                _send_password_reset_email(request, user, token)
+            except User.DoesNotExist:
+                pass
+            messages.success(request, 'If an account exists with this email, a password reset link has been sent.')
+            return redirect('accounts:login')
+    else:
+        form = PasswordResetRequestForm()
+
+    return render(request, 'accounts/password_reset_request.html', {'form': form})
+
+
+@csrf_protect
+@never_cache
+@require_http_methods(['GET', 'POST'])
+def password_reset_confirm_view(request, token):
+    try:
+        user = User.objects.get(password_reset_token=token, is_active=True)
+    except User.DoesNotExist:
+        messages.error(request, 'Invalid or expired password reset link.')
+        return redirect('accounts:password_reset_request')
+
+    if not user.is_password_reset_token_valid():
+        user.clear_password_reset_token()
+        messages.error(request, 'Password reset link has expired. Please request a new one.')
+        return redirect('accounts:password_reset_request')
+
+    if request.method == 'POST':
+        form = PasswordResetConfirmForm(user=user, data=request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your password has been reset successfully. You can now sign in.')
+            return redirect('accounts:login')
+    else:
+        form = PasswordResetConfirmForm(user=user)
+
+    return render(request, 'accounts/password_reset_confirm.html', {'form': form, 'token': token})
+
+
+def password_reset_success_view(request):
+    return render(request, 'accounts/password_reset_success.html')
+
+
+def _send_password_reset_email(request, user, token):
+    from django.core.mail import send_mail
+    from django.conf import settings
+    from django.urls import reverse
+
+    reset_url = request.build_absolute_uri(
+        reverse('accounts:password_reset_confirm', kwargs={'token': str(token)})
+    )
+    subject = 'Password Reset Request - DPM Service'
+    message = (
+        f'Hello {user.get_full_name()},\n\n'
+        f'You have requested to reset your password. Please click the link below to set a new password:\n\n'
+        f'{reset_url}\n\n'
+        f'This link will expire in 1 hour.\n\n'
+        f'If you did not request this, please ignore this email.\n\n'
+        f'Regards,\n'
+        f'DPM Service Team'
+    )
+    try:
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=True,
+        )
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error('Password reset email failed to %s: %s', user.email, e)

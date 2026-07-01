@@ -6,6 +6,47 @@ from django.utils.translation import gettext_lazy as _
 User = get_user_model()
 
 
+class PasswordResetRequestForm(forms.Form):
+    email = forms.EmailField(
+        label=_('Email'),
+        widget=forms.EmailInput(attrs={'autocomplete': 'email', 'autofocus': True}),
+    )
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        return email.lower() if email else email
+
+
+class PasswordResetConfirmForm(forms.Form):
+    new_password1 = forms.CharField(
+        label=_('New password'),
+        strip=False,
+        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}),
+    )
+    new_password2 = forms.CharField(
+        label=_('Confirm new password'),
+        strip=False,
+        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}),
+    )
+
+    def __init__(self, user=None, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_new_password2(self):
+        p1 = self.cleaned_data.get('new_password1')
+        p2 = self.cleaned_data.get('new_password2')
+        if p1 and p2 and p1 != p2:
+            raise forms.ValidationError(_("The two password fields didn't match."))
+        password_validation.validate_password(p2, self.user)
+        return p2
+
+    def save(self):
+        self.user.set_password(self.cleaned_data['new_password1'])
+        self.user.clear_password_reset_token()
+        self.user.save()
+
+
 class EmailLoginForm(forms.Form):
     email = forms.EmailField(
         label=_('Email'),
