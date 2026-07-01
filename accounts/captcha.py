@@ -23,7 +23,6 @@ class MathCaptchaWidget(forms.Widget):
         self.answer = self.a + self.b if self.operator == '+' else self.a - self.b
 
     def render(self, name, value, attrs=None, renderer=None):
-        self._generate_problem()
         context = {
             'a': self.a,
             'b': self.b,
@@ -58,7 +57,6 @@ class MathCaptchaField(forms.CharField):
 
 
 def validate_captcha(request, value):
-    """Validate captcha answer against session-stored answer."""
     expected = request.session.get(SESSION_KEY)
     if expected is None:
         return False
@@ -69,5 +67,4 @@ def validate_captcha(request, value):
 
 
 def store_captcha_answer(request, answer):
-    """Store the captcha answer in the session."""
     request.session[SESSION_KEY] = answer

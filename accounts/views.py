@@ -72,6 +72,13 @@ def login_view(request):
     if request.user.is_authenticated:
         return redirect('accounts:dashboard')
 
+    from .captcha import MathCaptchaWidget
+
+    def _new_captcha():
+        widget = MathCaptchaWidget()
+        store_captcha_answer(request, widget.answer)
+        return widget.render('captcha', '', {})
+
     if request.method == 'POST':
         email = request.POST.get('email', '').strip().lower()
         ip = _get_client_ip(request)
@@ -79,19 +86,18 @@ def login_view(request):
         if is_locked_out(email, ip):
             messages.error(request, 'Too many failed login attempts. Please try again in 5 minutes.')
             form = EmailLoginForm(request)
-            return render(request, 'accounts/login.html', {'form': form})
+            return render(request, 'accounts/login.html', {'form': form, 'captcha_html': _new_captcha()})
 
         captcha_value = request.POST.get('captcha', '')
         if not validate_captcha(request, captcha_value):
             messages.error(request, 'Invalid captcha answer. Please try again.')
             form = EmailLoginForm(request)
-            return render(request, 'accounts/login.html', {'form': form})
+            return render(request, 'accounts/login.html', {'form': form, 'captcha_html': _new_captcha()})
 
         form = EmailLoginForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
             reset_attempts(email, ip)
-            store_captcha_answer(request, None)
             login(request, user)
             messages.success(request, f'Welcome back, {user.get_short_name()}.')
             next_url = request.POST.get('next') or request.GET.get('next')
@@ -104,14 +110,9 @@ def login_view(request):
     else:
         form = EmailLoginForm(request)
 
-    from .captcha import MathCaptchaWidget
-    widget = MathCaptchaWidget()
-    store_captcha_answer(request, widget.answer)
-    captcha_html = widget.render('captcha', '', {})
-
     return render(request, 'accounts/login.html', {
         'form': form,
-        'captcha_html': captcha_html,
+        'captcha_html': _new_captcha(),
     })
 
 
