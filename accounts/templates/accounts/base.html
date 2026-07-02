@@ -21,6 +21,7 @@
                 theme: 'light',
                 themeOpen: false,
                 sidebarOpen: window.innerWidth >= 1024,
+                sidebarCollapsed: false,
                 init() {
                     const stored = localStorage.getItem('daisyui-theme');
                     if (stored && DAISYUI_THEMES.some(t => t.id === stored)) {
@@ -55,7 +56,14 @@
                     return 'sun';
                 },
                 toggleSidebar() {
-                    this.sidebarOpen = !this.sidebarOpen;
+                    if (window.innerWidth < 1024) {
+                        this.sidebarOpen = !this.sidebarOpen;
+                    } else {
+                        this.sidebarCollapsed = !this.sidebarCollapsed;
+                        if (this.sidebarCollapsed) {
+                            this.sidebarOpen = true;
+                        }
+                    }
                 },
             };
         }
@@ -138,6 +146,9 @@
         .ss-dropdown .ss-item:hover { background: oklch(var(--b2)); }
         .ss-dropdown .ss-item.ss-active { background: oklch(var(--p) / 0.15); color: oklch(var(--p)); font-weight: 600; }
         .ss-dropdown .ss-empty { padding: 0.5rem 0.75rem; font-size: 0.875rem; color: oklch(var(--bc) / 0.5); }
+        aside { transition: width 0.3s ease; }
+        .sidebar-collapsed .logo-light,
+        .sidebar-collapsed .logo-dark { height: 1.5rem; transition: height 0.3s ease; }
     </style>
 </head>
 <body class="bg-base-200 text-base-content antialiased">
@@ -147,7 +158,8 @@
      @keydown.escape.window="sidebarOpen = false">
     {% if user.is_authenticated %}
         {% include "accounts/_sidebar.html" %}
-        <div class="flex-1 flex flex-col min-w-0">
+        <div class="flex-1 flex flex-col min-w-0 transition-all duration-300"
+             :class="sidebarCollapsed && window.innerWidth >= 1024 ? 'ml-0' : ''">
             {% include "accounts/_topbar.html" %}
             <main class="flex-1 p-4 lg:p-6">
                 <div id="page-content" class="mx-auto max-w-7xl">

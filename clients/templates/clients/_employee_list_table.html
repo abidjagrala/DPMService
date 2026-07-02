@@ -1,67 +1,139 @@
 {% load i18n %}
 
-<div class="overflow-x-auto">
-    <table class="table table-zebra table-sm">
-        <thead>
-            <tr>
-                <th>{% trans "Photo" %}</th>
-                <th>{% trans "ID" %}</th>
-                <th>{% trans "Name" %}</th>
-                <th>{% trans "Email" %}</th>
-                <th>{% trans "Designation" %}</th>
-                <th>{% trans "Department" %}</th>
-                <th>{% trans "Status" %}</th>
-                <th class="text-right">{% trans "Actions" %}</th>
-            </tr>
-        </thead>
-        <tbody>
+<div id="employee-table-wrapper"
+     hx-get="{% url 'clients:employee_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+     hx-trigger="employee-saved from:body"
+     hx-swap="outerHTML">
+    <div x-show="viewMode === 'table'" x-cloak>
+        <div class="overflow-x-auto">
+            <table class="table table-zebra table-sm">
+                <thead>
+                    <tr>
+                        <th>{% trans "Photo" %}</th>
+                        <th>{% trans "ID" %}</th>
+                        <th>{% trans "Name" %}</th>
+                        <th>{% trans "Email" %}</th>
+                        <th>{% trans "Designation" %}</th>
+                        <th>{% trans "Department" %}</th>
+                        <th>{% trans "Status" %}</th>
+                        <th class="text-right">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in employees %}
+                    <tr>
+                        <td>
+                            {% if emp.employee_photo %}
+                                <img src="{{ emp.employee_photo.url }}" alt="{{ emp.user.get_full_name }}" class="w-10 h-10 rounded-full object-cover border border-base-300">
+                            {% else %}
+                                <div class="avatar placeholder">
+                                    <div class="bg-primary text-primary-content rounded-full w-10">
+                                        <span class="text-sm">{{ emp.user.first_name|first|upper }}{{ emp.user.last_name|first|upper }}</span>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td class="font-medium">{{ emp.employee_id }}</td>
+                        <td>
+                            <a href="{% url 'clients:employee_detail' pk=emp.pk %}" class="link link-primary">{{ emp.user.get_full_name }}</a>
+                        </td>
+                        <td>{{ emp.user.email }}</td>
+                        <td>{{ emp.designation }}</td>
+                        <td>{{ emp.get_department_display }}</td>
+                        <td>
+                            {% if emp.is_active %}
+                                <span class="badge badge-success badge-sm">{% trans "Active" %}</span>
+                            {% else %}
+                                <span class="badge badge-ghost badge-sm">{% trans "Inactive" %}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-right space-x-1">
+                            <a href="{% url 'clients:employee_update' pk=emp.pk %}"
+                               class="btn btn-ghost btn-xs">
+                                {% trans "Edit" %}
+                            </a>
+                            <button type="button"
+                                    hx-get="{% url 'clients:employee_delete' pk=emp.pk %}"
+                                    hx-target="#modal-body"
+                                    hx-swap="innerHTML"
+                                    @click="$dispatch('open-modal')"
+                                    class="btn btn-ghost btn-xs text-error">
+                                {% trans "Delete" %}
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-base-content/60 py-8">{% trans "No employees found." %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div x-show="viewMode === 'card'" x-cloak>
+        <div id="card-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
             {% for emp in employees %}
-            <tr>
-                <td>
-                    {% if emp.employee_photo %}
-                        <img src="{{ emp.employee_photo.url }}" alt="{{ emp.user.get_full_name }}" class="w-10 h-10 rounded-full object-cover border border-base-300">
-                    {% else %}
-                        <div class="avatar placeholder">
-                            <div class="bg-primary text-primary-content rounded-full w-10">
-                                <span class="text-sm">{{ emp.user.first_name|first|upper }}{{ emp.user.last_name|first|upper }}</span>
+            <div class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-shadow">
+                <div class="card-body p-4">
+                    <div class="flex items-start gap-3">
+                        {% if emp.employee_photo %}
+                            <img src="{{ emp.employee_photo.url }}" alt="{{ emp.user.get_full_name }}" class="w-12 h-12 rounded-xl object-cover border border-base-300 flex-shrink-0">
+                        {% else %}
+                            <div class="avatar placeholder flex-shrink-0">
+                                <div class="bg-primary text-primary-content rounded-xl w-12">
+                                    <span class="text-sm">{{ emp.user.first_name|first|upper }}{{ emp.user.last_name|first|upper }}</span>
+                                </div>
                             </div>
+                        {% endif %}
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-start justify-between gap-2">
+                                <a href="{% url 'clients:employee_detail' pk=emp.pk %}" class="card-title text-base link link-primary truncate">
+                                    {{ emp.user.get_full_name }}
+                                </a>
+                            </div>
+                            <p class="text-sm text-base-content/60">{{ emp.employee_id }}</p>
                         </div>
-                    {% endif %}
-                </td>
-                <td class="font-medium">{{ emp.employee_id }}</td>
-                <td>
-                    <a href="{% url 'clients:employee_detail' pk=emp.pk %}" class="link link-primary">{{ emp.user.get_full_name }}</a>
-                </td>
-                <td>{{ emp.user.email }}</td>
-                <td>{{ emp.designation }}</td>
-                <td>{{ emp.get_department_display }}</td>
-                <td>
-                    {% if emp.is_active %}
-                        <span class="badge badge-success badge-sm">{% trans "Active" %}</span>
-                    {% else %}
-                        <span class="badge badge-ghost badge-sm">{% trans "Inactive" %}</span>
-                    {% endif %}
-                </td>
-                <td class="text-right space-x-1">
-                    <a href="{% url 'clients:employee_update' pk=emp.pk %}"
-                       class="btn btn-ghost btn-xs">
-                        {% trans "Edit" %}
-                    </a>
-                    <button type="button"
-                            hx-get="{% url 'clients:employee_delete' pk=emp.pk %}"
-                            hx-target="#modal-body"
-                            hx-swap="innerHTML"
-                            @click="$dispatch('open-modal')"
-                            class="btn btn-ghost btn-xs text-error">
-                        {% trans "Delete" %}
-                    </button>
-                </td>
-            </tr>
+                    </div>
+                    <div class="text-sm space-y-1 mt-2">
+                        <div class="flex gap-2">
+                            <span class="text-base-content/50 w-24 shrink-0">{% trans "Email" %}</span>
+                            <span class="truncate">{{ emp.user.email }}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="text-base-content/50 w-24 shrink-0">{% trans "Designation" %}</span>
+                            <span>{{ emp.designation }}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="text-base-content/50 w-24 shrink-0">{% trans "Department" %}</span>
+                            <span>{{ emp.get_department_display }}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-2">
+                        {% if emp.is_active %}
+                            <span class="badge badge-success badge-sm">{% trans "Active" %}</span>
+                        {% else %}
+                            <span class="badge badge-ghost badge-sm">{% trans "Inactive" %}</span>
+                        {% endif %}
+                    </div>
+                    <div class="divider my-1"></div>
+                    <div class="card-actions justify-end">
+                        <a href="{% url 'clients:employee_update' pk=emp.pk %}" class="btn btn-ghost btn-xs">{% trans "Edit" %}</a>
+                        <button type="button"
+                                hx-get="{% url 'clients:employee_delete' pk=emp.pk %}"
+                                hx-target="#modal-body"
+                                hx-swap="innerHTML"
+                                @click="$dispatch('open-modal')"
+                                class="btn btn-ghost btn-xs text-error">{% trans "Delete" %}</button>
+                    </div>
+                </div>
+            </div>
             {% empty %}
-            <tr>
-                <td colspan="8" class="text-center text-base-content/60 py-8">{% trans "No employees found." %}</td>
-            </tr>
+            <div class="col-span-full text-center py-12 text-base-content/50">
+                <p>{% trans "No employees found." %}</p>
+            </div>
             {% endfor %}
-        </tbody>
-    </table>
+        </div>
+    </div>
 </div>

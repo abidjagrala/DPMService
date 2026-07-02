@@ -15,15 +15,31 @@
             <h1 class="text-2xl font-semibold">Homeworkers</h1>
             <p class="text-sm text-base-content/60">{{ homeworkers|length }} {% trans "total homeworker" %}{{ homeworkers|length|pluralize }}</p>
         </div>
-        <button type="button"
-                hx-get="{% url 'clients:homeworker_create' %}"
-                hx-target="#drawer-body"
-                hx-swap="innerHTML"
-                @click="$dispatch('open-drawer', { title: '{% trans "New homeworker" %}' })"
-                class="btn btn-primary btn-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
-            {% trans "Add Homeworker" %}
-        </button>
+        <div class="flex items-center gap-2">
+            <div class="btn-group">
+                <button type="button" class="btn btn-ghost btn-sm"
+                        :class="{ 'btn-active': viewMode === 'table' }"
+                        @click="setViewMode('table')"
+                        title="{% trans 'Table view' %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M3 6h18M3 18h18"/></svg>
+                </button>
+                <button type="button" class="btn btn-ghost btn-sm"
+                        :class="{ 'btn-active': viewMode === 'card' }"
+                        @click="setViewMode('card')"
+                        title="{% trans 'Card view' %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                </button>
+            </div>
+            <button type="button"
+                    hx-get="{% url 'clients:homeworker_create' %}"
+                    hx-target="#drawer-body"
+                    hx-swap="innerHTML"
+                    @click="$dispatch('open-drawer', { title: '{% trans "New homeworker" %}' })"
+                    class="btn btn-primary btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+                {% trans "Add Homeworker" %}
+            </button>
+        </div>
     </div>
 
     <div class="card bg-base-100 border border-base-300">
@@ -84,12 +100,7 @@
                 {% endif %}
             </form>
 
-            <div id="homeworker-table-wrapper"
-                 hx-get="{% url 'clients:homeworker_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
-                 hx-trigger="homeworker-saved from:body"
-                 hx-swap="outerHTML">
-                {% include "clients/_homeworker_list_table.html" %}
-            </div>
+            {% include "clients/_homeworker_list_table.html" %}
         </div>
     </div>
 
@@ -130,6 +141,11 @@ function homeworkerCrud() {
         drawerOpen: false,
         drawerTitle: 'Form',
         modalOpen: false,
+        viewMode: localStorage.getItem('homeworker-view-mode') || 'table',
+        setViewMode(mode) {
+            this.viewMode = mode;
+            localStorage.setItem('homeworker-view-mode', mode);
+        },
         init() {
             window.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
