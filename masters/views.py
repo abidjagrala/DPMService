@@ -402,3 +402,86 @@ def transport_type_delete_view(request, pk):
 
     template = 'masters/_transport_type_confirm_delete_partial.html' if is_htmx(request) else 'masters/transport_type_confirm_delete.html'
     return render(request, template, {'obj': tt, 'page_title': f'Delete Transport Type — {tt.name}'})
+
+
+# ---------------------------------------------------------------------------
+# Quick-Create (for inline add from other forms)
+# ---------------------------------------------------------------------------
+
+@role_required('admin', 'manager')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def state_quick_create_view(request):
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        if not name:
+            return HttpResponse(json.dumps({'error': 'State name is required.'}), status=400, content_type='application/json')
+        if State.objects.filter(name__iexact=name).exists():
+            return HttpResponse(json.dumps({'error': 'A state with this name already exists.'}), status=400, content_type='application/json')
+        state = State.objects.create(name=name)
+        return HttpResponse(json.dumps({'id': state.pk, 'label': state.name}), status=201, content_type='application/json')
+    return render(request, 'masters/_state_quick_form_partial.html')
+
+
+@role_required('admin', 'manager')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def city_quick_create_view(request):
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        if not name:
+            return HttpResponse(json.dumps({'error': 'City name is required.'}), status=400, content_type='application/json')
+        state_id = request.POST.get('state')
+        state = get_object_or_404(State, pk=state_id) if state_id else None
+        if state and City.objects.filter(state=state, name__iexact=name).exists():
+            return HttpResponse(json.dumps({'error': 'A city with this name already exists in this state.'}), status=400, content_type='application/json')
+        city = City.objects.create(state=state, name=name) if state else City.objects.create(name=name)
+        return HttpResponse(json.dumps({'id': city.pk, 'label': str(city)}), status=201, content_type='application/json')
+    state_id = request.GET.get('state', '')
+    states = State.objects.filter(is_active=True).order_by('name')
+    return render(request, 'masters/_city_quick_form_partial.html', {'selected_state': state_id, 'states': states})
+
+
+@role_required('admin', 'manager')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def service_type_quick_create_view(request):
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        if not name:
+            return HttpResponse(json.dumps({'error': 'Service type name is required.'}), status=400, content_type='application/json')
+        if ServiceType.objects.filter(name__iexact=name).exists():
+            return HttpResponse(json.dumps({'error': 'A service type with this name already exists.'}), status=400, content_type='application/json')
+        st = ServiceType.objects.create(name=name, description=request.POST.get('description', ''))
+        return HttpResponse(json.dumps({'id': st.pk, 'label': st.name}), status=201, content_type='application/json')
+    return render(request, 'masters/_service_type_quick_form_partial.html')
+
+
+@role_required('admin', 'manager')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def asset_type_quick_create_view(request):
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        if not name:
+            return HttpResponse(json.dumps({'error': 'Asset type name is required.'}), status=400, content_type='application/json')
+        if AssetType.objects.filter(name__iexact=name).exists():
+            return HttpResponse(json.dumps({'error': 'An asset type with this name already exists.'}), status=400, content_type='application/json')
+        at = AssetType.objects.create(name=name, description=request.POST.get('description', ''))
+        return HttpResponse(json.dumps({'id': at.pk, 'label': at.name}), status=201, content_type='application/json')
+    return render(request, 'masters/_asset_type_quick_form_partial.html')
+
+
+@role_required('admin', 'manager')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def transport_type_quick_create_view(request):
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        if not name:
+            return HttpResponse(json.dumps({'error': 'Transport type name is required.'}), status=400, content_type='application/json')
+        if TransportType.objects.filter(name__iexact=name).exists():
+            return HttpResponse(json.dumps({'error': 'A transport type with this name already exists.'}), status=400, content_type='application/json')
+        tt = TransportType.objects.create(name=name, description=request.POST.get('description', ''))
+        return HttpResponse(json.dumps({'id': tt.pk, 'label': tt.name}), status=201, content_type='application/json')
+    return render(request, 'masters/_transport_type_quick_form_partial.html')

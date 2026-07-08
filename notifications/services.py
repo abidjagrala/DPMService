@@ -6,8 +6,20 @@ from django.core.mail import send_mail
 logger = logging.getLogger(__name__)
 
 
+def _apply_mail_settings():
+    """Apply MailSettings from DB to Django settings. Returns True if email is active."""
+    from accounts.models import MailSettings
+    mail_config = MailSettings.get_instance()
+    if not mail_config.is_active:
+        return False
+    mail_config.apply_to_settings()
+    return True
+
+
 def send_email_notification(subject, message, recipient_email):
-    if not recipient_email or not settings.EMAIL_HOST_USER:
+    if not recipient_email:
+        return
+    if not _apply_mail_settings():
         return
     try:
         send_mail(

@@ -1,0 +1,65 @@
+{% extends "accounts/base_auth.html" %}
+{% load daisy static i18n %}
+
+{% block title %}Two-Factor Verification — DPM Service{% endblock %}
+
+{% block content %}
+<div class="card bg-base-100 shadow-xl border border-base-300">
+    <div class="card-body">
+        <div class="flex items-center gap-3 mb-4">
+            <img src="{% static 'images/dpm-logo-light.webp' %}" alt="DPM Service" class="h-16 w-16 object-contain logo-light">
+            <img src="{% static 'images/dpm-logo-dark.webp' %}" alt="DPM Service" class="h-16 w-16 object-contain logo-dark">
+            <div>
+                <h1 class="card-title text-lg leading-tight">{% trans "Two-Factor Verification" %}</h1>
+                <p class="text-xs text-base-content/60">{% trans "Enter the code from your authenticator app" %}</p>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <div class="flex justify-center">
+                <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+            </div>
+
+            {% if error %}
+                <div class="alert alert-error text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{{ error }}</span>
+                </div>
+            {% endif %}
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">{% trans "Verification Code" %}</span></label>
+                    <input type="text"
+                           name="code"
+                           maxlength="6"
+                           pattern="[0-9]{6}"
+                           autocomplete="one-time-code"
+                           inputmode="numeric"
+                           autofocus
+                           required
+                           class="input input-bordered input-lg w-full text-center text-2xl tracking-[0.5em] font-mono"
+                           placeholder="000000">
+                    <label class="label"><span class="label-text-alt text-base-content/50">{% trans "Enter the 6-digit code from your authenticator app" %}</span></label>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full mt-4">{% trans "Verify" %}</button>
+            </form>
+
+            <div class="text-center">
+                <a href="{% url 'accounts:login' %}" class="link link-primary text-xs">{% trans "Back to login" %}</a>
+            </div>
+        </div>
+    </div>
+</div>
+<p class="text-center text-xs text-base-content/50 mt-4">
+    Developed by: <a href="https://www.arwasys.com" target="_blank" rel="noopener" class="link link-primary">Arwasys Technokraft Pvt. Ltd.</a>
+</p>
+{% endblock %}

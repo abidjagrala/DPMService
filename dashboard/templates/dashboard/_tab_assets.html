@@ -1,0 +1,54 @@
+{% load i18n %}
+<div class="space-y-6">
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
+            <div class="stat-title text-xs">{% trans "Assets" %}</div>
+            <div class="stat-value text-2xl">{{ total_assets }}</div>
+            <div class="stat-desc text-xs">{{ assigned_assets }} {% trans "assigned" %}</div>
+        </div>
+        <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
+            <div class="stat-title text-xs">{% trans "Available Assets" %}</div>
+            <div class="stat-value text-2xl text-success">{{ available_assets }}</div>
+        </div>
+        <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
+            <div class="stat-title text-xs">{% trans "Under Maintenance" %}</div>
+            <div class="stat-value text-2xl text-warning">{{ maintenance_assets }}</div>
+        </div>
+    </div>
+
+    <div class="flex gap-3">
+        <a href="{% url 'assets:asset_create' %}" class="btn btn-primary btn-sm">{% trans "Add Assets" %}</a>
+        <a href="{% url 'assets:asset_list' %}" class="btn btn-ghost btn-sm">{% trans "View All Assets" %}</a>
+    </div>
+
+    {% if warranty_alerts %}
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-base">{% trans "Warranty Alerts" %}</h2>
+            <div class="space-y-2">
+                {% for a in warranty_alerts %}
+                <div class="flex items-center justify-between text-sm py-1">
+                    <span>{{ a.asset_tag }} — {{ a.brand_model }} <span class="text-base-content/50">({{ a.client.company_name|default:"—" }})</span></span>
+                    <span class="badge badge-warning badge-sm">{{ a.warranty_expiry }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-base">{% trans "Asset Status Distribution" %}</h2>
+            <div class="h-72"><canvas id="assetStatusChart"></canvas></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof loadAssetStatus === 'function') loadAssetStatus();
+});
+</script>

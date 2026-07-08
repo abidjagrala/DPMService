@@ -19,7 +19,7 @@
             {% csrf_token %}
             {% daisy_form_errors form %}
             {% daisy_field form.email %}
-            {% daisy_field form.password %}
+            {% include "accounts/_password_field.html" with field=form.password %}
             <div class="form-control">
                 <label class="label"><span class="label-text font-medium">Verification</span></label>
                 {{ captcha_html|safe }}

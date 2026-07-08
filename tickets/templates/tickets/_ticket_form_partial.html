@@ -7,12 +7,25 @@
     {% csrf_token %}
     {% daisy_form_errors form %}
     {% for field in form %}
-        {% if field.name == 'service_type' or field.name == 'client' or field.name == 'asset' or field.name == 'assigned_to' or field.name == 'priority' or field.name == 'status' or field.name == 'transport_type' %}
+        {% if field.name == 'service_type' or field.name == 'client' or field.name == 'asset' or field.name == 'location' or field.name == 'assigned_to' or field.name == 'priority' or field.name == 'status' or field.name == 'transport_type' %}
             <div class="form-control">
                 <label class="label py-1">
                     <span class="label-text text-sm font-medium">{{ field.label }}{% if field.field.required %} <span class="text-error">*</span>{% endif %}</span>
                 </label>
-                {% searchable_select field placeholder="Search..." css_class="input input-bordered input-sm w-full" %}
+                <div class="flex items-center">
+                    <div class="flex-1">
+                        {% searchable_select field placeholder="Search..." css_class="input input-bordered input-sm w-full" %}
+                    </div>
+                    {% if field.name == 'client' %}
+                        {% include "accounts/_quick_add_modal.html" with url="/company/quick-new/client/" field_name="client" label="Client" %}
+                    {% elif field.name == 'service_type' %}
+                        {% include "accounts/_quick_add_modal.html" with url="/masters/quick-new/service-type/" field_name="service_type" label="Service Type" %}
+                    {% elif field.name == 'transport_type' %}
+                        {% include "accounts/_quick_add_modal.html" with url="/masters/quick-new/transport-type/" field_name="transport_type" label="Transport Type" %}
+                    {% elif field.name == 'location' %}
+                        {% include "accounts/_quick_add_modal.html" with url="/company/quick-new/location/" field_name="location" label="Location" %}
+                    {% endif %}
+                </div>
                 {% if field.help_text %}
                     <label class="label"><span class="label-text-alt">{{ field.help_text }}</span></label>
                 {% endif %}

@@ -8,7 +8,6 @@ from django.views.decorators.http import require_http_methods
 
 from accounts.views import is_htmx
 from clients.models import Client
-from masters.models import City, State
 
 from . import services
 
@@ -27,43 +26,7 @@ def _safe(fn, default, *args, **kwargs):
 @require_http_methods(['GET'])
 def dashboard_view(request):
     user = request.user
-    ctx = _safe(services.get_all_kpis, {
-        'total_clients': 0, 'total_employees': 0, 'total_homeworkers': 0,
-        'total_tickets': 0, 'open_tickets': 0, 'in_progress_tickets': 0,
-        'completed_tickets': 0, 'tickets_today': 0,
-        'total_assets': 0, 'assigned_assets': 0, 'available_assets': 0, 'maintenance_assets': 0,
-        'total_domains': 0, 'active_domains': 0, 'expiring_domains_30': 0,
-        'total_hosting': 0, 'active_hosting': 0, 'expiring_hosting_30': 0,
-    }, user)
-    ctx['recent_tickets'] = _safe(services.get_recent_tickets, [], user)
-    ctx['recent_activities'] = _safe(services.get_recent_activities, [], user)
-    ctx['expiry_alerts'] = _safe(services.get_expiry_alerts, {
-        'domains_30': [], 'domains_15': [], 'domains_7': [],
-        'hosting_30': [], 'hosting_15': [], 'hosting_7': [],
-    }, user)
-    ctx['warranty_alerts'] = _safe(services.get_asset_warranty_alerts, [], user)
-    ctx['client_summary'] = _safe(services.get_client_summary, Client.objects.none(), user)
-    ctx['homeworker_summary'] = _safe(services.get_homeworker_summary, {
-        'total': 0, 'assigned_assets': 0,
-        'open_tickets': 0, 'closed_tickets': 0,
-    }, user)
-    ctx['domain_hosting_panel'] = _safe(services.get_domain_hosting_panel, {
-        'domains': [], 'hosting': [],
-    }, user)
-    ctx['my_tasks'] = _safe(services.get_my_tasks, {
-        'assigned_tickets': [], 'pending_count': 0,
-        'due_today_count': 0, 'overdue_count': 0,
-    }, user)
-    ctx['recent_comments'] = _safe(services.get_recent_comments, [], user)
-
-    # Filter options
-    if user.is_client:
-        ctx['clients'] = Client.objects.filter(user=user)
-    else:
-        ctx['clients'] = Client.objects.filter(is_active=True)
-    ctx['states'] = State.objects.filter(is_active=True)
-    ctx['cities'] = City.objects.filter(is_active=True)
-
+    ctx = {}
     ctx['page_title'] = 'Dashboard'
     return render(request, 'dashboard/dashboard.html', ctx)
 
@@ -236,3 +199,73 @@ def chart_domain_hosting(request):
 def chart_client_state(request):
     empty = {'labels': [], 'values': []}
     return JsonResponse(_safe(services.get_client_state_distribution, empty, request.user))
+
+
+# ---------------------------------------------------------------------------
+# Tab partials
+# ---------------------------------------------------------------------------
+
+@login_required
+@require_http_methods(['GET'])
+def dashboard_tickets_tab(request):
+    user = request.user
+    empty_kpi = {
+        'total_tickets': 0, 'open_tickets': 0, 'in_progress_tickets': 0,
+        'completed_tickets': 0, 'tickets_today': 0,
+    }
+    ctx = _safe(services.get_ticket_counts, empty_kpi, user)
+    ctx['recent_tickets'] = _safe(services.get_recent_tickets, [], user)[:10]
+    ctx['recent_activities'] = _safe(services.get_recent_activities, [], user)
+    ctx['my_tasks'] = _safe(services.get_my_tasks, {
+        'assigned_tickets': [], 'pending_count': 0,
+        'due_today_count': 0, 'overdue_count': 0,
+    }, user)
+    ctx['recent_comments'] = _safe(services.get_recent_comments, [], user)
+    return render(request, 'dashboard/_tab_tickets.html', ctx)
+
+
+@login_required
+@require_http_methods(['GET'])
+def dashboard_assets_tab(request):
+    user = request.user
+    empty_kpi = {
+        'total_assets': 0, 'assigned_assets': 0,
+        'available_assets': 0, 'maintenance_assets': 0,
+    }
+    ctx = _safe(services.get_asset_counts, empty_kpi, user)
+    ctx['warranty_alerts'] = _safe(services.get_asset_warranty_alerts, [], user)
+    return render(request, 'dashboard/_tab_assets.html', ctx)
+
+
+@login_required
+@require_http_methods(['GET'])
+def dashboard_domain_hosting_tab(request):
+    user = request.user
+    empty_kpi = {
+        'total_domains': 0, 'active_domains': 0, 'expiring_domains_30': 0,
+        'total_hosting': 0, 'active_hosting': 0, 'expiring_hosting_30': 0,
+    }
+    ctx = _safe(services.get_domain_hosting_counts, empty_kpi, user)
+    ctx['expired_dh_list'] = _safe(services.get_expired_domain_hosting_list, [], user)
+    ctx['next_expiry_dh_list'] = _safe(services.get_next_expiry_domain_hosting_list, [], user)
+    ctx['expiry_alerts'] = _safe(services.get_expiry_alerts, {
+        'domains_30': [], 'domains_15': [], 'domains_7': [],
+        'hosting_30': [], 'hosting_15': [], 'hosting_7': [],
+    }, user)
+    return render(request, 'dashboard/_tab_domain_hosting.html', ctx)
+
+
+@login_required
+@require_http_methods(['GET'])
+def dashboard_others_tab(request):
+    user = request.user
+    ctx = _safe(services.get_entity_counts_with_status, {
+        'total_clients': 0, 'active_clients': 0, 'inactive_clients': 0,
+        'total_employees': 0, 'active_employees': 0, 'inactive_employees': 0,
+        'total_homeworkers': 0, 'active_homeworkers': 0, 'inactive_homeworkers': 0,
+    }, user)
+    ctx['homeworker_summary'] = _safe(services.get_homeworker_summary, {
+        'total': 0, 'assigned_assets': 0,
+        'open_tickets': 0, 'closed_tickets': 0,
+    }, user)
+    return render(request, 'dashboard/_tab_others.html', ctx)

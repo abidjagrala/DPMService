@@ -76,6 +76,29 @@ def get_entity_counts(user=None):
     }
 
 
+def get_entity_counts_with_status(user=None):
+    if _is_restricted(user):
+        return {
+            'total_clients': 0, 'active_clients': 0, 'inactive_clients': 0,
+            'total_employees': 0, 'active_employees': 0, 'inactive_employees': 0,
+            'total_homeworkers': 0, 'active_homeworkers': 0, 'inactive_homeworkers': 0,
+        }
+    all_clients = Client.objects.all()
+    all_employees = Employee.objects.all()
+    all_homeworkers = Homeworker.objects.all()
+    return {
+        'total_clients': all_clients.count(),
+        'active_clients': all_clients.filter(is_active=True).count(),
+        'inactive_clients': all_clients.filter(is_active=False).count(),
+        'total_employees': all_employees.count(),
+        'active_employees': all_employees.filter(is_active=True).count(),
+        'inactive_employees': all_employees.filter(is_active=False).count(),
+        'total_homeworkers': all_homeworkers.count(),
+        'active_homeworkers': all_homeworkers.filter(is_active=True).count(),
+        'inactive_homeworkers': all_homeworkers.filter(is_active=False).count(),
+    }
+
+
 def get_ticket_counts(user=None):
     tickets = _client_ticket_qs(user)
     return {
@@ -450,6 +473,25 @@ def get_domain_hosting_panel(user=None):
         'domains': services.filter(service_type='domain')[:10],
         'hosting': services.filter(service_type='hosting')[:10],
     }
+
+
+def get_expired_domain_hosting_list(user=None, limit=10):
+    """Expired domains and hosting sorted by expiry date."""
+    if _is_restricted(user):
+        return DomainHosting.objects.none()
+    return DomainHosting.objects.filter(
+        is_active=True, status='expired'
+    ).select_related('client').order_by('expiry_date')[:limit]
+
+
+def get_next_expiry_domain_hosting_list(user=None, limit=10):
+    """Upcoming expiring domains and hosting within 30 days."""
+    if _is_restricted(user):
+        return DomainHosting.objects.none()
+    return DomainHosting.objects.filter(
+        is_active=True, status='active',
+        expiry_date__lte=thirty_days, expiry_date__gte=today,
+    ).select_related('client').order_by('expiry_date')[:limit]
 
 
 def get_my_tasks(user):

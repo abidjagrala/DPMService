@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import never_cache
@@ -98,10 +98,11 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             reset_attempts(email, ip)
-            login(request, user)
-            messages.success(request, f'Welcome back, {user.get_short_name()}.')
-            next_url = request.POST.get('next') or request.GET.get('next')
-            return redirect(next_url or 'accounts:dashboard')
+            request.session['pre_2fa_user_id'] = user.pk
+            if user.totp_secret:
+                return redirect('accounts:totp_verify')
+            else:
+                return redirect('accounts:totp_setup')
         else:
             record_failed_attempt(email, ip)
             remaining = get_remaining_attempts(email, ip)
@@ -350,6 +351,12 @@ def _send_password_reset_email(request, user, token):
     from django.conf import settings
     from django.urls import reverse
 
+    from accounts.models import MailSettings
+    mail_config = MailSettings.get_instance()
+    if not mail_config.is_active:
+        return
+    mail_config.apply_to_settings()
+
     reset_url = request.build_absolute_uri(
         reverse('accounts:password_reset_confirm', kwargs={'token': str(token)})
     )
@@ -375,3 +382,219 @@ def _send_password_reset_email(request, user, token):
         import logging
         logger = logging.getLogger(__name__)
         logger.error('Password reset email failed to %s: %s', user.email, e)
+
+
+# ---------------------------------------------------------------------------
+# Company Info (singleton)
+# ---------------------------------------------------------------------------
+
+@role_required('admin')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def company_info_edit_view(request):
+    from .forms import CompanyInfoForm
+    from .models import CompanyInfo
+
+    company = CompanyInfo.get_instance()
+
+    if request.method == 'POST':
+        form = CompanyInfoForm(request.POST, request.FILES, instance=company)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Company information updated successfully.'))
+            return redirect('accounts:company_info_edit')
+    else:
+        form = CompanyInfoForm(instance=company)
+
+    return render(request, 'accounts/company_info_edit.html', {
+        'form': form,
+        'obj': company,
+        'page_title': _('Company Information'),
+    })
+
+
+# ---------------------------------------------------------------------------
+# Mail Settings (singleton)
+# ---------------------------------------------------------------------------
+
+@role_required('admin')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def mail_settings_edit_view(request):
+    from .forms import MailSettingsForm
+    from .models import MailSettings
+
+    mail_config = MailSettings.get_instance()
+
+    if request.method == 'POST':
+        form = MailSettingsForm(request.POST, instance=mail_config)
+        if form.is_valid():
+            mail_settings_obj = form.save()
+            mail_settings_obj.apply_to_settings()
+            messages.success(request, _('Mail settings updated successfully.'))
+            return redirect('accounts:mail_settings_edit')
+    else:
+        form = MailSettingsForm(instance=mail_config)
+
+    return render(request, 'accounts/mail_settings_edit.html', {
+        'form': form,
+        'obj': mail_config,
+        'page_title': _('Mail Settings'),
+    })
+
+
+@role_required('admin')
+@csrf_protect
+@require_http_methods(['POST'])
+def mail_settings_test_view(request):
+    """Send a test email using the current mail settings."""
+    from django.core.mail import send_mail
+    from django.conf import settings
+    from .models import MailSettings
+
+    mail_config = MailSettings.get_instance()
+    if not mail_config.is_active:
+        return JsonResponse({'success': False, 'error': _('Email sending is disabled. Enable it first.')})
+    if not mail_config.from_email and not settings.DEFAULT_FROM_EMAIL:
+        return JsonResponse({'success': False, 'error': _('Please set a "From Email" address first.')})
+
+    mail_config.apply_to_settings()
+
+    test_email = request.POST.get('email', '').strip()
+    if not test_email:
+        return JsonResponse({'success': False, 'error': _('Please enter an email address.')})
+
+    try:
+        send_mail(
+            subject='DPM Service — Test Email',
+            message=(
+                'This is a test email from DPM Service.\n\n'
+                'If you received this, your mail settings are working correctly.\n\n'
+                f'SMTP Host: {mail_config.host}\n'
+                f'Port: {mail_config.port}\n'
+                f'Security: {mail_config.get_security_display()}\n'
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[test_email],
+            fail_silently=False,
+        )
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+# ---------------------------------------------------------------------------
+# Two-Factor Authentication (TOTP)
+# ---------------------------------------------------------------------------
+
+import io
+import base64
+
+import pyotp
+import qrcode
+
+
+def _get_pre_2fa_user(request):
+    """Retrieve the user awaiting 2FA verification from the session."""
+    user_id = request.session.get('pre_2fa_user_id')
+    if not user_id:
+        return None
+    try:
+        return User.objects.get(pk=user_id)
+    except User.DoesNotExist:
+        return None
+
+
+@csrf_protect
+@never_cache
+@require_http_methods(['GET', 'POST'])
+def totp_setup_view(request):
+    """First-time TOTP setup: show QR code, validate first code, enable 2FA."""
+    user = _get_pre_2fa_user(request)
+    if not user:
+        messages.error(request, _('Session expired. Please log in again.'))
+        return redirect('accounts:login')
+
+    # If user already has 2FA enabled, redirect to verify
+    if user.totp_secret:
+        return redirect('accounts:totp_verify')
+
+    if request.method == 'GET':
+        secret = pyotp.random_base32()
+        request.session['totp_setup_secret'] = secret
+    else:
+        secret = request.session.get('totp_setup_secret')
+        if not secret:
+            return redirect('accounts:totp_setup')
+
+    totp = pyotp.TOTP(secret)
+    issuer = 'DPM Service'
+    provisioning_uri = totp.provisioning_uri(name=user.email, issuer_name=issuer)
+
+    # Generate QR code as base64 PNG
+    qr = qrcode.QRCode(version=1, box_size=8, border=2)
+    qr.add_data(provisioning_uri)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color='black', back_color='white')
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    qr_b64 = base64.b64encode(buf.getvalue()).decode()
+
+    error = None
+    if request.method == 'POST':
+        code = request.POST.get('code', '').strip()
+        if not code or len(code) != 6 or not code.isdigit():
+            error = _('Please enter a valid 6-digit code.')
+        else:
+            verify_totp = pyotp.TOTP(secret)
+            if verify_totp.verify(code, valid_window=2):
+                user.totp_secret = secret
+                user.two_factor_enabled = True
+                user.save(update_fields=['totp_secret', 'two_factor_enabled'])
+                request.session.pop('totp_setup_secret', None)
+                login(request, user)
+                request.session.pop('pre_2fa_user_id', None)
+                messages.success(request, _('Two-factor authentication has been enabled.'))
+                return redirect('accounts:dashboard')
+            else:
+                error = _('Invalid code. Please try again.')
+
+    return render(request, 'accounts/totp_setup.html', {
+        'qr_b64': qr_b64,
+        'secret': secret,
+        'error': error,
+    })
+
+
+@csrf_protect
+@never_cache
+@require_http_methods(['GET', 'POST'])
+def totp_verify_view(request):
+    """Verify TOTP code on subsequent logins."""
+    user = _get_pre_2fa_user(request)
+    if not user:
+        messages.error(request, _('Session expired. Please log in again.'))
+        return redirect('accounts:login')
+
+    if not user.totp_secret:
+        return redirect('accounts:totp_setup')
+
+    error = None
+    if request.method == 'POST':
+        code = request.POST.get('code', '').strip()
+        if not code or len(code) != 6 or not code.isdigit():
+            error = _('Please enter a valid 6-digit code.')
+        else:
+            totp = pyotp.TOTP(user.totp_secret)
+            if totp.verify(code, valid_window=2):
+                login(request, user)
+                request.session.pop('pre_2fa_user_id', None)
+                messages.success(request, _('Welcome back, ') + user.get_short_name() + '.')
+                next_url = request.session.pop('next_url', None)
+                return redirect(next_url or 'accounts:dashboard')
+            else:
+                error = _('Invalid code. Please try again.')
+
+    return render(request, 'accounts/totp_verify.html', {
+        'error': error,
+    })

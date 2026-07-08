@@ -72,6 +72,27 @@
             if (token) e.detail.headers['X-CSRFToken'] = token;
         });
 
+        function handleQuickAddResponse(e, fieldName) {
+            const xhr = e.detail.xhr;
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    window.dispatchEvent(new CustomEvent('quick-add-done', {
+                        detail: { fieldName: fieldName, id: data.id, label: data.label }
+                    }));
+                } catch(err) {
+                    console.error('Quick add parse error:', err);
+                }
+            } else if (xhr.status === 400) {
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    alert(data.error || 'An error occurred.');
+                } catch {
+                    alert('An error occurred.');
+                }
+            }
+        }
+
 
         function searchableSelect(opts) {
             return {
@@ -89,6 +110,16 @@
                         if (this._skipWatch) { this._skipWatch = false; return; }
                         const opt = this.options.find(o => o.value == v);
                         this.search = opt ? opt.label : '';
+                    });
+                    window.addEventListener('quick-add-done', (e) => {
+                        const detail = e.detail;
+                        if (detail.fieldName === this.name) {
+                            this.options = [...this.options, { value: String(detail.id), label: detail.label }];
+                            this._skipWatch = true;
+                            this.value = String(detail.id);
+                            this.search = detail.label;
+                            this.open = false;
+                        }
                     });
                 },
                 get filtered() {
@@ -115,6 +146,35 @@
             };
         }
 
+        function quickAdd(opts) {
+            return {
+                open: false,
+                url: opts.url,
+                fieldName: opts.fieldName || '',
+                openModal() {
+                    this.open = true;
+                    const body = this.$refs.modalBody;
+                    if (body) {
+                        body.innerHTML = '';
+                        htmx.ajax('GET', this.url, { target: body, swap: 'innerHTML' });
+                    }
+                },
+                closeModal() {
+                    this.open = false;
+                },
+                init() {
+                    window.addEventListener('quick-add-done', (e) => {
+                        if (e.detail.fieldName === this.fieldName) {
+                            this.open = false;
+                        }
+                    });
+                    window.addEventListener('close-quick-add', () => {
+                        this.open = false;
+                    });
+                },
+            };
+        }
+
     </script>
     <script>
         {% if user.is_authenticated %}
@@ -130,12 +190,12 @@
         .logo-light { display: none; }
         .logo-dark { display: none; }
         [data-theme="light"] .logo-light,
-        [data-theme="corporate"] .logo-light { display: block; }
+        [data-theme="corporate"] .logo-light { display: inline-block; }
         [data-theme="dark"] .logo-dark,
         [data-theme="autumn"] .logo-dark,
         [data-theme="coffee"] .logo-dark,
         [data-theme="sunset"] .logo-dark,
-        [data-theme="dim"] .logo-dark { display: block; }
+        [data-theme="dim"] .logo-dark { display: inline-block; }
         .ss-wrapper { position: relative; }
         .ss-input-wrap { position: relative; display: flex; align-items: center; }
         .ss-input-wrap input { width: 100%; padding-right: 2rem; }

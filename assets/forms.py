@@ -1,7 +1,7 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from clients.models import Client, Homeworker
+from clients.models import Client, Homeworker, Location
 from masters.models import AssetType
 
 from .models import Asset, AssetAssignment
@@ -15,7 +15,7 @@ class AssetForm(forms.ModelForm):
         fields = [
             'asset_tag', 'serial_number', 'asset_type', 'brand_model',
             'purchase_date', 'warranty_expiry',
-            'status', 'client', 'homeworker', 'ip_address', 'mac_address',
+            'status', 'client', 'homeworker', 'location', 'ip_address', 'mac_address',
             'notes', 'username', 'password', 'is_active',
         ]
         widgets = {
@@ -28,6 +28,7 @@ class AssetForm(forms.ModelForm):
             'status': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'client': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'homeworker': forms.Select(attrs={'class': 'select select-bordered w-full'}),
+            'location': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'ip_address': forms.TextInput(attrs={'class': 'input input-bordered w-full', 'placeholder': '192.168.1.10'}),
             'mac_address': forms.TextInput(attrs={'class': 'input input-bordered w-full', 'placeholder': 'AA:BB:CC:DD:EE:FF'}),
             'notes': forms.Textarea(attrs={'class': 'textarea textarea-bordered w-full', 'rows': 2}),
@@ -40,8 +41,10 @@ class AssetForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['client'].queryset = Client.objects.filter(is_active=True)
         self.fields['homeworker'].queryset = Homeworker.objects.filter(is_active=True)
+        self.fields['location'].queryset = Location.objects.filter(is_active=True)
         self.fields['client'].required = False
         self.fields['homeworker'].required = False
+        self.fields['location'].required = False
         if self.instance.pk:
             self.fields['asset_tag'].disabled = True
         else:

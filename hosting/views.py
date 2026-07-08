@@ -14,8 +14,8 @@ from django.views.decorators.http import require_http_methods
 from accounts.views import is_htmx, role_required
 from clients.models import Client
 
-from .forms import DomainHostingForm, DomainHostingInvoiceForm
-from .models import DomainHosting, DomainHostingInvoice
+from .forms import DomainHostingForm, DomainHostingInvoiceForm, AMCForm
+from .models import DomainHosting, DomainHostingInvoice, AnnualMaintenanceContract
 
 
 def _hx_toast(level: str, message: str, status: int = 200, extra_events: dict | None = None) -> HttpResponse:
@@ -410,3 +410,93 @@ def hosting_import_csv(request):
     if is_htmx(request):
         return render(request, 'hosting/_hosting_import_preview.html', context)
     return render(request, 'hosting/hosting_import.html', context)
+
+
+# ---------------------------------------------------------------------------
+# Annual Maintenance Contract CRUD
+# ---------------------------------------------------------------------------
+
+@role_required('admin', 'manager')
+@require_http_methods(['GET'])
+def amc_list_view(request):
+    amcs = AnnualMaintenanceContract.objects.select_related('client').all()
+    search = request.GET.get('search', '').strip()
+    status_filter = request.GET.get('status', '')
+    client_filter = request.GET.get('client', '')
+    if search:
+        amcs = amcs.filter(
+            Q(title__icontains=search) |
+            Q(client__company_name__icontains=search)
+        )
+    if status_filter:
+        amcs = amcs.filter(payment_status=status_filter)
+    if client_filter:
+        amcs = amcs.filter(client_id=client_filter)
+    context = {
+        'amcs': amcs,
+        'search': search,
+        'selected_status': status_filter,
+        'selected_client': client_filter,
+        'status_choices': AnnualMaintenanceContract.PaymentStatus.choices,
+        'clients': Client.objects.filter(is_active=True),
+        'page_title': 'Annual Maintenance Contracts',
+    }
+    if is_htmx(request):
+        return render(request, 'hosting/_amc_list_content.html', context)
+    return render(request, 'hosting/amc_list.html', context)
+
+
+@role_required('admin', 'manager')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def amc_create_view(request):
+    if request.method == 'POST':
+        form = AMCForm(request.POST)
+        if form.is_valid():
+            amc = form.save()
+            if is_htmx(request):
+                return _hx_toast('success', f'AMC {amc.title} created.', status=204, extra_events={'amc-saved': True})
+            messages.success(request, f'AMC {amc.title} created successfully.')
+            return redirect('hosting:amc_list')
+    else:
+        form = AMCForm()
+
+    template = 'hosting/_amc_form_partial.html' if is_htmx(request) else 'hosting/amc_form.html'
+    return render(request, template, {'form': form, 'mode': 'create', 'page_title': 'Add AMC'})
+
+
+@role_required('admin', 'manager')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def amc_update_view(request, pk):
+    amc = get_object_or_404(AnnualMaintenanceContract, pk=pk)
+    if request.method == 'POST':
+        form = AMCForm(request.POST, instance=amc)
+        if form.is_valid():
+            form.save()
+            if is_htmx(request):
+                return _hx_toast('success', f'AMC {amc.title} updated.', status=204, extra_events={'amc-saved': True})
+            messages.success(request, f'AMC {amc.title} updated successfully.')
+            return redirect('hosting:amc_list')
+    else:
+        form = AMCForm(instance=amc)
+
+    template = 'hosting/_amc_form_partial.html' if is_htmx(request) else 'hosting/amc_form.html'
+    return render(request, template, {'form': form, 'mode': 'update', 'obj': amc, 'page_title': f'Edit AMC — {amc.title}'})
+
+
+@role_required('admin', 'manager')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def amc_delete_view(request, pk):
+    amc = get_object_or_404(AnnualMaintenanceContract, pk=pk)
+    if request.method == 'POST':
+        title = amc.title
+        amc.delete()
+        if is_htmx(request):
+            return _hx_toast('success', f'AMC {title} deleted.', status=204, extra_events={'amc-saved': True})
+        messages.success(request, f'AMC {title} deleted successfully.')
+        return redirect('hosting:amc_list')
+
+    template = 'hosting/_amc_confirm_delete_partial.html' if is_htmx(request) else 'hosting/amc_confirm_delete.html'
+    return render(request, template, {'obj': amc, 'page_title': f'Delete AMC — {amc.title}'})

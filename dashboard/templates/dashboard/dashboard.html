@@ -16,92 +16,65 @@
         </div>
     </div>
 
-    {% include "dashboard/_filters.html" %}
-
-    <div id="kpi-section"
-         hx-get="{% url 'dashboard:htmx_kpis' %}"
-         hx-trigger="refresh-dashboard from:body"
-         hx-swap="innerHTML">
-        {% include "dashboard/_kpi_cards.html" %}
-    </div>
-
-    {% include "dashboard/_quick_actions.html" %}
-
-    {% if user.is_admin or user.is_manager %}
-    <div id="charts-section"
-         hx-get="{% url 'dashboard:htmx_charts' %}"
-         hx-trigger="refresh-dashboard from:body"
-         hx-swap="innerHTML">
-        {% include "dashboard/_charts.html" %}
-    </div>
-    {% endif %}
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div id="recent-tickets-section"
-             hx-get="{% url 'dashboard:htmx_recent_tickets' %}"
-             hx-trigger="refresh-dashboard from:body"
-             hx-swap="innerHTML">
-            {% include "dashboard/_recent_tickets.html" %}
-        </div>
-        <div id="activities-section"
-             hx-get="{% url 'dashboard:htmx_activities' %}"
-             hx-trigger="refresh-dashboard from:body"
-             hx-swap="innerHTML">
-            {% include "dashboard/_activities.html" %}
-        </div>
-    </div>
-
-    {% if user.is_admin or user.is_manager %}
-    <div id="expiry-section"
-         hx-get="{% url 'dashboard:htmx_expiry_alerts' %}"
-         hx-trigger="refresh-dashboard from:body"
-         hx-swap="innerHTML">
-        {% include "dashboard/_expiry_alerts.html" %}
-    </div>
-    {% endif %}
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {% if user.is_admin or user.is_manager %}
-        <div id="client-summary-section"
-             hx-get="{% url 'dashboard:htmx_client_summary' %}"
-             hx-trigger="refresh-dashboard from:body"
-             hx-swap="innerHTML">
-            {% include "dashboard/_client_summary.html" %}
-        </div>
-        {% endif %}
+    <div role="tablist" class="tabs tabs-boxed bg-base-200 p-1">
+        <a role="tab" class="tab" :class="{'tab-active': activeTab === 'tickets'}" @click="switchTab('tickets')">{% trans "Tickets" %}</a>
         {% if not user.is_staff_member %}
-        <div id="homeworker-summary-section"
-             hx-get="{% url 'dashboard:htmx_homeworker_summary' %}"
-             hx-trigger="refresh-dashboard from:body"
-             hx-swap="innerHTML">
-            {% include "dashboard/_homeworker_summary.html" %}
-        </div>
+        <a role="tab" class="tab" :class="{'tab-active': activeTab === 'assets'}" @click="switchTab('assets')">{% trans "Assets" %}</a>
+        {% endif %}
+        {% if user.is_admin or user.is_manager %}
+        <a role="tab" class="tab" :class="{'tab-active': activeTab === 'domain-hosting'}" @click="switchTab('domain-hosting')">{% trans "Domain & Hosting" %}</a>
+        <a role="tab" class="tab" :class="{'tab-active': activeTab === 'others'}" @click="switchTab('others')">{% trans "Others" %}</a>
         {% endif %}
     </div>
 
-    {% if user.is_admin or user.is_manager %}
-    <div id="domain-hosting-section"
-         hx-get="{% url 'dashboard:htmx_domain_hosting' %}"
-         hx-trigger="refresh-dashboard from:body"
-         hx-swap="innerHTML">
-        {% include "dashboard/_domain_hosting_panel.html" %}
+    <div x-show="activeTab === 'tickets'" x-cloak>
+        <div id="tab-tickets"
+             hx-get="{% url 'dashboard:htmx_tab_tickets' %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <div class="flex justify-center py-12">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
+        </div>
+    </div>
+
+    {% if not user.is_staff_member %}
+    <div x-show="activeTab === 'assets'" x-cloak>
+        <div id="tab-assets"
+             hx-get="{% url 'dashboard:htmx_tab_assets' %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <div class="flex justify-center py-12">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
+        </div>
     </div>
     {% endif %}
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div id="my-tasks-section"
-             hx-get="{% url 'dashboard:htmx_my_tasks' %}"
-             hx-trigger="refresh-dashboard from:body"
+    {% if user.is_admin or user.is_manager %}
+    <div x-show="activeTab === 'domain-hosting'" x-cloak>
+        <div id="tab-domain-hosting"
+             hx-get="{% url 'dashboard:htmx_tab_domain_hosting' %}"
+             hx-trigger="load"
              hx-swap="innerHTML">
-            {% include "dashboard/_my_tasks.html" %}
-        </div>
-        <div id="comments-section"
-             hx-get="{% url 'dashboard:htmx_comments' %}"
-             hx-trigger="refresh-dashboard from:body"
-             hx-swap="innerHTML">
-            {% include "dashboard/_recent_comments.html" %}
+            <div class="flex justify-center py-12">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
         </div>
     </div>
+
+    <div x-show="activeTab === 'others'" x-cloak>
+        <div id="tab-others"
+             hx-get="{% url 'dashboard:htmx_tab_others' %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <div class="flex justify-center py-12">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
 </div>
 {% endblock %}
 
@@ -110,23 +83,24 @@
 <script>
 function dashboardApp() {
     return {
-        init() {
-            this.loadCharts();
-            this.$watch('filtersChanged', () => this.refreshAll());
+        activeTab: 'tickets',
+        switchTab(tab) {
+            this.activeTab = tab;
+            setTimeout(() => this.loadChartsForTab(tab), 300);
         },
-        filtersChanged: false,
-        refreshAll() {
-            document.body.dispatchEvent(new Event('refresh-dashboard'));
-            setTimeout(() => this.loadCharts(), 500);
-        },
-        loadCharts() {
-            loadMonthlyTrend();
-            loadTicketsByStatus();
-            loadClientWiseTickets();
-            loadStaffProductivity();
-            loadAssetStatus();
-            loadDomainHostingOverview();
-            loadClientStateDist();
+        loadChartsForTab(tab) {
+            if (tab === 'tickets') {
+                loadMonthlyTrend();
+                loadTicketsByStatus();
+                loadClientWiseTickets();
+                loadStaffProductivity();
+            } else if (tab === 'assets') {
+                loadAssetStatus();
+            } else if (tab === 'domain-hosting') {
+                loadDomainHostingOverview();
+            } else if (tab === 'others') {
+                loadStaffProductivityOthers();
+            }
         }
     };
 }
@@ -207,6 +181,24 @@ function loadStaffProductivity() {
         });
 }
 
+function loadStaffProductivityOthers() {
+    fetch('{% url "dashboard:chart_staff_productivity" %}')
+        .then(r => r.json())
+        .then(data => {
+            getOrCreate('staffProductivityChartOthers', {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        { label: 'Assigned', data: data.assigned, backgroundColor: '#3b82f6' },
+                        { label: 'Completed', data: data.completed, backgroundColor: '#10b981' },
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        });
+}
+
 function loadAssetStatus() {
     fetch('{% url "dashboard:chart_asset_status" %}')
         .then(r => r.json())
@@ -233,21 +225,6 @@ function loadDomainHostingOverview() {
                     datasets: [{ label: 'Count', data: data.values, backgroundColor: ['#10b981','#ef4444','#3b82f6','#f59e0b'] }]
                 },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-        });
-}
-
-function loadClientStateDist() {
-    fetch('{% url "dashboard:chart_client_state" %}')
-        .then(r => r.json())
-        .then(data => {
-            getOrCreate('clientStateChart', {
-                type: 'pie',
-                data: {
-                    labels: data.labels,
-                    datasets: [{ data: data.values, backgroundColor: ['#6366f1','#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#6b7280'] }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
         });
 }

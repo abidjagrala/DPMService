@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 
 from clients.models import Client
 
-from .models import DomainHosting, DomainHostingInvoice
+from .models import DomainHosting, DomainHostingInvoice, AnnualMaintenanceContract
 
 
 class DomainHostingForm(forms.ModelForm):
@@ -56,3 +56,25 @@ class DomainHostingInvoiceForm(forms.ModelForm):
             'paid_date': forms.DateInput(attrs={'class': 'input input-bordered w-full', 'type': 'date'}),
             'notes': forms.Textarea(attrs={'class': 'textarea textarea-bordered w-full', 'rows': 2}),
         }
+
+
+class AMCForm(forms.ModelForm):
+    """Form for creating and updating AnnualMaintenanceContract records."""
+
+    class Meta:
+        model = AnnualMaintenanceContract
+        fields = ['title', 'client', 'description', 'expiry_date', 'amount', 'payment_status', 'is_active']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
+            'client': forms.Select(attrs={'class': 'select select-bordered w-full'}),
+            'description': forms.Textarea(attrs={'class': 'textarea textarea-bordered w-full', 'rows': 3}),
+            'expiry_date': forms.DateInput(attrs={'class': 'input input-bordered w-full', 'type': 'date'}),
+            'amount': forms.NumberInput(attrs={'class': 'input input-bordered w-full', 'step': '0.01'}),
+            'payment_status': forms.Select(attrs={'class': 'select select-bordered w-full'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'checkbox checkbox-primary'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['client'].queryset = Client.objects.filter(is_active=True)
+        self.fields['description'].required = False

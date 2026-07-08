@@ -1,0 +1,134 @@
+{% load i18n %}
+
+<div id="amc-table-wrapper"
+     hx-get="{% url 'hosting:amc_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+     hx-trigger="amc-saved from:body"
+     hx-swap="outerHTML">
+    <div x-show="viewMode === 'table'" x-cloak>
+        <div class="overflow-x-auto">
+            <table class="table table-zebra table-sm">
+                <thead>
+                    <tr>
+                        <th>{% trans "Title" %}</th>
+                        <th>{% trans "Client" %}</th>
+                        <th>{% trans "Expiry Date" %}</th>
+                        <th>{% trans "Amount" %}</th>
+                        <th>{% trans "Payment Status" %}</th>
+                        <th class="text-right">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for amc in amcs %}
+                    <tr>
+                        <td class="font-medium">{{ amc.title }}</td>
+                        <td>{{ amc.client.company_name }}</td>
+                        <td>{{ amc.expiry_date|date:"d M Y" }}</td>
+                        <td>₹{{ amc.amount|floatformat:2 }}</td>
+                        <td>
+                            {% if amc.payment_status == 'paid' %}
+                                <span class="badge badge-success badge-sm">{% trans "Paid" %}</span>
+                            {% elif amc.payment_status == 'partial' %}
+                                <span class="badge badge-warning badge-sm">{% trans "Partial" %}</span>
+                            {% elif amc.payment_status == 'overdue' %}
+                                <span class="badge badge-error badge-sm">{% trans "Overdue" %}</span>
+                            {% else %}
+                                <span class="badge badge-ghost badge-sm">{% trans "Pending" %}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-right space-x-1">
+                            <button type="button"
+                                    hx-get="{% url 'hosting:amc_update' pk=amc.pk %}"
+                                    hx-target="#drawer-body"
+                                    hx-swap="innerHTML"
+                                    @click="$dispatch('open-drawer', { title: 'Edit {{ amc.title|escapejs }}' })"
+                                    class="btn btn-ghost btn-xs">
+                                {% trans "Edit" %}
+                            </button>
+                            <button type="button"
+                                    hx-get="{% url 'hosting:amc_delete' pk=amc.pk %}"
+                                    hx-target="#modal-body"
+                                    hx-swap="innerHTML"
+                                    @click="$dispatch('open-modal')"
+                                    class="btn btn-ghost btn-xs text-error">
+                                {% trans "Delete" %}
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-base-content/60 py-8">{% trans "No AMCs found." %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div x-show="viewMode === 'card'" x-cloak>
+        <div id="card-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+            {% for amc in amcs %}
+            <div class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-shadow">
+                <div class="card-body p-4">
+                    <div class="flex items-start gap-3">
+                        <div class="avatar placeholder flex-shrink-0">
+                            <div class="bg-secondary text-secondary-content rounded-xl w-12">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-start justify-between gap-2">
+                                <h3 class="card-title text-base truncate">{{ amc.title }}</h3>
+                                {% if amc.payment_status == 'paid' %}
+                                    <span class="badge badge-success badge-sm flex-shrink-0">{% trans "Paid" %}</span>
+                                {% elif amc.payment_status == 'partial' %}
+                                    <span class="badge badge-warning badge-sm flex-shrink-0">{% trans "Partial" %}</span>
+                                {% elif amc.payment_status == 'overdue' %}
+                                    <span class="badge badge-error badge-sm flex-shrink-0">{% trans "Overdue" %}</span>
+                                {% else %}
+                                    <span class="badge badge-ghost badge-sm flex-shrink-0">{% trans "Pending" %}</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-sm text-base-content/60">{{ amc.client.company_name }}</p>
+                        </div>
+                    </div>
+                    <div class="text-sm space-y-1 mt-2">
+                        <div class="flex gap-2">
+                            <span class="text-base-content/50 w-24 shrink-0">{% trans "Expiry" %}</span>
+                            <span>{{ amc.expiry_date|date:"d M Y" }}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="text-base-content/50 w-24 shrink-0">{% trans "Amount" %}</span>
+                            <span>₹{{ amc.amount|floatformat:2 }}</span>
+                        </div>
+                        {% if amc.description %}
+                        <div class="flex gap-2">
+                            <span class="text-base-content/50 w-24 shrink-0">{% trans "Details" %}</span>
+                            <span class="line-clamp-2">{{ amc.description }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="divider my-1"></div>
+                    <div class="card-actions justify-end">
+                        <button type="button"
+                                hx-get="{% url 'hosting:amc_update' pk=amc.pk %}"
+                                hx-target="#drawer-body"
+                                hx-swap="innerHTML"
+                                @click="$dispatch('open-drawer', { title: 'Edit {{ amc.title|escapejs }}' })"
+                                class="btn btn-ghost btn-xs">{% trans "Edit" %}</button>
+                        <button type="button"
+                                hx-get="{% url 'hosting:amc_delete' pk=amc.pk %}"
+                                hx-target="#modal-body"
+                                hx-swap="innerHTML"
+                                @click="$dispatch('open-modal')"
+                                class="btn btn-ghost btn-xs text-error">{% trans "Delete" %}</button>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full text-center py-12 text-base-content/50">
+                <p>{% trans "No AMCs found." %}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>

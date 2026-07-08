@@ -1,0 +1,158 @@
+{% load i18n %}
+<div class="space-y-6">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
+            <div class="stat-title text-xs">{% trans "Domains" %}</div>
+            <div class="stat-value text-2xl">{{ total_domains }}</div>
+            <div class="stat-desc text-xs">{{ expiring_domains_30 }} {% trans "expiring" %}</div>
+        </div>
+        <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
+            <div class="stat-title text-xs">{% trans "Hosting" %}</div>
+            <div class="stat-value text-2xl">{{ total_hosting }}</div>
+            <div class="stat-desc text-xs">{{ expiring_hosting_30 }} {% trans "expiring" %}</div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title text-base">{% trans "Expired Domain & Hosting" %}</h2>
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra table-sm">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Name" %}</th>
+                                <th>{% trans "Type" %}</th>
+                                <th>{% trans "Client" %}</th>
+                                <th>{% trans "Expiry" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in expired_dh_list %}
+                            <tr class="hover">
+                                <td><a href="{% url 'hosting:hosting_detail' pk=s.pk %}" class="link link-primary text-sm">{{ s.service_name }}</a></td>
+                                <td>
+                                    {% if s.service_type == 'domain' %}
+                                        <span class="badge badge-info badge-xs">{% trans "Domain" %}</span>
+                                    {% else %}
+                                        <span class="badge badge-accent badge-xs">{% trans "Hosting" %}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-sm">{{ s.client.company_name|truncatewords:3 }}</td>
+                                <td><span class="badge badge-error badge-sm">{{ s.expiry_date }}</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center text-base-content/60 py-4">{% trans "No expired services." %}</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title text-base">{% trans "Next Expiry Domain & Hosting" %}</h2>
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra table-sm">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Name" %}</th>
+                                <th>{% trans "Type" %}</th>
+                                <th>{% trans "Client" %}</th>
+                                <th>{% trans "Expiry" %}</th>
+                                <th>{% trans "Days" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in next_expiry_dh_list %}
+                            <tr class="hover">
+                                <td><a href="{% url 'hosting:hosting_detail' pk=s.pk %}" class="link link-primary text-sm">{{ s.service_name }}</a></td>
+                                <td>
+                                    {% if s.service_type == 'domain' %}
+                                        <span class="badge badge-info badge-xs">{% trans "Domain" %}</span>
+                                    {% else %}
+                                        <span class="badge badge-accent badge-xs">{% trans "Hosting" %}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-sm">{{ s.client.company_name|truncatewords:3 }}</td>
+                                <td class="text-sm">{{ s.expiry_date }}</td>
+                                <td>
+                                    {% if s.is_expiring_soon %}
+                                        <span class="badge badge-warning badge-sm">{{ s.days_until_expiry }}d</span>
+                                    {% else %}
+                                        <span class="badge badge-success badge-sm">{{ s.days_until_expiry }}d</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center text-base-content/60 py-4">{% trans "No upcoming expiries." %}</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex gap-3">
+        <a href="{% url 'hosting:hosting_list' %}" class="btn btn-ghost btn-sm">{% trans "View Domain & Hosting" %}</a>
+        <a href="{% url 'hosting:hosting_create' %}" class="btn btn-primary btn-sm">{% trans "Add Domain & Hosting" %}</a>
+    </div>
+
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-base">{% trans "Expiry Alerts" %}</h2>
+            <div class="space-y-4">
+                <div>
+                    <h3 class="font-medium text-sm mb-2">{% trans "Domains" %}</h3>
+                    <div class="flex gap-2 flex-wrap mb-2">
+                        <span class="badge badge-warning badge-sm">{% blocktrans count counter=expiry_alerts.domains_30|length %}{{ counter }} expiring in 30 days{% plural %}{{ counter }} expiring in 30 days{% endblocktrans %}</span>
+                        <span class="badge badge-error badge-sm">{% blocktrans count counter=expiry_alerts.domains_15|length %}{{ counter }} expiring in 15 days{% plural %}{{ counter }} expiring in 15 days{% endblocktrans %}</span>
+                        <span class="badge badge-error badge-xs">{% blocktrans count counter=expiry_alerts.domains_7|length %}{{ counter }} expiring in 7 days{% plural %}{{ counter }} expiring in 7 days{% endblocktrans %}</span>
+                    </div>
+                    {% for s in expiry_alerts.domains_30 %}
+                    <div class="flex items-center justify-between text-sm py-1 {% if s.days_until_expiry <= 7 %}text-error font-semibold{% elif s.days_until_expiry <= 15 %}text-warning{% endif %}">
+                        <span>{{ s.service_name }} <span class="text-base-content/50">({{ s.client.company_name }})</span></span>
+                        <span class="badge {% if s.days_until_expiry <= 7 %}badge-error{% elif s.days_until_expiry <= 15 %}badge-warning{% else %}badge-warning{% endif %} badge-sm">{{ s.expiry_date }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-xs text-base-content/50">{% trans "No domains expiring soon." %}</p>
+                    {% endfor %}
+                </div>
+                <div class="divider my-1"></div>
+                <div>
+                    <h3 class="font-medium text-sm mb-2">{% trans "Hosting" %}</h3>
+                    <div class="flex gap-2 flex-wrap mb-2">
+                        <span class="badge badge-warning badge-sm">{% blocktrans count counter=expiry_alerts.hosting_30|length %}{{ counter }} expiring in 30 days{% plural %}{{ counter }} expiring in 30 days{% endblocktrans %}</span>
+                        <span class="badge badge-error badge-sm">{% blocktrans count counter=expiry_alerts.hosting_15|length %}{{ counter }} expiring in 15 days{% plural %}{{ counter }} expiring in 15 days{% endblocktrans %}</span>
+                        <span class="badge badge-error badge-xs">{% blocktrans count counter=expiry_alerts.hosting_7|length %}{{ counter }} expiring in 7 days{% plural %}{{ counter }} expiring in 7 days{% endblocktrans %}</span>
+                    </div>
+                    {% for s in expiry_alerts.hosting_30 %}
+                    <div class="flex items-center justify-between text-sm py-1 {% if s.days_until_expiry <= 7 %}text-error font-semibold{% elif s.days_until_expiry <= 15 %}text-warning{% endif %}">
+                        <span>{{ s.service_name }} <span class="text-base-content/50">({{ s.client.company_name }})</span></span>
+                        <span class="badge {% if s.days_until_expiry <= 7 %}badge-error{% elif s.days_until_expiry <= 15 %}badge-warning{% else %}badge-warning{% endif %} badge-sm">{{ s.expiry_date }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-xs text-base-content/50">{% trans "No hosting expiring soon." %}</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-base">{% trans "Domain & Hosting Overview" %}</h2>
+            <div class="h-72"><canvas id="domainHostingChart"></canvas></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof loadDomainHostingOverview === 'function') loadDomainHostingOverview();
+});
+</script>

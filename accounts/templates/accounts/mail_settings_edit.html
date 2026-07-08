@@ -1,0 +1,138 @@
+{% extends "accounts/base.html" %}
+{% load daisy i18n %}
+
+{% block title %}{{ page_title }} — DPM Service{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto" x-data="mailTest()">
+    <div class="mb-3">
+        <a href="{% url 'accounts:dashboard' %}" class="btn btn-ghost btn-sm">&larr; Back to Dashboard</a>
+    </div>
+
+    <form method="post" novalidate class="space-y-4">
+        <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title">{% trans "Mail Settings" %}</h2>
+                <p class="text-sm text-base-content/60">{% trans "Configure SMTP settings for sending notification emails." %}</p>
+
+                {% csrf_token %}
+                {% daisy_form_errors form %}
+
+                <div class="form-control">
+                    <label class="label cursor-pointer justify-start gap-3">
+                        {% daisy_field form.is_active add_label=False %}
+                        <span class="label-text font-medium">{% trans "Enable Email Sending" %}</span>
+                    </label>
+                    <label class="label"><span class="label-text-alt text-base-content/50">{% trans "Toggle to enable or disable all outgoing emails" %}</span></label>
+                </div>
+
+                <div class="divider text-xs text-base-content/50">{% trans "SMTP Server" %}</div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="form-control">{% daisy_field form.host %}</div>
+                    <div class="form-control">{% daisy_field form.port %}</div>
+                    <div class="form-control">{% daisy_field form.security %}</div>
+                </div>
+
+                <div class="divider text-xs text-base-content/50">{% trans "Authentication" %}</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">{% daisy_field form.username %}</div>
+                    <div class="form-control">{% include "accounts/_password_field.html" with field=form.password %}</div>
+                </div>
+
+                <div class="divider text-xs text-base-content/50">{% trans "Sender" %}</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">{% daisy_field form.from_name %}</div>
+                    <div class="form-control">{% daisy_field form.from_email %}</div>
+                </div>
+
+                <div class="card-actions justify-end mt-2">
+                    <a href="{% url 'accounts:dashboard' %}" class="btn btn-ghost">{% trans "Cancel" %}</a>
+                    <button type="submit" class="btn btn-primary">{% trans "Save Changes" %}</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="card bg-base-100 border border-base-300 shadow-sm mt-4">
+        <div class="card-body">
+            <h3 class="card-title text-sm">{% trans "Test Email" %}</h3>
+            <p class="text-xs text-base-content/60">{% trans "Send a test email to verify your settings work." %}</p>
+            <div class="flex items-center gap-3 mt-2">
+                <input type="email"
+                       x-model="testEmail"
+                       placeholder="{% trans 'Enter email to test' %}"
+                       class="input input-bordered input-sm flex-1"
+                       required>
+                <button type="button"
+                        class="btn btn-outline btn-sm"
+                        :class="testLoading ? 'loading' : ''"
+                        :disabled="testLoading || !testEmail"
+                        @click="sendTest()">
+                    <svg x-show="!testLoading" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <span x-text="testLoading ? '{% trans "Sending..." %}' : '{% trans "Send Test Email" %}'"></span>
+                </button>
+                <div x-show="testResult" class="flex items-center gap-2 text-sm">
+                    <span x-show="testSuccess" class="text-success flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        {% trans "Email sent! Check your inbox." %}
+                    </span>
+                    <span x-show="!testSuccess" class="text-error flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        <span x-text="testError"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function mailTest() {
+    return {
+        testLoading: false,
+        testResult: false,
+        testSuccess: false,
+        testError: '',
+        testEmail: '{{ request.user.email|escapejs }}',
+        sendTest() {
+            this.testLoading = true;
+            this.testResult = false;
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+                || document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+            const body = new FormData();
+            body.append('email', this.testEmail);
+            fetch('{% url "accounts:mail_settings_test" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                },
+                body: body,
+            })
+            .then(r => r.json())
+            .then(data => {
+                this.testResult = true;
+                this.testSuccess = data.success;
+                this.testError = data.error || '';
+            })
+            .catch(err => {
+                console.error('Mail test error:', err);
+                this.testResult = true;
+                this.testSuccess = false;
+                this.testError = 'Network error. Please try again.';
+            })
+            .finally(() => {
+                this.testLoading = false;
+            });
+        }
+    }
+}
+</script>
+{% endblock %}

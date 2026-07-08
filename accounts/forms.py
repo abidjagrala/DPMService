@@ -3,6 +3,8 @@ from django.contrib.auth import authenticate, get_user_model, password_validatio
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
 from django.utils.translation import gettext_lazy as _
 
+from .models import CompanyInfo, MailSettings
+
 User = get_user_model()
 
 
@@ -227,3 +229,53 @@ class AdminUserForm(forms.ModelForm):
         if commit:
             user.save()
         return user
+
+
+class CompanyInfoForm(forms.ModelForm):
+    class Meta:
+        model = CompanyInfo
+        fields = [
+            'name', 'tagline', 'address', 'city', 'state', 'pincode', 'country',
+            'phone', 'email', 'website',
+            'gst_number', 'pan_number', 'cin_number',
+            'logo_light', 'logo_dark',
+            'bank_name', 'bank_account_number', 'bank_ifsc', 'bank_branch',
+        ]
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'tagline': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'address': forms.Textarea(attrs={'class': 'textarea textarea-bordered w-full', 'rows': 3}),
+            'city': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'state': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'pincode': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'country': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'phone': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'email': forms.EmailInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'website': forms.URLInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'gst_number': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'pan_number': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'cin_number': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'bank_name': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'bank_account_number': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'bank_ifsc': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'bank_branch': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+        }
+
+
+class MailSettingsForm(forms.ModelForm):
+    class Meta:
+        model = MailSettings
+        fields = [
+            'host', 'port', 'security', 'username', 'password',
+            'from_name', 'from_email', 'is_active',
+        ]
+        widgets = {
+            'host': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'port': forms.NumberInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'security': forms.Select(attrs={'class': 'select select-bordered select-sm w-full'}),
+            'username': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'password': forms.PasswordInput(attrs={'class': 'input input-bordered input-sm w-full'}, render_value=True),
+            'from_name': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'from_email': forms.EmailInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'checkbox checkbox-sm'}),
+        }

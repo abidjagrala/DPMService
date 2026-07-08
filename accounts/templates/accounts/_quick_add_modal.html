@@ -1,0 +1,20 @@
+<div x-data="quickAdd({ url: '{{ url }}', fieldName: '{{ field_name }}' })" class="inline-flex items-center ml-1">
+    <button type="button" @click="openModal()" class="btn btn-ghost btn-xs text-primary" title="Quick Add {{ label }}">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+    </button>
+
+    <template x-if="open">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" x-cloak>
+            <div class="fixed inset-0 bg-black/50" @click="closeModal()"></div>
+            <div class="relative bg-base-100 rounded-xl shadow-xl w-full max-w-sm z-10">
+                <div class="flex items-center justify-between p-4 border-b border-base-200">
+                    <h3 class="font-semibold text-sm">Quick Add — {{ label }}</h3>
+                    <button type="button" @click="closeModal()" class="btn btn-ghost btn-xs">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+                <div class="p-4" x-ref="modalBody" x-init="$nextTick(() => { if (open) { htmx.ajax('GET', '{{ url }}', { target: $el, swap: 'innerHTML' }) } })"></div>
+            </div>
+        </div>
+    </template>
+</div>

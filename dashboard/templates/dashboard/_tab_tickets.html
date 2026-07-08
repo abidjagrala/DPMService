@@ -1,0 +1,217 @@
+{% load i18n %}
+<div class="space-y-6">
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
+            <div class="stat-title text-xs">{% trans "Total Tickets" %}</div>
+            <div class="stat-value text-2xl">{{ total_tickets }}</div>
+            <div class="stat-desc text-xs">{% trans "Today" %}: {{ tickets_today }}</div>
+        </div>
+        <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
+            <div class="stat-title text-xs">{% trans "Open / In Progress" %}</div>
+            <div class="stat-value text-2xl text-warning">{{ open_tickets }}</div>
+            <div class="stat-desc text-xs">{{ in_progress_tickets }} {% trans "in progress" %}</div>
+        </div>
+        <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
+            <div class="stat-title text-xs">{% trans "Completed" %}</div>
+            <div class="stat-value text-2xl text-success">{{ completed_tickets }}</div>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-base">{% trans "My Tasks" %}</h2>
+            <div class="grid grid-cols-3 gap-3 mb-4">
+                <div class="stat bg-base-200 rounded-box p-3">
+                    <div class="stat-title text-xs">{% trans "Pending" %}</div>
+                    <div class="stat-value text-xl text-warning">{{ my_tasks.pending_count }}</div>
+                </div>
+                <div class="stat bg-base-200 rounded-box p-3">
+                    <div class="stat-title text-xs">{% trans "Due Today" %}</div>
+                    <div class="stat-value text-xl text-info">{{ my_tasks.due_today_count }}</div>
+                </div>
+                <div class="stat bg-base-200 rounded-box p-3">
+                    <div class="stat-title text-xs">{% trans "Overdue" %}</div>
+                    <div class="stat-value text-xl text-error">{{ my_tasks.overdue_count }}</div>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="table table-zebra table-sm">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Ticket" %}</th>
+                            <th>{% trans "Client" %}</th>
+                            <th>{% trans "Service" %}</th>
+                            <th>{% trans "Status" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in my_tasks.assigned_tickets %}
+                        <tr class="hover">
+                            <td><a href="{% url 'tickets:ticket_detail' pk=t.pk %}" class="link link-primary text-sm">{{ t.ticket_number }}</a></td>
+                            <td class="text-sm">{{ t.client.company_name|truncatewords:3 }}</td>
+                            <td class="text-sm">{{ t.service_type.name }}</td>
+                            <td>
+                                {% if t.status == 'new' %}
+                                    <span class="badge badge-info badge-sm">{% trans "New" %}</span>
+                                {% elif t.status == 'assigned' %}
+                                    <span class="badge badge-warning badge-sm">{% trans "Assigned" %}</span>
+                                {% elif t.status == 'in_progress' %}
+                                    <span class="badge badge-accent badge-sm">{% trans "In Progress" %}</span>
+                                {% else %}
+                                    <span class="badge badge-sm">{{ t.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-base-content/60 py-4">{% trans "No assigned tasks." %}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex gap-3">
+        <a href="{% url 'tickets:ticket_create' %}" class="btn btn-primary btn-sm">{% trans "Create Ticket" %}</a>
+        <a href="{% url 'tickets:ticket_list' %}" class="btn btn-ghost btn-sm">{% trans "View All Tickets" %}</a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body">
+                <div class="flex items-center justify-between">
+                    <h2 class="card-title text-base">{% trans "Recent Tickets" %}</h2>
+                    <a href="{% url 'tickets:ticket_list' %}" class="link link-primary text-xs">{% trans "View All" %}</a>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra table-sm">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Ticket" %}</th>
+                                <th>{% trans "Client" %}</th>
+                                <th>{% trans "Assigned" %}</th>
+                                <th>{% trans "Status" %}</th>
+                                <th>{% trans "Updated" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in recent_tickets %}
+                            <tr class="hover">
+                                <td>
+                                    <a href="{% url 'tickets:ticket_detail' pk=t.pk %}" class="link link-primary font-medium">{{ t.ticket_number }}</a>
+                                </td>
+                                <td>{{ t.client.company_name|truncatewords:3 }}</td>
+                                <td>{% if t.assigned_to %}{{ t.assigned_to.user.get_full_name|default:"—" }}{% else %}—{% endif %}</td>
+                                <td>
+                                    {% if t.status == 'new' %}
+                                        <span class="badge badge-info badge-sm">{% trans "New" %}</span>
+                                    {% elif t.status == 'assigned' %}
+                                        <span class="badge badge-warning badge-sm">{% trans "Assigned" %}</span>
+                                    {% elif t.status == 'in_progress' %}
+                                        <span class="badge badge-accent badge-sm">{% trans "In Progress" %}</span>
+                                    {% elif t.status == 'completed' %}
+                                        <span class="badge badge-success badge-sm">{% trans "Completed" %}</span>
+                                    {% elif t.status == 'cancelled' %}
+                                        <span class="badge badge-ghost badge-sm">{% trans "Cancelled" %}</span>
+                                    {% else %}
+                                        <span class="badge badge-sm">{{ t.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-xs text-base-content/60">{{ t.updated_at|timesince }} ago</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center text-base-content/60 py-4">{% trans "No tickets yet." %}</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title text-base">{% trans "Recent Activities" %}</h2>
+                <div class="overflow-y-auto max-h-96 space-y-3">
+                    {% for a in recent_activities %}
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 mt-1">
+                            {% if a.level == 'success' %}
+                                <span class="badge badge-success badge-xs">{% trans "OK" %}</span>
+                            {% elif a.level == 'warning' %}
+                                <span class="badge badge-warning badge-xs">{% trans "!" %}</span>
+                            {% elif a.level == 'error' %}
+                                <span class="badge badge-error badge-xs">{% trans "!" %}</span>
+                            {% else %}
+                                <span class="badge badge-info badge-xs">{% trans "i" %}</span>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm">{{ a.verb }}</p>
+                            <p class="text-xs text-base-content/50">{{ a.actor }} &middot; {{ a.created_at|timesince }} ago</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-base-content/60 text-center py-4">{% trans "No recent activities." %}</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title text-base">{% trans "Monthly Ticket Trend" %}</h2>
+                <div class="h-72"><canvas id="monthlyTrendChart"></canvas></div>
+            </div>
+        </div>
+        <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title text-base">{% trans "Tickets by Status" %}</h2>
+                <div class="h-72"><canvas id="ticketsByStatusChart"></canvas></div>
+            </div>
+        </div>
+        <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title text-base">{% trans "Client Wise Ticket Count" %}</h2>
+                <div class="h-72"><canvas id="clientWiseChart"></canvas></div>
+            </div>
+        </div>
+        <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title text-base">{% trans "Staff Productivity" %}</h2>
+                <div class="h-72"><canvas id="staffProductivityChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-base">{% trans "Recent Comments" %}</h2>
+            <div class="overflow-y-auto max-h-96 space-y-3">
+                {% for c in recent_comments %}
+                <div class="border-l-2 border-base-300 pl-3">
+                    <div class="flex items-center gap-2">
+                        <span class="font-medium text-sm">{% if c.created_by %}{{ c.created_by.get_full_name|default:c.created_by.email }}{% else %}<span class="text-base-content/40">{% trans "Deleted user" %}</span>{% endif %}</span>
+                        <span class="text-xs text-base-content/50">{{ c.created_at|timesince }} ago</span>
+                    </div>
+                    <p class="text-sm mt-1">{{ c.body|truncatewords:30 }}</p>
+                </div>
+                {% empty %}
+                <p class="text-sm text-base-content/60 text-center py-4">{% trans "No comments yet." %}</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof loadMonthlyTrend === 'function') loadMonthlyTrend();
+    if (typeof loadTicketsByStatus === 'function') loadTicketsByStatus();
+    if (typeof loadClientWiseTickets === 'function') loadClientWiseTickets();
+    if (typeof loadStaffProductivity === 'function') loadStaffProductivity();
+});
+</script>

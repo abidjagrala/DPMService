@@ -15,8 +15,8 @@ from django.views.decorators.http import require_http_methods
 from accounts.views import is_htmx, role_required
 from masters.models import City, State
 
-from .forms import ClientForm, EmployeeForm, HomeworkerForm
-from .models import Client, Employee, Homeworker
+from .forms import ClientForm, EmployeeForm, HomeworkerForm, LocationForm
+from .models import Client, Employee, Homeworker, Location
 
 User = get_user_model()
 
@@ -686,3 +686,134 @@ def homeworker_detail_view(request, pk):
         return HttpResponseForbidden('You do not have access to this homeworker.')
 
     return render(request, 'clients/homeworker_detail.html', {'obj': homeworker, 'page_title': homeworker.name})
+
+
+# ---------------------------------------------------------------------------
+# Location
+# ---------------------------------------------------------------------------
+
+@role_required('admin', 'manager')
+@require_http_methods(['GET'])
+def location_list_view(request):
+    locations = Location.objects.select_related('city', 'state').all()
+    search = request.GET.get('search', '').strip()
+    if search:
+        locations = locations.filter(name__icontains=search)
+    context = {
+        'locations': locations,
+        'search': search,
+        'page_title': 'Locations',
+    }
+    if is_htmx(request):
+        return render(request, 'clients/_location_list_table.html', context)
+    return render(request, 'clients/location_list.html', context)
+
+
+@role_required('admin', 'manager')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def location_create_view(request):
+    if request.method == 'POST':
+        form = LocationForm(request.POST)
+        if form.is_valid():
+            location = form.save()
+            if is_htmx(request):
+                return _hx_toast('success', f'Location {location.name} created.', status=204, extra_events={'location-saved': True})
+            messages.success(request, f'Location {location.name} created successfully.')
+            return redirect('clients:location_list')
+    else:
+        form = LocationForm()
+
+    template = 'clients/_location_form_partial.html' if is_htmx(request) else 'clients/location_form.html'
+    return render(request, template, {'form': form, 'mode': 'create', 'page_title': 'Add Location'})
+
+
+@role_required('admin', 'manager')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def location_update_view(request, pk):
+    location = get_object_or_404(Location, pk=pk)
+    if request.method == 'POST':
+        form = LocationForm(request.POST, instance=location)
+        if form.is_valid():
+            form.save()
+            if is_htmx(request):
+                return _hx_toast('success', f'Location {location.name} updated.', status=204, extra_events={'location-saved': True})
+            messages.success(request, f'Location {location.name} updated successfully.')
+            return redirect('clients:location_list')
+    else:
+        form = LocationForm(instance=location)
+
+    template = 'clients/_location_form_partial.html' if is_htmx(request) else 'clients/location_form.html'
+    return render(request, template, {'form': form, 'mode': 'update', 'obj': location, 'page_title': f'Edit Location — {location.name}'})
+
+
+@role_required('admin', 'manager')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def location_delete_view(request, pk):
+    location = get_object_or_404(Location, pk=pk)
+    if request.method == 'POST':
+        name = location.name
+        location.delete()
+        if is_htmx(request):
+            return _hx_toast('success', f'Location {name} deleted.', status=204, extra_events={'location-saved': True})
+        messages.success(request, f'Location {name} deleted successfully.')
+        return redirect('clients:location_list')
+
+    template = 'clients/_location_confirm_delete_partial.html' if is_htmx(request) else 'clients/location_confirm_delete.html'
+    return render(request, template, {'obj': location, 'page_title': f'Delete Location — {location.name}'})
+
+
+# ---------------------------------------------------------------------------
+# Quick-Create (for inline add from other forms)
+# ---------------------------------------------------------------------------
+
+@role_required('admin', 'manager')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def client_quick_create_view(request):
+    if request.method == 'POST':
+        company_name = request.POST.get('company_name', '').strip()
+        contact_person = request.POST.get('contact_person', '').strip()
+        email = request.POST.get('email', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        if not company_name or not email or not phone:
+            return HttpResponse(json.dumps({'error': 'Company name, email and phone are required.'}), status=400, content_type='application/json')
+        if Client.objects.filter(email__iexact=email).exists():
+            return HttpResponse(json.dumps({'error': 'A client with this email already exists.'}), status=400, content_type='application/json')
+        user = User.objects.create_user(email=email, password='Client@123', first_name=contact_person, last_name='', role=User.Role.CLIENT)
+        client = Client.objects.create(user=user, company_name=company_name, contact_person=contact_person, email=email, phone=phone, address=request.POST.get('address', ''), pincode=request.POST.get('pincode', '000000'), city_id=request.POST.get('city') or None, state_id=request.POST.get('state') or None)
+        return HttpResponse(json.dumps({'id': client.pk, 'label': client.company_name}), status=201, content_type='application/json')
+    return render(request, 'clients/_client_quick_form_partial.html')
+
+
+@role_required('admin', 'manager')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def homeworker_quick_create_view(request):
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        client_id = request.POST.get('client')
+        if not name or not phone or not client_id:
+            return HttpResponse(json.dumps({'error': 'Name, phone and client are required.'}), status=400, content_type='application/json')
+        client = get_object_or_404(Client, pk=client_id)
+        homeworker = Homeworker.objects.create(client=client, name=name, phone=phone, email=request.POST.get('email', ''), address=request.POST.get('address', ''), pincode=request.POST.get('pincode', '000000'), state_id=request.POST.get('state') or None, city_id=request.POST.get('city') or None)
+        return HttpResponse(json.dumps({'id': homeworker.pk, 'label': homeworker.name}), status=201, content_type='application/json')
+    client_id = request.GET.get('client', '')
+    clients = Client.objects.filter(is_active=True).order_by('company_name')
+    return render(request, 'clients/_homeworker_quick_form_partial.html', {'selected_client': client_id, 'clients': clients})
+
+
+@role_required('admin', 'manager')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def location_quick_create_view(request):
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        if not name:
+            return HttpResponse(json.dumps({'error': 'Location name is required.'}), status=400, content_type='application/json')
+        location = Location.objects.create(name=name, address=request.POST.get('address', ''), state_id=request.POST.get('state') or None, city_id=request.POST.get('city') or None, pincode=request.POST.get('pincode', ''))
+        return HttpResponse(json.dumps({'id': location.pk, 'label': location.name}), status=201, content_type='application/json')
+    return render(request, 'clients/_location_quick_form_partial.html')

@@ -65,6 +65,12 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f'Successfully sent {count} expiry reminder(s).'))
 
     def _send_email(self, service, days_left):
+        from accounts.models import MailSettings
+        mail_config = MailSettings.get_instance()
+        if not mail_config.is_active:
+            return
+        mail_config.apply_to_settings()
+
         subject = f'DPM Service: {service.get_service_type_display()} Expiring Soon — {service.service_name}'
         message = (
             f'This is a reminder that the following {service.get_service_type_display().lower()} '

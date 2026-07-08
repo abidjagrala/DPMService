@@ -157,3 +157,54 @@ class DomainHostingInvoice(models.Model):
 
     def __str__(self) -> str:
         return f'{self.service.service_name} — {self.invoice_date}'
+
+
+class AnnualMaintenanceContract(models.Model):
+    """Annual Maintenance Contract for a client."""
+
+    class PaymentStatus(models.TextChoices):
+        PENDING = 'pending', _('Pending')
+        PAID = 'paid', _('Paid')
+        PARTIAL = 'partial', _('Partial')
+        OVERDUE = 'overdue', _('Overdue')
+
+    title = models.CharField(
+        _('AMC title'),
+        max_length=200,
+    )
+    client = models.ForeignKey(
+        Client,
+        on_delete=models.CASCADE,
+        related_name='amcs',
+        verbose_name=_('client'),
+    )
+    description = models.TextField(
+        _('description'),
+        blank=True,
+        default='',
+    )
+    expiry_date = models.DateField(
+        _('expiry date'),
+    )
+    amount = models.DecimalField(
+        _('amount'),
+        max_digits=12,
+        decimal_places=2,
+    )
+    payment_status = models.CharField(
+        _('payment status'),
+        max_length=10,
+        choices=PaymentStatus.choices,
+        default=PaymentStatus.PENDING,
+    )
+    is_active = models.BooleanField(_('active'), default=True)
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
+
+    class Meta:
+        verbose_name = _('annual maintenance contract')
+        verbose_name_plural = _('annual maintenance contracts')
+        ordering = ['-expiry_date']
+
+    def __str__(self) -> str:
+        return f'{self.title} — {self.client.company_name}'

@@ -1,11 +1,20 @@
 from django.conf import settings
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from django.core.exceptions import ValidationError
+
 from assets.models import Asset
-from clients.models import Client, Employee
+from clients.models import Client, Employee, Location
 from masters.models import ServiceType, TransportType
+
+
+def validate_file_size(value):
+    limit = 2 * 1024 * 1024  # 2 MB
+    if value.size > limit:
+        raise ValidationError(_('File size must be under 2 MB.'))
 
 
 class ServiceTicket(models.Model):
@@ -47,6 +56,14 @@ class ServiceTicket(models.Model):
         on_delete=models.PROTECT,
         related_name='service_tickets',
         verbose_name=_('asset'),
+        null=True,
+        blank=True,
+    )
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.SET_NULL,
+        related_name='service_tickets',
+        verbose_name=_('location'),
         null=True,
         blank=True,
     )
@@ -125,6 +142,17 @@ class ServiceTicket(models.Model):
         _('internal notes'),
         blank=True,
         default='',
+    )
+    attachment = models.FileField(
+        _('attachment'),
+        upload_to='tickets/attachments/',
+        blank=True,
+        null=True,
+        validators=[
+            FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'webp', 'pdf']),
+            validate_file_size,
+        ],
+        help_text=_('Upload jpg, png, webp or pdf. Max 2 MB.'),
     )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

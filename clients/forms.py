@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 
 from masters.models import City, State
 
-from .models import Client, Employee, Homeworker
+from .models import Client, Employee, Homeworker, Location
 
 User = get_user_model()
 
@@ -238,3 +238,33 @@ class HomeworkerForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+class LocationForm(forms.ModelForm):
+    """Form for creating and updating Location records."""
+
+    class Meta:
+        model = Location
+        fields = ['name', 'address', 'state', 'city', 'pincode', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
+            'address': forms.Textarea(attrs={'class': 'textarea textarea-bordered w-full', 'rows': 3}),
+            'state': forms.Select(attrs={'class': 'select select-bordered w-full'}),
+            'city': forms.Select(attrs={'class': 'select select-bordered w-full'}),
+            'pincode': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'checkbox checkbox-primary'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['state'].queryset = self.fields['state'].queryset.filter(is_active=True)
+        self.fields['city'].queryset = self.fields['city'].queryset.filter(is_active=True)
+
+    def clean_name(self) -> str:
+        name = self.cleaned_data['name'].strip()
+        qs = Location.objects.filter(name__iexact=name)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError(_('A location with this name already exists.'))
+        return name

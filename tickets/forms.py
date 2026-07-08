@@ -2,7 +2,7 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 
 from assets.models import Asset
-from clients.models import Client, Employee
+from clients.models import Client, Employee, Location
 from masters.models import ServiceType, TransportType
 
 from .models import ServiceTicket, TicketComment
@@ -14,16 +14,17 @@ class ServiceTicketForm(forms.ModelForm):
     class Meta:
         model = ServiceTicket
         fields = [
-            'service_type', 'client', 'asset', 'assigned_to',
+            'service_type', 'client', 'asset', 'location', 'assigned_to',
             'priority', 'subject', 'description', 'scheduled_date',
             'address', 'contact_person', 'contact_phone',
             'transport_type', 'tracking_url',
-            'notes', 'status',
+            'notes', 'attachment', 'status',
         ]
         widgets = {
             'service_type': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'client': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'asset': forms.Select(attrs={'class': 'select select-bordered w-full'}),
+            'location': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'assigned_to': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'priority': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'status': forms.Select(attrs={'class': 'select select-bordered w-full'}),
@@ -36,21 +37,25 @@ class ServiceTicketForm(forms.ModelForm):
             'transport_type': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'tracking_url': forms.URLInput(attrs={'class': 'input input-bordered w-full', 'placeholder': 'https://...'}),
             'notes': forms.Textarea(attrs={'class': 'textarea textarea-bordered w-full', 'rows': 2}),
+            'attachment': forms.ClearableFileInput(attrs={'class': 'file-input file-input-bordered file-input-sm w-full', 'accept': 'image/jpeg,image/png,image/webp,application/pdf'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['client'].queryset = Client.objects.filter(is_active=True)
         self.fields['asset'].queryset = Asset.objects.filter(is_active=True)
+        self.fields['location'].queryset = Location.objects.filter(is_active=True)
         self.fields['assigned_to'].queryset = Employee.objects.filter(is_active=True)
         self.fields['transport_type'].queryset = TransportType.objects.filter(is_active=True)
         self.fields['asset'].required = False
+        self.fields['location'].required = False
         self.fields['assigned_to'].required = False
         self.fields['scheduled_date'].required = False
         self.fields['address'].required = False
         self.fields['transport_type'].required = False
         self.fields['tracking_url'].required = False
         self.fields['notes'].required = False
+        self.fields['attachment'].required = False
 
     def save(self, commit=True):
         instance = super().save(commit=False)

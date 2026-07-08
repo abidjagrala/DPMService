@@ -20,6 +20,12 @@ urlpatterns = [
     path('htmx/comments/', views.dashboard_comments, name='htmx_comments'),
     path('htmx/quick-actions/', views.dashboard_quick_actions, name='htmx_quick_actions'),
 
+    # Tab partials
+    path('htmx/tab/tickets/', views.dashboard_tickets_tab, name='htmx_tab_tickets'),
+    path('htmx/tab/assets/', views.dashboard_assets_tab, name='htmx_tab_assets'),
+    path('htmx/tab/domain-hosting/', views.dashboard_domain_hosting_tab, name='htmx_tab_domain_hosting'),
+    path('htmx/tab/others/', views.dashboard_others_tab, name='htmx_tab_others'),
+
     # Chart JSON APIs
     path('api/monthly-trend/', views.chart_monthly_trend, name='chart_monthly_trend'),
     path('api/tickets-by-status/', views.chart_tickets_by_status, name='chart_tickets_by_status'),

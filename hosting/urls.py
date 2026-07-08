@@ -15,4 +15,10 @@ urlpatterns = [
     path('<int:pk>/delete/', views.hosting_delete_view, name='hosting_delete'),
     path('<int:service_pk>/invoices/new/', views.hosting_invoice_create_view, name='invoice_create'),
     path('<int:service_pk>/invoices/<int:pk>/delete/', views.hosting_invoice_delete_view, name='invoice_delete'),
+
+    # Annual Maintenance Contract
+    path('amcs/', views.amc_list_view, name='amc_list'),
+    path('amcs/new/', views.amc_create_view, name='amc_create'),
+    path('amcs/<int:pk>/edit/', views.amc_update_view, name='amc_update'),
+    path('amcs/<int:pk>/delete/', views.amc_delete_view, name='amc_delete'),
 ]

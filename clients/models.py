@@ -248,3 +248,48 @@ class Homeworker(models.Model):
 
     def __str__(self) -> str:
         return f'{self.name} ({self.client.company_name})'
+
+
+class Location(models.Model):
+    """Company location / office address."""
+
+    name = models.CharField(
+        _('location name'),
+        max_length=200,
+    )
+    address = models.TextField(
+        _('address'),
+    )
+    city = models.ForeignKey(
+        City,
+        on_delete=models.PROTECT,
+        related_name='locations',
+        verbose_name=_('city'),
+        null=True,
+        blank=True,
+    )
+    state = models.ForeignKey(
+        State,
+        on_delete=models.PROTECT,
+        related_name='locations',
+        verbose_name=_('state'),
+        null=True,
+        blank=True,
+    )
+    pincode = models.CharField(
+        _('pincode'),
+        max_length=10,
+        blank=True,
+        default='',
+    )
+    is_active = models.BooleanField(_('active'), default=True)
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
+
+    class Meta:
+        verbose_name = _('location')
+        verbose_name_plural = _('locations')
+        ordering = ['name']
+
+    def __str__(self) -> str:
+        return self.name

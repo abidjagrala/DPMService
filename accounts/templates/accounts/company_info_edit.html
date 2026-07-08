@@ -1,0 +1,91 @@
+{% extends "accounts/base.html" %}
+{% load daisy i18n %}
+
+{% block title %}{{ page_title }} — DPM Service{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <div class="mb-3">
+        <a href="{% url 'accounts:dashboard' %}" class="btn btn-ghost btn-sm">&larr; Back to Dashboard</a>
+    </div>
+
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title">{% trans "Company Information" %}</h2>
+            <p class="text-sm text-base-content/60">{% trans "This information is used in PDF invoices, headers, and the app sidebar." %}</p>
+
+            <form method="post" enctype="multipart/form-data" novalidate class="space-y-4">
+                {% csrf_token %}
+                {% daisy_form_errors form %}
+
+                <div class="divider text-xs text-base-content/50">{% trans "Basic Details" %}</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">{% daisy_field form.name %}</div>
+                    <div class="form-control">{% daisy_field form.tagline %}</div>
+                </div>
+                <div class="form-control">{% daisy_field form.address %}</div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="form-control">{% daisy_field form.city %}</div>
+                    <div class="form-control">{% daisy_field form.state %}</div>
+                    <div class="form-control">{% daisy_field form.pincode %}</div>
+                    <div class="form-control">{% daisy_field form.country %}</div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="form-control">{% daisy_field form.phone %}</div>
+                    <div class="form-control">{% daisy_field form.email %}</div>
+                    <div class="form-control">{% daisy_field form.website %}</div>
+                </div>
+
+                <div class="divider text-xs text-base-content/50">{% trans "Tax & Registration" %}</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">{% daisy_field form.gst_number %}</div>
+                    <div class="form-control">{% daisy_field form.pan_number %}</div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">{% daisy_field form.cin_number %}</div>
+                    <div></div>
+                </div>
+
+                <div class="divider text-xs text-base-content/50">{% trans "Logos" %}</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-medium">{% trans "Logo (Light Theme)" %}</span></label>
+                        {% if obj.logo_light %}
+                            <div class="mb-2">
+                                <img src="{{ obj.logo_light.url }}" alt="Light logo" class="h-16 w-auto border border-base-300 rounded p-2 bg-white">
+                            </div>
+                        {% endif %}
+                        <input type="file" name="logo_light" accept="image/*" class="file-input file-input-bordered file-input-sm w-full">
+                        <label class="label"><span class="label-text-alt text-base-content/50">{% trans "Displayed on light backgrounds (PDF, sidebar)" %}</span></label>
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-medium">{% trans "Logo (Dark Theme)" %}</span></label>
+                        {% if obj.logo_dark %}
+                            <div class="mb-2">
+                                <img src="{{ obj.logo_dark.url }}" alt="Dark logo" class="h-16 w-auto border border-base-300 rounded p-2 bg-base-200">
+                            </div>
+                        {% endif %}
+                        <input type="file" name="logo_dark" accept="image/*" class="file-input file-input-bordered file-input-sm w-full">
+                        <label class="label"><span class="label-text-alt text-base-content/50">{% trans "Displayed on dark backgrounds (PDF, sidebar)" %}</span></label>
+                    </div>
+                </div>
+
+                <div class="divider text-xs text-base-content/50">{% trans "Bank Details" %}</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">{% daisy_field form.bank_name %}</div>
+                    <div class="form-control">{% daisy_field form.bank_branch %}</div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">{% daisy_field form.bank_account_number %}</div>
+                    <div class="form-control">{% daisy_field form.bank_ifsc %}</div>
+                </div>
+
+                <div class="card-actions justify-end mt-2">
+                    <a href="{% url 'accounts:dashboard' %}" class="btn btn-ghost">{% trans "Cancel" %}</a>
+                    <button type="submit" class="btn btn-primary">{% trans "Save Changes" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

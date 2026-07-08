@@ -19,8 +19,8 @@
     <div class="divider text-xs text-base-content/50">
         {% if mode == 'create' %}Set password{% else %}Reset password (optional){% endif %}
     </div>
-    {% daisy_field form.password1 %}
-    {% daisy_field form.password2 %}
+    {% include "accounts/_password_field.html" with field=form.password1 %}
+    {% include "accounts/_password_field.html" with field=form.password2 %}
 
     <div class="flex justify-end gap-2 pt-2">
         <button type="button" class="btn btn-ghost btn-sm" @click="$dispatch('close-drawer')">Cancel</button>

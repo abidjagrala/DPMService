@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from clients.models import Client, Homeworker
+from clients.models import Client, Homeworker, Location
 from masters.models import AssetType
 
 
@@ -69,6 +69,14 @@ class Asset(models.Model):
         on_delete=models.SET_NULL,
         related_name='assets',
         verbose_name=_('homeworker'),
+        null=True,
+        blank=True,
+    )
+    location = models.ForeignKey(
+        'clients.Location',
+        on_delete=models.SET_NULL,
+        related_name='assets',
+        verbose_name=_('location'),
         null=True,
         blank=True,
     )

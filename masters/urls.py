@@ -34,4 +34,11 @@ urlpatterns = [
     path('transport-types/new/', views.transport_type_create_view, name='transport_type_create'),
     path('transport-types/<int:pk>/edit/', views.transport_type_update_view, name='transport_type_update'),
     path('transport-types/<int:pk>/delete/', views.transport_type_delete_view, name='transport_type_delete'),
+
+    # Quick-Create (inline add from other forms)
+    path('quick-new/state/', views.state_quick_create_view, name='state_quick_create'),
+    path('quick-new/city/', views.city_quick_create_view, name='city_quick_create'),
+    path('quick-new/service-type/', views.service_type_quick_create_view, name='service_type_quick_create'),
+    path('quick-new/asset-type/', views.asset_type_quick_create_view, name='asset_type_quick_create'),
+    path('quick-new/transport-type/', views.transport_type_quick_create_view, name='transport_type_quick_create'),
 ]

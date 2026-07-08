@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import DomainHosting, DomainHostingInvoice
+from .models import DomainHosting, DomainHostingInvoice, AnnualMaintenanceContract
 
 
 class DomainHostingInvoiceInline(admin.TabularInline):
@@ -24,3 +24,10 @@ class DomainHostingInvoiceAdmin(admin.ModelAdmin):
     list_display = ['invoice_number', 'service', 'invoice_date', 'amount', 'paid']
     list_filter = ['paid']
     search_fields = ['invoice_number', 'service__service_name']
+
+
+@admin.register(AnnualMaintenanceContract)
+class AnnualMaintenanceContractAdmin(admin.ModelAdmin):
+    list_display = ['title', 'client', 'expiry_date', 'amount', 'payment_status', 'is_active']
+    list_filter = ['payment_status', 'is_active']
+    search_fields = ['title', 'client__company_name']

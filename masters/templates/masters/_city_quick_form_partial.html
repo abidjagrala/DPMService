@@ -1,0 +1,21 @@
+<form hx-post="{% url 'masters:city_quick_create' %}"
+      hx-swap="none"
+      hx-on::after-request="handleQuickAddResponse(event, 'city')"
+      class="space-y-3">
+    {% csrf_token %}
+    <div class="form-control">
+        <label class="label py-1"><span class="label-text text-sm font-medium">State</span></label>
+        <select name="state" class="select select-bordered select-sm w-full">
+            <option value="">Select State</option>
+            {% for s in states %}<option value="{{ s.pk }}" {% if selected_state == s.pk|stringformat:"d" %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+        </select>
+    </div>
+    <div class="form-control">
+        <label class="label py-1"><span class="label-text text-sm font-medium">City Name</span></label>
+        <input type="text" name="name" class="input input-bordered input-sm w-full">
+    </div>
+    <div class="flex justify-end gap-2 pt-2">
+        <button type="button" class="btn btn-ghost btn-sm" @click="$dispatch('close-quick-add')">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm">Create</button>
+    </div>
+</form>
