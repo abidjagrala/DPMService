@@ -39,6 +39,7 @@ class Asset(models.Model):
         _('brand/model'),
         max_length=200,
         default='',
+        blank=True,
     )
     purchase_date = models.DateField(
         _('purchase date'),
