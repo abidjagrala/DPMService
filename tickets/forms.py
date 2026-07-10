@@ -13,7 +13,7 @@ class ServiceTicketForm(forms.ModelForm):
     class Meta:
         model = ServiceTicket
         fields = [
-            'service_type', 'client', 'assets', 'location', 'assigned_to',
+            'client', 'service_type', 'assets', 'location', 'assigned_to',
             'priority', 'subject', 'description', 'scheduled_date',
             'address', 'contact_person', 'contact_phone',
             'transport_type', 'tracking_url',
@@ -134,7 +134,7 @@ class StaffTicketForm(forms.ModelForm):
     class Meta:
         model = ServiceTicket
         fields = [
-            'service_type', 'client', 'priority', 'subject', 'description',
+            'client', 'service_type', 'priority', 'subject', 'description',
             'address', 'contact_person', 'contact_phone',
         ]
         widgets = {
