@@ -9,8 +9,8 @@
     <meta name="csrf-token" content="{{ csrf_token }}">
     <title>{% block title %}DPM Service{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'main.css' %}">
-    <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
-    <script defer src="https://unpkg.com/alpinejs@3.13.10/dist/cdn.min.js"></script>
+    <script src="{% static 'js/htmx.min.js' %}" defer></script>
+    <script defer src="{% static 'js/alpine.min.js' %}"></script>
     <script>
         const DAISYUI_THEMES = [
             { id: 'light', label: 'Light', icon: '☀️' },
@@ -223,6 +223,16 @@
             {% include "accounts/_topbar.html" %}
             <main class="flex-1 p-4 lg:p-6">
                 <div id="page-content" class="mx-auto max-w-7xl">
+                    {% if messages %}
+                        <div class="mb-4 space-y-2">
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags|default:'info' }} shadow" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" x-transition>
+                                    <span>{{ message }}</span>
+                                    <button type="button" class="btn btn-ghost btn-xs" @click="show = false">&times;</button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                     {% block breadcrumbs %}{% endblock %}
                     {% block content %}{% endblock %}
                 </div>

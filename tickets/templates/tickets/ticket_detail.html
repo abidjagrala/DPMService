@@ -1,9 +1,10 @@
 {% extends "tickets/base.html" %}
-{% load comments i18n %}
+{% load comments daisy i18n %}
 
 {% block content %}
 <div class="flex flex-wrap items-center gap-2 mb-4">
     <h1 class="text-2xl font-semibold mr-auto">{{ obj.ticket_number }} — {{ obj.subject }}</h1>
+    <a class="btn btn-ghost btn-sm" href="{% url 'tickets:ticket_detail_pdf' obj.pk %}" target="_blank">Download PDF</a>
     <a class="btn btn-ghost btn-sm" href="{% url 'tickets:ticket_list' %}">{% trans "Back" %}</a>
 </div>
 
@@ -15,7 +16,11 @@
                 <div class="grid grid-cols-2 gap-4 text-sm">
                     <div><span class="font-semibold">{% trans "Service Type" %}:</span> {{ obj.service_type }}</div>
                     <div><span class="font-semibold">{% trans "Client" %}:</span> {{ obj.client.company_name }}</div>
-                    <div><span class="font-semibold">{% trans "Asset" %}:</span> {{ obj.asset|default:"—" }}</div>
+                    <div><span class="font-semibold">{% trans "Asset" %}:</span>
+                        {% for asset in obj.assets.all %}
+                            <a href="{% url 'assets:asset_detail' asset.pk %}" class="badge badge-primary badge-outline">{{ asset.asset_tag }}</a>
+                        {% empty %}—{% endfor %}
+                    </div>
                     <div><span class="font-semibold">{% trans "Assigned To" %}:</span>
                         {% if obj.assigned_to %}{{ obj.assigned_to.user.get_full_name|default:obj.assigned_to.user.email }}{% else %}—{% endif %}</div>
                     <div><span class="font-semibold">{% trans "Priority" %}:</span> {{ obj.get_priority_display }}</div>

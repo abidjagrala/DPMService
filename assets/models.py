@@ -80,6 +80,13 @@ class Asset(models.Model):
         null=True,
         blank=True,
     )
+    device_location = models.CharField(
+        _('device location'),
+        max_length=255,
+        blank=True,
+        default='',
+        help_text=_('Physical location of the device (e.g. Building A, Floor 3, Desk 12).'),
+    )
     ip_address = models.CharField(
         _('IP address'),
         max_length=45,

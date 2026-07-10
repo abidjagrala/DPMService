@@ -15,7 +15,8 @@ class AssetForm(forms.ModelForm):
         fields = [
             'asset_tag', 'serial_number', 'asset_type', 'brand_model',
             'purchase_date', 'warranty_expiry',
-            'status', 'client', 'homeworker', 'location', 'ip_address', 'mac_address',
+            'status', 'client', 'homeworker', 'location', 'device_location',
+            'ip_address', 'mac_address',
             'notes', 'username', 'password', 'is_active',
         ]
         widgets = {
@@ -29,6 +30,7 @@ class AssetForm(forms.ModelForm):
             'client': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'homeworker': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'location': forms.Select(attrs={'class': 'select select-bordered w-full'}),
+            'device_location': forms.TextInput(attrs={'class': 'input input-bordered w-full', 'placeholder': 'e.g. Building A, Floor 3, Desk 12'}),
             'ip_address': forms.TextInput(attrs={'class': 'input input-bordered w-full', 'placeholder': '192.168.1.10'}),
             'mac_address': forms.TextInput(attrs={'class': 'input input-bordered w-full', 'placeholder': 'AA:BB:CC:DD:EE:FF'}),
             'notes': forms.Textarea(attrs={'class': 'textarea textarea-bordered w-full', 'rows': 2}),
@@ -110,7 +112,7 @@ class ClientAssetForm(forms.ModelForm):
         fields = [
             'serial_number', 'asset_type', 'brand_model',
             'purchase_date', 'warranty_expiry',
-            'status', 'homeworker', 'ip_address', 'mac_address',
+            'status', 'homeworker', 'device_location', 'ip_address', 'mac_address',
             'notes',
         ]
         widgets = {
@@ -121,6 +123,7 @@ class ClientAssetForm(forms.ModelForm):
             'warranty_expiry': forms.DateInput(attrs={'class': 'input input-bordered w-full', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'homeworker': forms.Select(attrs={'class': 'select select-bordered w-full'}),
+            'device_location': forms.TextInput(attrs={'class': 'input input-bordered w-full', 'placeholder': 'e.g. Building A, Floor 3, Desk 12'}),
             'ip_address': forms.TextInput(attrs={'class': 'input input-bordered w-full', 'placeholder': '192.168.1.10'}),
             'mac_address': forms.TextInput(attrs={'class': 'input input-bordered w-full', 'placeholder': 'AA:BB:CC:DD:EE:FF'}),
             'notes': forms.Textarea(attrs={'class': 'textarea textarea-bordered w-full', 'rows': 2}),
@@ -134,6 +137,7 @@ class ClientAssetForm(forms.ModelForm):
         else:
             self.fields['homeworker'].queryset = Homeworker.objects.filter(is_active=True)
         self.fields['homeworker'].required = False
+        self.fields['device_location'].required = False
         self.fields['warranty_expiry'].required = False
         self.fields['ip_address'].required = False
         self.fields['mac_address'].required = False

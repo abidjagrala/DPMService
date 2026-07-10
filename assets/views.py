@@ -358,11 +358,16 @@ def asset_status_change_view(request, pk):
 @require_http_methods(['GET'])
 def asset_detail_pdf(request, pk):
     from io import BytesIO
+    from datetime import datetime, timezone as dt_timezone, timedelta
+
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4
-    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import mm
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage
+    from reportlab.pdfgen.canvas import Canvas
+
+    from accounts.models import CompanyInfo
 
     asset = get_object_or_404(
         Asset.objects.select_related('asset_type', 'client', 'homeworker__client'),
@@ -373,85 +378,284 @@ def asset_detail_pdf(request, pk):
         return HttpResponseForbidden('You do not have access to this asset.')
 
     assignments = asset.assignments.select_related('client', 'homeworker__client', 'assigned_by')[:10]
+    company = CompanyInfo.get_instance()
 
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=20*mm, rightMargin=20*mm, topMargin=20*mm, bottomMargin=20*mm)
+    doc = SimpleDocTemplate(
+        buffer, pagesize=A4,
+        leftMargin=15 * mm, rightMargin=15 * mm,
+        topMargin=20 * mm, bottomMargin=25 * mm,
+    )
     styles = getSampleStyleSheet()
     elements = []
 
-    elements.append(Paragraph(f'Asset Report — {asset.asset_tag}', styles['Title']))
-    elements.append(Spacer(1, 8*mm))
+    # Custom styles
+    label_style = ParagraphStyle(
+        'FieldLabel', parent=styles['Normal'],
+        fontSize=9, fontName='Helvetica-Bold', textColor=colors.Color(0.3, 0.3, 0.3),
+    )
+    value_style = ParagraphStyle(
+        'FieldValue', parent=styles['Normal'],
+        fontSize=9, fontName='Helvetica',
+    )
+    heading_style = ParagraphStyle(
+        'SectionHeading', parent=styles['Heading2'],
+        fontSize=11, fontName='Helvetica-Bold', spaceAfter=4 * mm,
+        textColor=colors.Color(0.15, 0.15, 0.15),
+    )
 
     def field_row(label, value):
-        return [Paragraph(f'<b>{label}</b>', styles['Normal']), Paragraph(str(value) if value else '—', styles['Normal'])]
+        return [
+            Paragraph(f'<b>{label}</b>', label_style),
+            Paragraph(str(value) if value else 'Not Available', value_style),
+        ]
+
+    # ============================================================
+    # HEADER
+    # ============================================================
+    logo_path = None
+    if company.logo_light and hasattr(company.logo_light, 'path'):
+        import os
+        try:
+            if os.path.exists(company.logo_light.path):
+                logo_path = company.logo_light.path
+        except Exception:
+            logo_path = None
+
+    if logo_path:
+        from PIL import Image as PILImage
+        with PILImage.open(logo_path) as img:
+            orig_w, orig_h = img.size
+        max_w, max_h = 35 * mm, 25 * mm
+        ratio = min(max_w / orig_w, max_h / orig_h)
+        logo_cell = RLImage(logo_path, width=orig_w * ratio, height=orig_h * ratio)
+    else:
+        logo_cell = Paragraph(
+            f'<b>{company.name or "DPM Service"}</b>',
+            ParagraphStyle('LogoText', parent=styles['Normal'], fontSize=14, fontName='Helvetica-Bold')
+        )
+
+    address_lines = []
+    if company.name:
+        address_lines.append(f'<b>{company.name}</b>')
+    if company.address:
+        address_lines.append(company.address)
+    city_parts = [p for p in [company.city, company.state, company.pincode] if p]
+    if city_parts:
+        address_lines.append(', '.join(city_parts))
+    if company.country:
+        address_lines.append(company.country)
+    if company.phone:
+        address_lines.append(f'Phone: {company.phone}')
+    if company.email:
+        address_lines.append(f'Email: {company.email}')
+    if company.website:
+        address_lines.append(f'Web: {company.website}')
+
+    address_text = '<br/>'.join(address_lines) if address_lines else 'Not Available'
+    address_para = Paragraph(address_text, ParagraphStyle(
+        'Address', parent=styles['Normal'], fontSize=8, leading=11, alignment=2,
+    ))
+
+    header_data = [[logo_cell, address_para]]
+    header_table = Table(header_data, colWidths=[80 * mm, 95 * mm])
+    header_table.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+    ]))
+    elements.append(header_table)
+    elements.append(Spacer(1, 6 * mm))
+
+    # Title
+    title_style = ParagraphStyle(
+        'PDFTitle', parent=styles['Title'],
+        fontSize=14, fontName='Helvetica-Bold', alignment=1,
+        textColor=colors.Color(0.1, 0.1, 0.1),
+    )
+    elements.append(Paragraph(f'Asset Report — {asset.asset_tag}', title_style))
+    elements.append(Spacer(1, 6 * mm))
+
+    # ============================================================
+    # ASSET DETAILS — 4-column layout: Label | Value | Label | Value
+    # ============================================================
+    elements.append(Paragraph('Asset Details', heading_style))
+
+    def val(v):
+        return str(v) if v else 'Not Available'
 
     details_data = [
-        field_row('Asset Tag', asset.asset_tag),
-        field_row('Serial Number', asset.serial_number),
-        field_row('Type', asset.asset_type.name),
-        field_row('Brand/Model', asset.brand_model),
-        field_row('IP Address', asset.ip_address),
-        field_row('MAC Address', asset.mac_address),
-        field_row('Status', asset.get_status_display()),
-        field_row('Active', 'Yes' if asset.is_active else 'No'),
+        field_row('Asset Tag', asset.asset_tag) + field_row('Serial Number', asset.serial_number),
+        field_row('Type', asset.asset_type.name if asset.asset_type else None) + field_row('Brand/Model', asset.brand_model),
+        field_row('Client', asset.client.company_name if asset.client else None) + field_row('Homeworker', asset.homeworker.name if asset.homeworker else None),
+        field_row('Location', asset.location.name if asset.location else None) + field_row('Device Location', asset.device_location),
+        field_row('IP Address', asset.ip_address) + field_row('MAC Address', asset.mac_address),
+        field_row('Username', asset.username) + field_row('Password', asset.password),
+        field_row('Status', asset.get_status_display()) + field_row('Active', 'Yes' if asset.is_active else 'No'),
     ]
-    t = Table(details_data, colWidths=[45*mm, 120*mm])
+    t = Table(details_data, colWidths=[32 * mm, 55 * mm, 32 * mm, 55 * mm])
     t.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (0, -1), colors.Color(0.95, 0.95, 0.95)),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BACKGROUND', (2, 0), (2, -1), colors.Color(0.95, 0.95, 0.95)),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.Color(0.8, 0.8, 0.8)),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('TOPPADDING', (0, 0), (-1, -1), 4),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
     ]))
-    elements.append(Paragraph('<b>Asset Details</b>', styles['Heading2']))
     elements.append(t)
-    elements.append(Spacer(1, 6*mm))
+    elements.append(Spacer(1, 6 * mm))
+
+    # ============================================================
+    # PURCHASE INFO — 4-column layout
+    # ============================================================
+    elements.append(Paragraph('Purchase Info', heading_style))
 
     purchase_data = [
-        field_row('Purchase Date', asset.purchase_date),
-        field_row('Warranty Expiry', asset.warranty_expiry),
-        field_row('Holder', asset.holder_name),
+        field_row('Purchase Date', asset.purchase_date) + field_row('Warranty Expiry', asset.warranty_expiry),
+        field_row('Holder', asset.holder_name) + ['', ''],
     ]
-    t2 = Table(purchase_data, colWidths=[45*mm, 120*mm])
+    t2 = Table(purchase_data, colWidths=[32 * mm, 55 * mm, 32 * mm, 55 * mm])
     t2.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (0, -1), colors.Color(0.95, 0.95, 0.95)),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BACKGROUND', (2, 0), (2, -1), colors.Color(0.95, 0.95, 0.95)),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.Color(0.8, 0.8, 0.8)),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('TOPPADDING', (0, 0), (-1, -1), 4),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
     ]))
-    elements.append(Paragraph('<b>Purchase Info</b>', styles['Heading2']))
     elements.append(t2)
-    elements.append(Spacer(1, 6*mm))
+    elements.append(Spacer(1, 4 * mm))
 
-    if asset.notes:
-        elements.append(Paragraph('<b>Notes</b>', styles['Heading2']))
-        elements.append(Paragraph(asset.notes.replace('\n', '<br/>'), styles['Normal']))
-        elements.append(Spacer(1, 6*mm))
+    # Notes
+    elements.append(Paragraph('<b>Notes</b>', label_style))
+    elements.append(Spacer(1, 2 * mm))
+    elements.append(Paragraph(asset.notes.replace('\n', '<br/>') if asset.notes else 'Not Available', value_style))
+    elements.append(Spacer(1, 8 * mm))
+
+    # ============================================================
+    # ASSIGNMENT HISTORY
+    # ============================================================
+    elements.append(Paragraph('Assignment History', heading_style))
+
+    ah_header = [
+        Paragraph('<b>Assigned To</b>', label_style),
+        Paragraph('<b>Assigned By</b>', label_style),
+        Paragraph('<b>Date</b>', label_style),
+        Paragraph('<b>Returned</b>', label_style),
+    ]
+    ah_data = [ah_header]
 
     if assignments:
-        elements.append(Paragraph('<b>Assignment History</b>', styles['Heading2']))
-        assignment_data = [['Assigned To', 'Assigned By', 'Date', 'Returned']]
         for a in assignments:
             assigned_to = a.client.company_name if a.client else (a.homeworker.name if a.homeworker else '—')
-            assignment_data.append([
-                assigned_to,
-                a.assigned_by.get_full_name(),
-                a.assigned_date.strftime('%b %d, %Y %I:%M %p') if a.assigned_date else '—',
-                a.return_date.strftime('%b %d, %Y %I:%M %p') if a.return_date else 'Current',
+            assigned_by = a.assigned_by.get_full_name() if a.assigned_by else '—'
+            ah_data.append([
+                Paragraph(assigned_to, value_style),
+                Paragraph(assigned_by, value_style),
+                Paragraph(a.assigned_date.strftime('%d %b %Y, %I:%M %p') if a.assigned_date else '—', value_style),
+                Paragraph(a.return_date.strftime('%d %b %Y, %I:%M %p') if a.return_date else 'Current', value_style),
             ])
-        t3 = Table(assignment_data, colWidths=[45*mm, 40*mm, 40*mm, 40*mm])
-        t3.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.9, 0.9, 0.9)),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-        ]))
-        elements.append(t3)
+    else:
+        ah_data.append([
+            Paragraph('No assignment records', value_style),
+            Paragraph('—', value_style),
+            Paragraph('—', value_style),
+            Paragraph('—', value_style),
+        ])
 
-    doc.build(elements)
+    ah_table = Table(ah_data, colWidths=[45 * mm, 40 * mm, 45 * mm, 45 * mm])
+    ah_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.9, 0.9, 0.9)),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.Color(0.8, 0.8, 0.8)),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('LEFTPADDING', (0, 0), (-1, -1), 3),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 3),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(ah_table)
+
+    # ============================================================
+    # FOOTER (on every page)
+    # ============================================================
+    ist = dt_timezone(timedelta(hours=5, minutes=30))
+    now_ist = datetime.now(ist)
+    now_str = now_ist.strftime('%d %b %Y, %I:%M %p IST')
+    user_name = request.user.get_full_name() or request.user.email
+
+    class NumberedCanvas(Canvas):
+        def __init__(self, *args, **kwargs):
+            Canvas.__init__(self, *args, **kwargs)
+            self._saved_page_states = []
+
+        def showPage(self):
+            self._saved_page_states.append(dict(self.__dict__))
+            self._startPage()
+
+        def save(self):
+            total_pages = len(self._saved_page_states)
+            for state in self._saved_page_states:
+                self.__dict__.update(state)
+                self._draw_footer(total_pages)
+                Canvas.showPage(self)
+            Canvas.save(self)
+
+        def _draw_footer(self, total_pages):
+            page_width = A4[0]
+            self.saveState()
+            self.setStrokeColor(colors.Color(0.8, 0.8, 0.8))
+            self.setLineWidth(0.5)
+            self.line(15 * mm, 20 * mm, page_width - 15 * mm, 20 * mm)
+            self.setFont('Helvetica', 7)
+            self.setFillColor(colors.Color(0.5, 0.5, 0.5))
+            self.drawString(15 * mm, 14 * mm, f'Generated: {now_str}')
+            self.drawCentredString(page_width / 2, 14 * mm, f'Generated by: {user_name}')
+            self.drawRightString(page_width - 15 * mm, 14 * mm, f'Page {self.getPageNumber()} of {total_pages}')
+            self.restoreState()
+
+    doc.build(elements, canvasmaker=NumberedCanvas)
     buffer.seek(0)
     response = HttpResponse(buffer, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="asset_{asset.asset_tag}.pdf"'
     return response
+
+
+@role_required('admin', 'manager', 'staff')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def asset_quick_create_view(request):
+    if request.method == 'POST':
+        asset_tag = request.POST.get('asset_tag', '').strip()
+        asset_type_id = request.POST.get('asset_type', '').strip()
+        brand_model = request.POST.get('brand_model', '').strip()
+        serial_number = request.POST.get('serial_number', '').strip()
+        client_id = request.POST.get('client', '').strip()
+
+        if not asset_type_id:
+            return HttpResponse(json.dumps({'error': 'Asset type is required.'}), status=400, content_type='application/json')
+
+        from masters.models import AssetType
+        asset_type = get_object_or_404(AssetType, pk=asset_type_id)
+
+        asset = Asset(
+            asset_type=asset_type,
+            brand_model=brand_model,
+            serial_number=serial_number,
+        )
+        if client_id:
+            from clients.models import Client
+            asset.client = Client.objects.filter(pk=client_id).first()
+        if asset_tag:
+            asset.asset_tag = asset_tag
+        asset.save()
+
+        return HttpResponse(json.dumps({'id': asset.pk, 'label': asset.asset_tag}), status=201, content_type='application/json')
+
+    from masters.models import AssetType
+    asset_types = AssetType.objects.filter(is_active=True).order_by('name')
+    return render(request, 'assets/_asset_quick_form_partial.html', {'asset_types': asset_types})

@@ -51,13 +51,11 @@ class ServiceTicket(models.Model):
         related_name='service_tickets',
         verbose_name=_('client'),
     )
-    asset = models.ForeignKey(
+    assets = models.ManyToManyField(
         Asset,
-        on_delete=models.PROTECT,
-        related_name='service_tickets',
-        verbose_name=_('asset'),
-        null=True,
         blank=True,
+        related_name='service_tickets',
+        verbose_name=_('assets'),
     )
     location = models.ForeignKey(
         Location,

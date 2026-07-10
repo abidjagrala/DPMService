@@ -98,10 +98,14 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             reset_attempts(email, ip)
-            request.session['pre_2fa_user_id'] = user.pk
-            if user.totp_secret:
+            if user.two_factor_enabled and user.totp_secret:
+                request.session['pre_2fa_user_id'] = user.pk
                 return redirect('accounts:totp_verify')
+            elif not user.two_factor_enabled and not user.totp_secret:
+                login(request, user)
+                return redirect('accounts:dashboard')
             else:
+                request.session['pre_2fa_user_id'] = user.pk
                 return redirect('accounts:totp_setup')
         else:
             record_failed_attempt(email, ip)
@@ -291,6 +295,31 @@ def user_delete_view(request, user_id):
 
     template = 'accounts/_user_confirm_delete_partial.html' if is_htmx(request) else 'accounts/user_confirm_delete.html'
     return render(request, template, {'user_obj': target_user})
+
+
+@role_required(User.Role.ADMIN)
+@csrf_protect
+@require_http_methods(['POST'])
+def user_2fa_toggle_view(request, user_id):
+    """Admin toggle 2FA for a user (force enable/disable without TOTP verification)."""
+    target_user = get_object_or_404(User, pk=user_id)
+
+    action = request.POST.get('action', '')
+
+    if action == 'disable':
+        target_user.totp_secret = ''
+        target_user.two_factor_enabled = False
+        target_user.save(update_fields=['totp_secret', 'two_factor_enabled'])
+        messages.success(request, f'2FA disabled for {target_user.email}.')
+    elif action == 'enable':
+        target_user.two_factor_enabled = False
+        target_user.totp_secret = ''
+        target_user.save(update_fields=['two_factor_enabled', 'totp_secret'])
+        messages.success(request, f'2FA enabled for {target_user.email}. User must complete 2FA setup on next login.')
+    else:
+        messages.error(request, 'Invalid action.')
+
+    return redirect('accounts:user_detail', user_id=target_user.pk)
 
 
 @csrf_protect
@@ -596,5 +625,106 @@ def totp_verify_view(request):
                 error = _('Invalid code. Please try again.')
 
     return render(request, 'accounts/totp_verify.html', {
+        'error': error,
+    })
+
+
+@login_required
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def totp_disable_view(request):
+    """Disable 2FA after verifying current TOTP code."""
+    user = request.user
+
+    if not user.two_factor_enabled or not user.totp_secret:
+        messages.info(request, _('Two-factor authentication is not enabled.'))
+        return redirect('accounts:profile')
+
+    error = None
+    if request.method == 'POST':
+        code = request.POST.get('code', '').strip()
+        if not code or len(code) != 6 or not code.isdigit():
+            error = _('Please enter a valid 6-digit code.')
+        else:
+            totp = pyotp.TOTP(user.totp_secret)
+            if totp.verify(code, valid_window=2):
+                user.totp_secret = ''
+                user.two_factor_enabled = False
+                user.save(update_fields=['totp_secret', 'two_factor_enabled'])
+                messages.success(request, _('Two-factor authentication has been disabled.'))
+                return redirect('accounts:profile')
+            else:
+                error = _('Invalid code. Please try again.')
+
+    return render(request, 'accounts/totp_disable.html', {
+        'error': error,
+    })
+
+
+@login_required
+@csrf_protect
+@require_http_methods(['POST'])
+def totp_enable_view(request):
+    """Redirect to TOTP setup to enable 2FA."""
+    user = request.user
+
+    if user.two_factor_enabled and user.totp_secret:
+        messages.info(request, _('Two-factor authentication is already enabled.'))
+        return redirect('accounts:profile')
+
+    return redirect('accounts:totp_setup_enable')
+
+
+@login_required
+@csrf_protect
+@never_cache
+@require_http_methods(['GET', 'POST'])
+def totp_setup_enable_view(request):
+    """TOTP setup for enabling 2FA from profile (authenticated user)."""
+    user = request.user
+
+    if user.two_factor_enabled and user.totp_secret:
+        return redirect('accounts:profile')
+
+    if request.method == 'GET':
+        secret = pyotp.random_base32()
+        request.session['totp_setup_secret'] = secret
+    else:
+        secret = request.session.get('totp_setup_secret')
+        if not secret:
+            return redirect('accounts:totp_setup_enable')
+
+    totp = pyotp.TOTP(secret)
+    issuer = 'DPM Service'
+    provisioning_uri = totp.provisioning_uri(name=user.email, issuer_name=issuer)
+
+    qr = qrcode.QRCode(version=1, box_size=8, border=2)
+    qr.add_data(provisioning_uri)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color='black', back_color='white')
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    qr_b64 = base64.b64encode(buf.getvalue()).decode()
+
+    error = None
+    if request.method == 'POST':
+        code = request.POST.get('code', '').strip()
+        if not code or len(code) != 6 or not code.isdigit():
+            error = _('Please enter a valid 6-digit code.')
+        else:
+            verify_totp = pyotp.TOTP(secret)
+            if verify_totp.verify(code, valid_window=2):
+                user.totp_secret = secret
+                user.two_factor_enabled = True
+                user.save(update_fields=['totp_secret', 'two_factor_enabled'])
+                request.session.pop('totp_setup_secret', None)
+                messages.success(request, _('Two-factor authentication has been enabled.'))
+                return redirect('accounts:profile')
+            else:
+                error = _('Invalid code. Please try again.')
+
+    return render(request, 'accounts/totp_setup.html', {
+        'qr_b64': qr_b64,
+        'secret': secret,
         'error': error,
     })

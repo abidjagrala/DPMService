@@ -20,9 +20,13 @@ urlpatterns = [
     path('users/<int:user_id>/', views.user_detail_view, name='user_detail'),
     path('users/<int:user_id>/edit/', views.user_update_view, name='user_update'),
     path('users/<int:user_id>/delete/', views.user_delete_view, name='user_delete'),
+    path('users/<int:user_id>/2fa-toggle/', views.user_2fa_toggle_view, name='user_2fa_toggle'),
     path('company-info/', views.company_info_edit_view, name='company_info_edit'),
     path('mail-settings/', views.mail_settings_edit_view, name='mail_settings_edit'),
     path('mail-settings/test/', views.mail_settings_test_view, name='mail_settings_test'),
     path('totp/setup/', views.totp_setup_view, name='totp_setup'),
     path('totp/verify/', views.totp_verify_view, name='totp_verify'),
+    path('totp/disable/', views.totp_disable_view, name='totp_disable'),
+    path('totp/enable/', views.totp_enable_view, name='totp_enable'),
+    path('totp/setup/enable/', views.totp_setup_enable_view, name='totp_setup_enable'),
 ]

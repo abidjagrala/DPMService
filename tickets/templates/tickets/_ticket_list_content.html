@@ -75,10 +75,7 @@
                                 {% trans "Change Status" %}
                             </button>
                             <button type="button"
-                                    hx-get="{% url 'tickets:ticket_update' pk=t.pk %}"
-                                    hx-target="#drawer-body"
-                                    hx-swap="innerHTML"
-                                    @click="$dispatch('open-drawer', { title: 'Edit {{ t.ticket_number|escapejs }}' })"
+                                    onclick="window.location='{% url 'tickets:ticket_update' pk=t.pk %}'"
                                     class="btn btn-ghost btn-xs">
                                 {% trans "Edit" %}
                             </button>
@@ -181,10 +178,7 @@
                                 @click="$dispatch('open-drawer', { title: '{% trans "Change Status" %}' })"
                                 class="btn btn-ghost btn-xs">{% trans "Status" %}</button>
                         <button type="button"
-                                hx-get="{% url 'tickets:ticket_update' pk=t.pk %}"
-                                hx-target="#drawer-body"
-                                hx-swap="innerHTML"
-                                @click="$dispatch('open-drawer', { title: 'Edit {{ t.ticket_number|escapejs }}' })"
+                                onclick="window.location='{% url 'tickets:ticket_update' pk=t.pk %}'"
                                 class="btn btn-ghost btn-xs">{% trans "Edit" %}</button>
                         <button type="button"
                                 hx-get="{% url 'tickets:ticket_delete' pk=t.pk %}"

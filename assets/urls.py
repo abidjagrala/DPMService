@@ -8,6 +8,7 @@ urlpatterns = [
     path('assets/', views.asset_list_view, name='asset_list'),
     path('assets/export/', views.asset_export_csv, name='asset_export_csv'),
     path('assets/new/', views.asset_create_view, name='asset_create'),
+    path('assets/quick-new/asset/', views.asset_quick_create_view, name='asset_quick_create'),
     path('assets/<int:pk>/', views.asset_detail_view, name='asset_detail'),
     path('assets/<int:pk>/credentials/', views.asset_credentials_view, name='asset_credentials'),
     path('assets/<int:pk>/pdf/', views.asset_detail_pdf, name='asset_detail_pdf'),

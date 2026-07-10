@@ -1,0 +1,119 @@
+{% extends "accounts/base.html" %}
+{% load i18n %}
+
+{% block title %}{{ page_title }} - DPM Service{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto" x-data="backupRestore()">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-semibold">{{ page_title }}</h1>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title text-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    {% trans "Download Backup" %}
+                </h2>
+                <p class="text-sm text-base-content/70">
+                    {% trans "Download a complete backup of your database and all uploaded files." %}
+                </p>
+                <ul class="text-xs text-base-content/60 space-y-1 mt-2">
+                    <li>• {% trans "All database records (users, clients, tickets, assets, etc.)" %}</li>
+                    <li>• {% trans "All uploaded files (logos, attachments, PDFs)" %}</li>
+                    <li>• {% trans "Compressed ZIP format" %}</li>
+                </ul>
+                <div class="card-actions justify-end mt-4">
+                    <a href="{% url 'system:backup' %}" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        {% trans "Download Backup" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title text-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    {% trans "Restore Backup" %}
+                </h2>
+                <p class="text-sm text-base-content/70">
+                    {% trans "Restore your system from a previous backup file." %}
+                </p>
+                <div class="alert alert-warning text-xs mt-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <div>
+                        <strong>{% trans "Warning:" %}</strong> {% trans "This will DELETE ALL existing data and replace it with the backup. This action cannot be undone." %}
+                    </div>
+                </div>
+                <div class="card-actions justify-end mt-4">
+                    <button type="button" @click="showModal = true" class="btn btn-warning">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                        {% trans "Restore from Backup" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="showModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-black/50" @click="showModal = false"></div>
+        <div class="relative bg-base-100 rounded-xl shadow-xl w-full max-w-lg z-10">
+            <div class="flex items-center justify-between p-4 border-b border-base-200">
+                <h3 class="font-semibold">{% trans "Restore from Backup" %}</h3>
+                <button type="button" @click="showModal = false" class="btn btn-ghost btn-xs">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <form method="post" action="{% url 'system:backup_restore' %}" enctype="multipart/form-data" class="p-4 space-y-4">
+                {% csrf_token %}
+
+                <div class="alert alert-error text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <div>
+                        <p class="font-medium">{% trans "This will permanently delete ALL current data!" %}</p>
+                    </div>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text text-sm font-medium">{% trans "Select backup file (.zip):" %}</span>
+                    </label>
+                    <input type="file" name="backup_file" accept=".zip"
+                           class="file-input file-input-bordered file-input-sm w-full" required>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text text-sm font-medium">{% trans "Type RESTORE to confirm:" %}</span>
+                    </label>
+                    <input type="text" name="confirm_text" x-model="confirmText"
+                           class="input input-bordered input-sm w-full"
+                           placeholder="RESTORE" autocomplete="off" required>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" @click="showModal = false" class="btn btn-ghost btn-sm">{% trans "Cancel" %}</button>
+                    <button type="submit" class="btn btn-error btn-sm" :disabled="confirmText !== 'RESTORE'">
+                        {% trans "Restore Now" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function backupRestore() {
+    return {
+        showModal: false,
+        confirmText: '',
+    };
+}
+</script>
+{% endblock %}

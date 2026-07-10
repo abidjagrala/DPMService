@@ -1,13 +1,10 @@
 {% load i18n crispy_forms_tags daisy %}
 
-<form hx-post="{% if mode == 'create' %}{% url 'tickets:ticket_create' %}{% else %}{% url 'tickets:ticket_update' pk=obj.pk %}{% endif %}"
-      hx-target="this"
-      hx-swap="outerHTML"
-      class="space-y-3">
+<form method="post" class="space-y-3">
     {% csrf_token %}
     {% daisy_form_errors form %}
     {% for field in form %}
-        {% if field.name == 'service_type' or field.name == 'client' or field.name == 'asset' or field.name == 'location' or field.name == 'assigned_to' or field.name == 'priority' or field.name == 'status' or field.name == 'transport_type' %}
+        {% if field.name == 'service_type' or field.name == 'client' or field.name == 'location' or field.name == 'assigned_to' or field.name == 'priority' or field.name == 'status' or field.name == 'transport_type' %}
             <div class="form-control">
                 <label class="label py-1">
                     <span class="label-text text-sm font-medium">{{ field.label }}{% if field.field.required %} <span class="text-error">*</span>{% endif %}</span>
@@ -38,6 +35,17 @@
                     <label class="label"><span class="label-text-alt text-error">{{ field.errors.0 }}</span></label>
                 {% endif %}
             </div>
+        {% elif field.name == 'assets' %}
+            <div class="form-control" id="assets-widget">
+                <label class="label py-1">
+                    <span class="label-text text-sm font-medium">{{ field.label }}</span>
+                    {% include "accounts/_quick_add_modal.html" with url="/inventory/assets/quick-new/asset/" field_name="asset" label="Asset" %}
+                </label>
+                <div class="border border-base-300 rounded-lg p-2 max-h-48 overflow-y-auto" id="assets-checkboxes">
+                    <div class="text-sm text-base-content/50 py-2" id="assets-placeholder">{% trans "Select a client first..." %}</div>
+                </div>
+                <div class="flex flex-wrap gap-1 mt-1" id="assets-badges"></div>
+            </div>
         {% else %}
             <div class="form-control">
                 {% daisy_field field %}
@@ -46,7 +54,7 @@
     {% endfor %}
 
     <div class="flex justify-end gap-2 pt-2">
-        <button type="button" class="btn btn-ghost btn-sm" @click="$dispatch('close-drawer')">{% trans "Cancel" %}</button>
+        <a href="{% url 'tickets:ticket_list' %}" class="btn btn-ghost btn-sm">{% trans "Cancel" %}</a>
         <button type="submit" class="btn btn-primary btn-sm">
             {% if mode == 'create' %}{% trans "Create" %}{% else %}{% trans "Save" %}{% endif %}
         </button>
@@ -55,16 +63,195 @@
 
 <script>
 (function() {
-    const trackingInput = document.querySelector('input[name="tracking_url"]');
-    const selfNote = document.querySelector('.tracking-url-self-note');
+    var EXISTING_IDS = {{ existing_asset_ids|safe }};
+    var API_URL = "{% url 'tickets:ticket_assets_api' %}";
+    var selected = [];
+    var allAssets = [];
+
+    function getSelected() { return selected; }
+
+    function setSelected(ids) {
+        selected = ids.map(String);
+        renderBadges();
+        syncHiddenInputs();
+    }
+
+    function toggleAsset(id) {
+        id = String(id);
+        var idx = selected.indexOf(id);
+        if (idx === -1) selected.push(id);
+        else selected.splice(idx, 1);
+        renderCheckboxes();
+        renderBadges();
+        syncHiddenInputs();
+    }
+
+    function renderBadges() {
+        var el = document.getElementById('assets-badges');
+        if (!el) return;
+        el.innerHTML = '';
+        selected.forEach(function(id) {
+            var asset = allAssets.find(function(a) { return String(a.id) === id; });
+            var label = asset ? asset.asset_tag : id;
+            var badge = document.createElement('span');
+            badge.className = 'badge badge-primary badge-sm gap-1';
+            badge.innerHTML = '<span>' + label + '</span><button type="button" class="btn btn-ghost btn-xs p-0" data-remove="' + id + '">&times;</button>';
+            el.appendChild(badge);
+        });
+    }
+
+    function renderCheckboxes() {
+        var container = document.getElementById('assets-checkboxes');
+        if (!container) return;
+
+        var searchInput = '<input type="text" id="assets-search" class="input input-bordered input-sm w-full mb-2" placeholder="{% trans "Search assets..." %}">';
+
+        if (allAssets.length === 0) {
+            container.innerHTML = '<div class="text-sm text-base-content/50 py-2" id="assets-placeholder">{% trans "No assets found for this client" %}</div>';
+            return;
+        }
+
+        var html = searchInput + '<div id="assets-list">';
+        allAssets.forEach(function(asset) {
+            var checked = selected.indexOf(String(asset.id)) !== -1 ? 'checked' : '';
+            var label = asset.asset_tag + (asset.brand_model ? ' \u2014 ' + asset.brand_model : '');
+            html += '<label class="flex items-center gap-2 p-1 hover:bg-base-200 rounded cursor-pointer">';
+            html += '<input type="checkbox" class="checkbox checkbox-sm checkbox-primary" value="' + asset.id + '" ' + checked + ' data-asset-check>';
+            html += '<span class="text-sm">' + label + '</span></label>';
+        });
+        html += '</div>';
+        container.innerHTML = html;
+
+        var searchEl = document.getElementById('assets-search');
+        if (searchEl) {
+            searchEl.addEventListener('input', function() {
+                var q = this.value.toLowerCase();
+                var labels = document.querySelectorAll('#assets-list label');
+                allAssets.forEach(function(asset, i) {
+                    if (labels[i]) {
+                        var match = asset.asset_tag.toLowerCase().indexOf(q) !== -1 ||
+                                    (asset.brand_model && asset.brand_model.toLowerCase().indexOf(q) !== -1);
+                        labels[i].style.display = match ? '' : 'none';
+                    }
+                });
+            });
+        }
+
+        container.querySelectorAll('input[data-asset-check]').forEach(function(cb) {
+            cb.addEventListener('change', function() {
+                toggleAsset(this.value);
+            });
+        });
+    }
+
+    function syncHiddenInputs() {
+        var widget = document.getElementById('assets-widget');
+        if (!widget) return;
+        widget.querySelectorAll('input[name="assets"]').forEach(function(el) { el.remove(); });
+        selected.forEach(function(id) {
+            var h = document.createElement('input');
+            h.type = 'hidden';
+            h.name = 'assets';
+            h.value = id;
+            widget.appendChild(h);
+        });
+    }
+
+    function loadAssets(clientId) {
+        var placeholder = document.getElementById('assets-placeholder');
+        var container = document.getElementById('assets-checkboxes');
+        if (!container) return;
+        if (!clientId) {
+            allAssets = [];
+            selected = [];
+            container.innerHTML = '<div class="text-sm text-base-content/50 py-2" id="assets-placeholder">{% trans "Select a client first..." %}</div>';
+            renderBadges();
+            syncHiddenInputs();
+            return;
+        }
+        container.innerHTML = '<div class="text-sm text-base-content/50 py-2">{% trans "Loading assets..." %}</div>';
+        fetch(API_URL + '?client_id=' + clientId)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                allAssets = data;
+                var keep = [];
+                selected.forEach(function(id) {
+                    if (data.some(function(a) { return String(a.id) === id; })) keep.push(id);
+                });
+                selected = keep;
+                renderCheckboxes();
+                renderBadges();
+                syncHiddenInputs();
+            });
+    }
+
+    function findClientInput() {
+        var input = document.querySelector('input[name="client"]');
+        if (input) return input;
+        return null;
+    }
+
+    function watchClient() {
+        var clientInput = findClientInput();
+        if (!clientInput) return;
+
+        setSelected(EXISTING_IDS || []);
+
+        function onClientChange() {
+            loadAssets(clientInput.value);
+        }
+
+        var observer = new MutationObserver(onClientChange);
+        observer.observe(clientInput, { attributes: true, attributeFilter: ['value'] });
+        clientInput.addEventListener('change', onClientChange);
+
+        document.addEventListener('click', function(e) {
+            var item = e.target.closest('.ss-item');
+            if (item && clientInput) {
+                setTimeout(onClientChange, 50);
+            }
+        }, true);
+
+        if (clientInput.value) onClientChange();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', watchClient);
+    } else {
+        watchClient();
+    }
+    setTimeout(watchClient, 200);
+
+    document.addEventListener('click', function(e) {
+        var removeBtn = e.target.closest('[data-remove]');
+        if (removeBtn) {
+            toggleAsset(removeBtn.getAttribute('data-remove'));
+        }
+    }, true);
+
+    document.addEventListener('quick-add-done', function(e) {
+        if (e.detail && e.detail.fieldName === 'asset') {
+            var clientInput = findClientInput();
+            if (clientInput && clientInput.value) {
+                loadAssets(clientInput.value);
+            }
+        }
+    });
+})();
+</script>
+
+<script>
+(function() {
+    var trackingInput = document.querySelector('input[name="tracking_url"]');
+    var selfNote = document.querySelector('.tracking-url-self-note');
     if (!trackingInput) return;
 
-    const transportHidden = document.querySelector('input[name="transport_type"]');
+    var transportHidden = document.querySelector('input[name="transport_type"]');
     if (!transportHidden) return;
 
     function toggleTrackingUrl() {
-        const val = (transportHidden.value || '').toLowerCase();
-        const isSelf = val && val.includes('self');
+        var val = (transportHidden.value || '').toLowerCase();
+        var isSelf = val && val.indexOf('self') !== -1;
         trackingInput.disabled = isSelf;
         if (isSelf) {
             trackingInput.placeholder = 'Auto-generated on save';
@@ -75,7 +262,7 @@
         }
     }
 
-    const observer = new MutationObserver(toggleTrackingUrl);
+    var observer = new MutationObserver(toggleTrackingUrl);
     observer.observe(transportHidden, { attributes: true, attributeFilter: ['value'] });
     transportHidden.addEventListener('change', toggleTrackingUrl);
     toggleTrackingUrl();

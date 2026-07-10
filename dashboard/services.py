@@ -323,8 +323,8 @@ def get_client_state_distribution(user=None):
 
 def get_recent_tickets(user=None, limit=15):
     tickets = ServiceTicket.objects.select_related(
-        'client', 'assigned_to__user', 'service_type', 'asset'
-    ).filter(is_active=True)
+        'client', 'assigned_to__user', 'service_type'
+    ).prefetch_related('assets').filter(is_active=True)
     if user.is_client:
         tickets = tickets.filter(client__user=user)
     return tickets.order_by('-updated_at')[:limit]

@@ -1,7 +1,6 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from assets.models import Asset
 from clients.models import Client, Employee, Location
 from masters.models import ServiceType, TransportType
 
@@ -14,7 +13,7 @@ class ServiceTicketForm(forms.ModelForm):
     class Meta:
         model = ServiceTicket
         fields = [
-            'service_type', 'client', 'asset', 'location', 'assigned_to',
+            'service_type', 'client', 'assets', 'location', 'assigned_to',
             'priority', 'subject', 'description', 'scheduled_date',
             'address', 'contact_person', 'contact_phone',
             'transport_type', 'tracking_url',
@@ -23,7 +22,6 @@ class ServiceTicketForm(forms.ModelForm):
         widgets = {
             'service_type': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'client': forms.Select(attrs={'class': 'select select-bordered w-full'}),
-            'asset': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'location': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'assigned_to': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'priority': forms.Select(attrs={'class': 'select select-bordered w-full'}),
@@ -43,11 +41,9 @@ class ServiceTicketForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['client'].queryset = Client.objects.filter(is_active=True)
-        self.fields['asset'].queryset = Asset.objects.filter(is_active=True)
         self.fields['location'].queryset = Location.objects.filter(is_active=True)
         self.fields['assigned_to'].queryset = Employee.objects.filter(is_active=True)
         self.fields['transport_type'].queryset = TransportType.objects.filter(is_active=True)
-        self.fields['asset'].required = False
         self.fields['location'].required = False
         self.fields['assigned_to'].required = False
         self.fields['scheduled_date'].required = False
@@ -64,6 +60,7 @@ class ServiceTicketForm(forms.ModelForm):
             instance.tracking_url = ''
         if commit:
             instance.save()
+            self.save_m2m()
         return instance
 
     def clean(self):

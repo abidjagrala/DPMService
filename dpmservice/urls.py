@@ -17,6 +17,7 @@ urlpatterns = [
     path('api/', include('api.urls', namespace='api')),
     path('notifications/', include('notifications.urls', namespace='notifications')),
     path('authorization/', include('authorization.urls', namespace='authorization')),
+    path('system/', include('system.urls', namespace='system')),
     path('', RedirectView.as_view(url='/accounts/login/', permanent=False)),
 ]
 

@@ -1,0 +1,64 @@
+{% extends "accounts/base.html" %}
+{% load daisy i18n %}
+
+{% block title %}Disable Two-Factor Authentication — DPM Service{% endblock %}
+{% block page_title %}Disable Two-Factor Authentication{% endblock %}
+
+{% block content %}
+<div class="card bg-base-100 border border-base-300 shadow-sm max-w-lg mx-auto">
+    <div class="card-body">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 rounded-full bg-warning/10 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+            </div>
+            <div>
+                <h2 class="card-title text-lg">Disable 2FA</h2>
+                <p class="text-xs text-base-content/60">Verify your identity to disable two-factor authentication</p>
+            </div>
+        </div>
+
+        <div class="alert alert-warning text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <span>Disabling 2FA reduces your account security. You will only need your password to log in.</span>
+        </div>
+
+        <div class="space-y-4">
+            {% if error %}
+                <div class="alert alert-error text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{{ error }}</span>
+                </div>
+            {% endif %}
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">{% trans "Verification Code" %}</span></label>
+                    <input type="text"
+                           name="code"
+                           maxlength="6"
+                           pattern="[0-9]{6}"
+                           autocomplete="one-time-code"
+                           inputmode="numeric"
+                           autofocus
+                           required
+                           class="input input-bordered input-lg w-full text-center text-2xl tracking-[0.5em] font-mono"
+                           placeholder="000000">
+                    <label class="label"><span class="label-text-alt text-base-content/50">{% trans "Enter the 6-digit code from your authenticator app" %}</span></label>
+                </div>
+
+                <div class="flex gap-2 mt-4">
+                    <a href="{% url 'accounts:profile' %}" class="btn btn-ghost flex-1">{% trans "Cancel" %}</a>
+                    <button type="submit" class="btn btn-warning flex-1">{% trans "Disable 2FA" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

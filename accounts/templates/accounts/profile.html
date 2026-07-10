@@ -39,9 +39,21 @@
             <dt class="text-base-content/60">Two-Factor Auth</dt>
             <dd class="sm:col-span-2">
                 {% if user_obj.two_factor_enabled %}
-                    <span class="badge badge-success">Enabled</span>
+                    <div class="flex items-center gap-2">
+                        <span class="badge badge-success">Enabled</span>
+                        <form method="post" action="{% url 'accounts:totp_disable' %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-warning btn-xs">Disable</button>
+                        </form>
+                    </div>
                 {% else %}
-                    <span class="badge badge-warning">Not Set Up</span>
+                    <div class="flex items-center gap-2">
+                        <span class="badge badge-warning">Not Set Up</span>
+                        <form method="post" action="{% url 'accounts:totp_enable' %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary btn-xs">Enable</button>
+                        </form>
+                    </div>
                 {% endif %}
             </dd>
 

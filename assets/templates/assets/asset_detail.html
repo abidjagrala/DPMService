@@ -55,6 +55,9 @@
                     <dt class="text-base-content/60">{% trans "Brand/Model" %}</dt>
                     <dd class="font-medium">{{ obj.brand_model }}</dd>
 
+                    <dt class="text-base-content/60">{% trans "Device Location" %}</dt>
+                    <dd class="font-medium">{{ obj.device_location|default:"—" }}</dd>
+
                     <dt class="text-base-content/60">{% trans "IP Address" %}</dt>
                     <dd class="font-medium">{{ obj.ip_address|default:"—" }}</dd>
 

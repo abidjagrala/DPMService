@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'api',
     'notifications',
     'authorization',
+    'system',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
