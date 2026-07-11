@@ -1,0 +1,57 @@
+{% load i18n auth_tags %}
+<div class="space-y-4">
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <div class="flex items-end gap-4">
+                <div class="form-control flex-1">
+                    <label class="label"><span class="label-text font-medium">{% trans "Select Role" %}</span></label>
+                    <select name="role" class="select select-bordered w-full"
+                            onchange="if(this.value){htmx.ajax('GET','{% url "authorization:notification_setting_matrix" %}?role='+this.value,{target:'#notif-setting-container',swap:'innerHTML'})}">
+                        <option value="">{% trans "Choose a role..." %}</option>
+                        {% for role in roles %}
+                        <option value="{{ role.pk }}" {% if selected_role and selected_role.pk == role.pk %}selected{% endif %}>{{ role.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if selected_role %}
+    <form hx-post="{% url 'authorization:notification_setting_save' %}" hx-target="#notif-setting-container" hx-swap="innerHTML">
+        {% csrf_token %}
+        <input type="hidden" name="role" value="{{ selected_role.pk }}">
+
+        <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body p-0">
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Notification Event" %}</th>
+                                <th class="text-center w-32">{% trans "Enabled" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event_key, event_label in events %}
+                            <tr>
+                                <td class="font-medium">{{ event_label }}</td>
+                                <td class="text-center">
+                                    <input type="checkbox" name="{{ event_key }}"
+                                           class="checkbox checkbox-xs checkbox-primary"
+                                           {% if settings_map|dict_get_bool:event_key %}checked{% endif %}>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end mt-4">
+            <button type="submit" class="btn btn-primary">{% trans "Save Notification Settings" %}</button>
+        </div>
+    </form>
+    {% endif %}
+</div>

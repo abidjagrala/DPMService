@@ -15,7 +15,8 @@ from .forms import (
 )
 from .models import (
     AuditLog, FieldPermission, Group, MenuPermission, MenuItem,
-    ModelPermission, Module, ModulePermission, Role, UserRoleAssignment,
+    ModelPermission, Module, ModulePermission, NotificationSetting, Role,
+    UserRoleAssignment,
 )
 from .services.permission_engine import clear_user_permissions, clear_all_permissions
 
@@ -611,6 +612,73 @@ def menu_permission_save(request):
     clear_all_permissions()
 
     return _hx_toast('success', f'Menu permissions saved for {role.name}.', status=204, extra_events={'auth-saved': True})
+
+
+# ---------------------------------------------------------------------------
+# Notification Settings
+# ---------------------------------------------------------------------------
+
+NOTIFICATION_EVENTS = [
+    ('ticket_created', 'Ticket Created'),
+    ('ticket_completed', 'Ticket Completed'),
+]
+
+
+@never_cache
+@require_http_methods(['GET'])
+def notification_setting_matrix(request):
+    if not _admin_required(request):
+        messages.error(request, 'Access denied.')
+        return redirect('accounts:dashboard')
+
+    role_id = request.GET.get('role', '')
+    roles = Role.objects.filter(is_active=True).order_by('name')
+
+    selected_role = None
+    settings_map = {}
+
+    if role_id:
+        selected_role = get_object_or_404(Role, pk=role_id)
+        for ns in NotificationSetting.objects.filter(role=selected_role):
+            settings_map = {
+                'ticket_created': ns.ticket_created,
+                'ticket_completed': ns.ticket_completed,
+            }
+
+    context = {
+        'roles': roles,
+        'events': NOTIFICATION_EVENTS,
+        'selected_role': selected_role,
+        'settings_map': settings_map,
+    }
+
+    if _is_htmx(request):
+        return render(request, 'authorization/partials/_notification_setting_matrix.html', context)
+    return render(request, 'authorization/notification_setting_matrix.html', context)
+
+
+@csrf_protect
+@require_http_methods(['POST'])
+def notification_setting_save(request):
+    if not _admin_required(request):
+        messages.error(request, 'Access denied.')
+        return redirect('accounts:dashboard')
+
+    role_id = request.POST.get('role')
+    if not role_id:
+        return _hx_toast('error', 'Role is required.', status=400)
+
+    role = get_object_or_404(Role, pk=role_id)
+
+    ns, _ = NotificationSetting.objects.get_or_create(role=role)
+    ns.ticket_created = 'ticket_created' in request.POST
+    ns.ticket_completed = 'ticket_completed' in request.POST
+    ns.save()
+
+    AuditLog.log(request.user, 'update', 'notificationsetting', role,
+                 changes={'role': role.name}, ip_address=_get_client_ip(request))
+
+    return _hx_toast('success', f'Notification settings saved for {role.name}.', status=204, extra_events={'auth-saved': True})
 
 
 # ---------------------------------------------------------------------------

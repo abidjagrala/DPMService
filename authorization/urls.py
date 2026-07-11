@@ -31,6 +31,9 @@ urlpatterns = [
     path('permissions/menus/', views.menu_permission_matrix, name='menu_perm_matrix'),
     path('permissions/menus/save/', views.menu_permission_save, name='menu_perm_save'),
 
+    path('permissions/notifications/', views.notification_setting_matrix, name='notification_setting_matrix'),
+    path('permissions/notifications/save/', views.notification_setting_save, name='notification_setting_save'),
+
     path('assignments/', views.user_assignment_list, name='user_assignment_list'),
     path('assignments/create/', views.user_assignment_create, name='user_assignment_create'),
     path('assignments/<int:pk>/edit/', views.user_assignment_edit, name='user_assignment_edit'),

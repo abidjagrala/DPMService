@@ -63,6 +63,10 @@ class Role(models.Model):
             menu.pk = None
             menu.role = cloned
             menu.save()
+        for ns in self.notification_settings.all():
+            ns.pk = None
+            ns.role = cloned
+            ns.save()
         return cloned
 
 
@@ -250,6 +254,28 @@ class MenuPermission(models.Model):
 
     def __str__(self):
         return f'{self.role} — {self.menu_item} — {"visible" if self.is_visible else "hidden"}'
+
+
+class NotificationSetting(models.Model):
+    role = models.ForeignKey(
+        Role, on_delete=models.CASCADE,
+        related_name='notification_settings', verbose_name=_('role'),
+    )
+    ticket_created = models.BooleanField(_('ticket created'), default=True)
+    ticket_completed = models.BooleanField(_('ticket completed'), default=True)
+
+    class Meta:
+        unique_together = ('role',)
+        verbose_name = _('notification setting')
+        verbose_name_plural = _('notification settings')
+
+    def __str__(self):
+        return f'{self.role} — Notifications'
+
+    @classmethod
+    def get_for_role(cls, role):
+        setting, _ = cls.objects.get_or_create(role=role)
+        return setting
 
 
 class UserRoleAssignment(models.Model):
