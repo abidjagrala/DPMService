@@ -309,6 +309,9 @@ def role_detail(request, pk):
         'module_perms': module_perms,
         'model_perms': model_perms,
     }
+
+    if _is_htmx(request):
+        return render(request, 'authorization/partials/_role_detail.html', context)
     return render(request, 'authorization/role_detail.html', context)
 
 

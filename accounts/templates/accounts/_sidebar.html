@@ -325,6 +325,13 @@
                             </a>
                         </li>
                         <li>
+                            <a href="{% url 'authorization:notification_setting_matrix' %}"
+                               class="{% if request.resolver_match.url_name == 'notification_setting_matrix' %}active{% endif %}">
+                                <span class="transition-all duration-300 whitespace-nowrap overflow-hidden"
+                                      :class="sidebarCollapsed && window.innerWidth >= 1024 ? 'w-0 opacity-0' : 'opacity-100'">Notification Settings</span>
+                            </a>
+                        </li>
+                        <li>
                             <a href="{% url 'authorization:user_assignment_list' %}"
                                class="{% if 'assignment' in request.resolver_match.url_name %}active{% endif %}">
                                 <span class="transition-all duration-300 whitespace-nowrap overflow-hidden"
