@@ -110,7 +110,7 @@
         setTimeout(toggleRestFields, 200);
     }
 
-    document.addEventListener('quick-add-done', function(e) {
+    window.addEventListener('quick-add-done', function(e) {
         if (e.detail && e.detail.fieldName === 'client') {
             setTimeout(toggleRestFields, 150);
         }
@@ -282,7 +282,7 @@
         }
     }, true);
 
-    document.addEventListener('quick-add-done', function(e) {
+    window.addEventListener('quick-add-done', function(e) {
         if (e.detail && e.detail.fieldName === 'asset') {
             var clientInput = findClientInput();
             if (clientInput && clientInput.value) {

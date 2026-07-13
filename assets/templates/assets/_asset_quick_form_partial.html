@@ -2,6 +2,7 @@
 <form hx-post="{% url 'assets:asset_quick_create' %}"
       hx-swap="none"
       hx-on::after-request="handleQuickAddResponse(event, 'asset')"
+      hx-vals='js:{"client": document.querySelector("#ticket-form .ss-wrapper input[name=\x27client\x27]")?.value || ""}'
       class="space-y-3">
     {% csrf_token %}
     <div class="form-control">
@@ -22,7 +23,6 @@
         <input type="text" name="brand_model" class="input input-bordered input-sm w-full">
     </div>
 
-    <input type="hidden" name="client" value="">
     <input type="hidden" name="status" value="available">
     <input type="hidden" name="is_active" value="on">
     <div class="flex justify-end gap-2 pt-2">

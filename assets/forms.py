@@ -47,6 +47,16 @@ class AssetForm(forms.ModelForm):
         self.fields['homeworker'].required = False
         self.fields['location'].required = False
 
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if not instance.pk and not self.cleaned_data.get('password'):
+            pass
+        elif instance.pk and not self.cleaned_data.get('password'):
+            instance.password = Asset.objects.filter(pk=instance.pk).values_list('password', flat=True).first() or ''
+        if commit:
+            instance.save()
+        return instance
+
     def clean(self) -> dict:
         cleaned_data = super().clean()
         status = cleaned_data.get('status')
