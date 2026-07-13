@@ -410,7 +410,7 @@ def ticket_detail_pdf(request, pk):
     # ============================================================
     elements.append(Paragraph('Ticket Details', heading_style))
 
-    assets_str = ', '.join(a.asset_tag for a in ticket.assets.all()) or 'Not Available'
+    assets_str = ', '.join(a.serial_number or str(a.pk) for a in ticket.assets.all()) or 'Not Available'
     assigned_str = 'Not Available'
     if ticket.assigned_to and ticket.assigned_to.user:
         assigned_str = ticket.assigned_to.user.get_full_name() or ticket.assigned_to.user.email
@@ -661,6 +661,6 @@ def ticket_assets_api_view(request):
     assets = Asset.objects.filter(
         is_active=True,
         client_id=client_id,
-    ).order_by('asset_tag').values('id', 'asset_tag', 'brand_model')
+    ).order_by('id').values('id', 'serial_number', 'asset_type__name')
 
     return JsonResponse(list(assets), safe=False)

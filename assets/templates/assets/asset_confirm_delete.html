@@ -6,7 +6,7 @@
 
 <div class="card bg-base-100 border border-base-300 shadow-sm">
     <div class="card-body">
-        <p>{% trans "Are you sure you want to delete" %} <strong>{{ obj.asset_tag }}</strong>?</p>
+        <p>{% trans "Are you sure you want to delete" %} <strong>{{ obj.serial_number }}</strong>?</p>
         <form method="post" action="{% url 'assets:asset_delete' pk=obj.pk %}" class="mt-4">
             {% csrf_token %}
             <div class="flex justify-end gap-2">

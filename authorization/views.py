@@ -469,7 +469,7 @@ FIELD_MAP = {
         'alt_phone', 'address', 'city', 'state', 'pincode', 'is_active',
     ],
     'asset': [
-        'asset_tag', 'serial_number', 'asset_type', 'brand_model',
+        'serial_number', 'asset_type', 'brand_model',
         'ip_address', 'mac_address', 'purchase_date', 'warranty_expiry',
         'status', 'client', 'homeworker', 'notes', 'is_active',
     ],

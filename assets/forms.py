@@ -13,14 +13,13 @@ class AssetForm(forms.ModelForm):
     class Meta:
         model = Asset
         fields = [
-            'asset_tag', 'serial_number', 'asset_type', 'brand_model',
+            'serial_number', 'asset_type', 'brand_model',
             'purchase_date', 'warranty_expiry',
             'status', 'client', 'homeworker', 'location', 'device_location',
             'ip_address', 'mac_address',
             'notes', 'username', 'password', 'is_active',
         ]
         widgets = {
-            'asset_tag': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
             'serial_number': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
             'asset_type': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'brand_model': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
@@ -47,21 +46,6 @@ class AssetForm(forms.ModelForm):
         self.fields['client'].required = False
         self.fields['homeworker'].required = False
         self.fields['location'].required = False
-        if self.instance.pk:
-            self.fields['asset_tag'].disabled = True
-        else:
-            self.fields['asset_tag'].widget = forms.HiddenInput()
-
-    def clean_asset_tag(self) -> str:
-        asset_tag = self.cleaned_data.get('asset_tag', '').strip()
-        if not asset_tag:
-            return asset_tag
-        qs = Asset.objects.filter(asset_tag__iexact=asset_tag)
-        if self.instance.pk:
-            qs = qs.exclude(pk=self.instance.pk)
-        if qs.exists():
-            raise forms.ValidationError(_('An asset with this tag already exists.'))
-        return asset_tag
 
     def clean(self) -> dict:
         cleaned_data = super().clean()

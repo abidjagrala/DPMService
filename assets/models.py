@@ -128,7 +128,7 @@ class Asset(models.Model):
         ordering = ['-created_at']
 
     def __str__(self) -> str:
-        return f'{self.asset_tag} — {self.brand_model}'
+        return f'{self.serial_number or self.pk} — {self.brand_model}'
 
     def save(self, *args, **kwargs):
         if not self.asset_tag:
@@ -212,4 +212,4 @@ class AssetAssignment(models.Model):
 
     def __str__(self) -> str:
         target = self.client or self.homeworker or 'Unassigned'
-        return f'{self.asset.asset_tag} → {target}'
+        return f'{self.asset.serial_number or self.asset.pk} → {target}'

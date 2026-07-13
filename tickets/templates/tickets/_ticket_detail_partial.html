@@ -16,7 +16,7 @@
                     <div><span class="font-semibold">{% trans "Client" %}:</span> {{ obj.client.company_name }}</div>
                     <div><span class="font-semibold">{% trans "Asset" %}:</span>
                         {% for asset in obj.assets.all %}
-                            <a href="{% url 'assets:asset_detail' asset.pk %}" class="badge badge-primary badge-outline">{{ asset.asset_tag }}</a>
+                            <a href="{% url 'assets:asset_detail' asset.pk %}" class="badge badge-primary badge-outline">{{ asset.pk }} — {{ asset.serial_number }}</a>
                         {% empty %}—{% endfor %}
                     </div>
                     <div><span class="font-semibold">{% trans "Assigned To" %}:</span>

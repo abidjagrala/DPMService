@@ -43,7 +43,7 @@ def asset_list_view(request):
 
     if search:
         assets = assets.filter(
-            Q(asset_tag__icontains=search) |
+            Q(serial_number__icontains=search) |
             Q(asset_type__name__icontains=search) |
             Q(homeworker__name__icontains=search) |
             Q(client__company_name__icontains=search)
@@ -81,7 +81,7 @@ def _get_filtered_assets(request):
     status_filter = request.GET.get('status', '')
     if search:
         assets = assets.filter(
-            Q(asset_tag__icontains=search) |
+            Q(serial_number__icontains=search) |
             Q(asset_type__name__icontains=search) |
             Q(homeworker__name__icontains=search) |
             Q(client__company_name__icontains=search)
@@ -103,7 +103,7 @@ def asset_export_csv(request):
     response['Content-Disposition'] = 'attachment; filename="assets.csv"'
     writer = csv.writer(response)
     writer.writerow([
-        'Asset Tag', 'Serial Number', 'Type', 'Brand/Model',
+        'ID', 'Serial Number', 'Type', 'Brand/Model',
         'Purchase Date', 'Warranty Expiry',
         'Status', 'Client', 'Homeworker', 'IP Address', 'MAC Address',
         'Notes', 'Active',
@@ -111,7 +111,7 @@ def asset_export_csv(request):
     ])
     for a in assets:
         writer.writerow([
-            a.asset_tag,
+            a.pk,
             a.serial_number,
             a.asset_type.name,
             a.brand_model,
@@ -143,8 +143,8 @@ def asset_create_view(request):
         if form.is_valid():
             asset = form.save()
             if is_htmx(request):
-                return _hx_toast('success', f'Asset {asset.asset_tag} created.', status=204, extra_events={'asset-saved': True})
-            messages.success(request, f'Asset {asset.asset_tag} created successfully.')
+                return _hx_toast('success', f'Asset {asset.serial_number} created.', status=204, extra_events={'asset-saved': True})
+            messages.success(request, f'Asset {asset.serial_number} created successfully.')
             return redirect('assets:asset_list')
     else:
         if request.user.is_client:
@@ -175,8 +175,8 @@ def asset_update_view(request, pk):
         if form.is_valid():
             form.save()
             if is_htmx(request):
-                return _hx_toast('success', f'Asset {asset.asset_tag} updated.', status=204, extra_events={'asset-saved': True})
-            messages.success(request, f'Asset {asset.asset_tag} updated successfully.')
+                return _hx_toast('success', f'Asset {asset.serial_number} updated.', status=204, extra_events={'asset-saved': True})
+            messages.success(request, f'Asset {asset.serial_number} updated successfully.')
             return redirect('assets:asset_list')
     else:
         if request.user.is_client:
@@ -186,7 +186,7 @@ def asset_update_view(request, pk):
             form = AssetForm(instance=asset)
 
     template = 'assets/_asset_form_partial.html' if is_htmx(request) else 'assets/asset_form.html'
-    return render(request, template, {'form': form, 'mode': 'update', 'obj': asset, 'page_title': f'Edit Asset — {asset.asset_tag}'})
+    return render(request, template, {'form': form, 'mode': 'update', 'obj': asset, 'page_title': f'Edit Asset — {asset.serial_number}'})
 
 
 @role_required('admin', 'manager', 'client')
@@ -199,15 +199,15 @@ def asset_delete_view(request, pk):
         return HttpResponseForbidden('You do not have access to this asset.')
 
     if request.method == 'POST':
-        tag = asset.asset_tag
+        serial = asset.serial_number
         asset.delete()
         if is_htmx(request):
-            return _hx_toast('success', f'Asset {tag} deleted.', status=204, extra_events={'asset-saved': True})
-        messages.success(request, f'Asset {tag} deleted successfully.')
+            return _hx_toast('success', f'Asset {serial} deleted.', status=204, extra_events={'asset-saved': True})
+        messages.success(request, f'Asset {serial} deleted successfully.')
         return redirect('assets:asset_list')
 
     template = 'assets/_asset_confirm_delete_partial.html' if is_htmx(request) else 'assets/asset_confirm_delete.html'
-    return render(request, template, {'obj': asset, 'page_title': f'Delete Asset — {asset.asset_tag}'})
+    return render(request, template, {'obj': asset, 'page_title': f'Delete Asset — {asset.serial_number}'})
 
 
 @role_required('admin', 'manager', 'staff', 'client')
@@ -278,7 +278,7 @@ def asset_assign_view(request, pk):
         form = AssetAssignForm()
 
     template = 'assets/_asset_assign_partial.html' if is_htmx(request) else 'assets/asset_assign.html'
-    return render(request, template, {'form': form, 'obj': asset, 'page_title': f'Assign Asset — {asset.asset_tag}'})
+    return render(request, template, {'form': form, 'obj': asset, 'page_title': f'Assign Asset — {asset.serial_number}'})
 
 
 @role_required('admin', 'manager')
@@ -473,7 +473,7 @@ def asset_detail_pdf(request, pk):
         fontSize=14, fontName='Helvetica-Bold', alignment=1,
         textColor=colors.Color(0.1, 0.1, 0.1),
     )
-    elements.append(Paragraph(f'Asset Report — {asset.asset_tag}', title_style))
+    elements.append(Paragraph(f'Asset Report — {asset.serial_number}', title_style))
     elements.append(Spacer(1, 6 * mm))
 
     # ============================================================
@@ -485,7 +485,7 @@ def asset_detail_pdf(request, pk):
         return str(v) if v else 'Not Available'
 
     details_data = [
-        field_row('Asset Tag', asset.asset_tag) + field_row('Serial Number', asset.serial_number),
+        field_row('Serial Number', asset.serial_number) + field_row('Type', asset.asset_type.name if asset.asset_type else None),
         field_row('Type', asset.asset_type.name if asset.asset_type else None) + field_row('Brand/Model', asset.brand_model),
         field_row('Client', asset.client.company_name if asset.client else None) + field_row('Homeworker', asset.homeworker.name if asset.homeworker else None),
         field_row('Location', asset.location.name if asset.location else None) + field_row('Device Location', asset.device_location),
@@ -621,7 +621,7 @@ def asset_detail_pdf(request, pk):
     doc.build(elements, canvasmaker=NumberedCanvas)
     buffer.seek(0)
     response = HttpResponse(buffer, content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="asset_{asset.asset_tag}.pdf"'
+    response['Content-Disposition'] = f'attachment; filename="asset_{asset.serial_number}.pdf"'
     return response
 
 
@@ -630,10 +630,9 @@ def asset_detail_pdf(request, pk):
 @require_http_methods(['GET', 'POST'])
 def asset_quick_create_view(request):
     if request.method == 'POST':
-        asset_tag = request.POST.get('asset_tag', '').strip()
+        serial_number = request.POST.get('serial_number', '').strip()
         asset_type_id = request.POST.get('asset_type', '').strip()
         brand_model = request.POST.get('brand_model', '').strip()
-        serial_number = request.POST.get('serial_number', '').strip()
         client_id = request.POST.get('client', '').strip()
 
         if not asset_type_id:
@@ -650,11 +649,9 @@ def asset_quick_create_view(request):
         if client_id:
             from clients.models import Client
             asset.client = Client.objects.filter(pk=client_id).first()
-        if asset_tag:
-            asset.asset_tag = asset_tag
         asset.save()
 
-        return HttpResponse(json.dumps({'id': asset.pk, 'label': asset.asset_tag}), status=201, content_type='application/json')
+        return HttpResponse(json.dumps({'id': asset.pk, 'label': str(asset)}), status=201, content_type='application/json')
 
     from masters.models import AssetType
     asset_types = AssetType.objects.filter(is_active=True).order_by('name')

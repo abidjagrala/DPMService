@@ -147,7 +147,7 @@
         el.innerHTML = '';
         selected.forEach(function(id) {
             var asset = allAssets.find(function(a) { return String(a.id) === id; });
-            var label = asset ? asset.asset_tag : id;
+            var label = asset ? asset.id + ' — ' + (asset.serial_number || '') : id;
             var badge = document.createElement('span');
             badge.className = 'badge badge-primary badge-sm gap-1';
             badge.innerHTML = '<span>' + label + '</span><button type="button" class="btn btn-ghost btn-xs p-0" data-remove="' + id + '">&times;</button>';
@@ -169,7 +169,7 @@
         var html = searchInput + '<div id="assets-list">';
         allAssets.forEach(function(asset) {
             var checked = selected.indexOf(String(asset.id)) !== -1 ? 'checked' : '';
-            var label = asset.asset_tag + (asset.brand_model ? ' \u2014 ' + asset.brand_model : '');
+            var label = asset.id + ' — ' + (asset.serial_number || '') + ' — ' + (asset.asset_type__name || '');
             html += '<label class="flex items-center gap-2 p-1 hover:bg-base-200 rounded cursor-pointer">';
             html += '<input type="checkbox" class="checkbox checkbox-sm checkbox-primary" value="' + asset.id + '" ' + checked + ' data-asset-check>';
             html += '<span class="text-sm">' + label + '</span></label>';
@@ -184,8 +184,9 @@
                 var labels = document.querySelectorAll('#assets-list label');
                 allAssets.forEach(function(asset, i) {
                     if (labels[i]) {
-                        var match = asset.asset_tag.toLowerCase().indexOf(q) !== -1 ||
-                                    (asset.brand_model && asset.brand_model.toLowerCase().indexOf(q) !== -1);
+                        var match = String(asset.id).indexOf(q) !== -1 ||
+                                    (asset.serial_number && asset.serial_number.toLowerCase().indexOf(q) !== -1) ||
+                                    (asset.asset_type__name && asset.asset_type__name.toLowerCase().indexOf(q) !== -1);
                         labels[i].style.display = match ? '' : 'none';
                     }
                 });

@@ -180,7 +180,6 @@ class AssetViewSet(viewsets.ModelViewSet):
         if search:
             from django.db.models import Q
             qs = qs.filter(
-                Q(asset_tag__icontains=search) |
                 Q(serial_number__icontains=search) |
                 Q(brand_model__icontains=search)
             )

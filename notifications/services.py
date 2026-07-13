@@ -93,9 +93,9 @@ def notify_ticket_closed(ticket):
 
 def notify_device_assigned(asset, client=None, homeworker=None):
     target_name = client.company_name if client else (homeworker.name if homeworker else 'Unknown')
-    subject = f'Device Assigned: {asset.asset_tag}'
+    subject = f'Device Assigned: {asset.serial_number or asset.pk}'
     message = (
-        f'Device {asset.asset_tag} ({asset.brand} {asset.model_name}) '
+        f'Device {asset.serial_number or asset.pk} ({asset.brand} {asset.model_name}) '
         f'has been assigned.\n\n'
         f'Assigned To: {target_name}\n'
         f'Status: {asset.get_status_display()}\n'

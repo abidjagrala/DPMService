@@ -127,7 +127,7 @@ class AssetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Asset
         fields = [
-            'id', 'asset_tag', 'serial_number', 'asset_type', 'asset_type_name',
+            'id', 'serial_number', 'asset_type', 'asset_type_name',
             'brand_model', 'status', 'status_display', 'ip_address', 'mac_address',
             'client', 'client_name', 'purchase_date',
             'warranty_expiry', 'notes', 'is_active',
@@ -188,7 +188,7 @@ class TicketHistorySerializer(serializers.ModelSerializer):
 
 class ServiceTicketSerializer(serializers.ModelSerializer):
     client_name = serializers.CharField(source='client.company_name', read_only=True)
-    asset_tag = serializers.CharField(source='asset.asset_tag', read_only=True, default='')
+    asset_serial = serializers.CharField(source='asset.serial_number', read_only=True, default='')
     assigned_to_name = serializers.CharField(source='assigned_to.user.get_full_name', read_only=True, default='')
     service_type_name = serializers.CharField(source='service_type.name', read_only=True)
     transport_type_name = serializers.CharField(source='transport_type.name', read_only=True, default='')
@@ -201,7 +201,7 @@ class ServiceTicketSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'ticket_number',
             'service_type', 'service_type_name', 'client', 'client_name',
-            'asset', 'asset_tag', 'assigned_to', 'assigned_to_name',
+            'asset', 'asset_serial', 'assigned_to', 'assigned_to_name',
             'priority', 'priority_display', 'status', 'status_display',
             'subject', 'description', 'scheduled_date', 'completed_date',
             'address', 'contact_person', 'contact_phone',
