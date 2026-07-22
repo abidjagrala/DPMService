@@ -43,6 +43,15 @@
 
                 <dt class="text-base-content/60">{% trans "Pincode" %}</dt>
                 <dd class="sm:col-span-2 font-medium">{{ obj.pincode|default:"-" }}</dd>
+
+                <dt class="text-base-content/60">{% trans "Branches" %}</dt>
+                <dd class="sm:col-span-2 font-medium">
+                    {% for branch in obj.branches.all %}
+                        <span class="badge badge-primary badge-sm">{{ branch.name }}</span>
+                    {% empty %}
+                        —
+                    {% endfor %}
+                </dd>
             </dl>
 
             {% if obj.employee_photo or obj.aadhar_card %}

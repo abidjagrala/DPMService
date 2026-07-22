@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
@@ -15,8 +15,8 @@ from django.views.decorators.http import require_http_methods
 from accounts.views import is_htmx, role_required
 from masters.models import City, State
 
-from .forms import ClientForm, EmployeeForm, HomeworkerForm, LocationForm
-from .models import Client, Employee, Homeworker, Location
+from .forms import BranchForm, ClientForm, EmployeeForm, HomeworkerForm, LocationForm
+from .models import Branch, Client, Employee, Homeworker, Location
 
 User = get_user_model()
 
@@ -56,7 +56,7 @@ def client_city_select_partial(request):
 @role_required('admin', 'manager')
 @require_http_methods(['GET'])
 def client_list_view(request):
-    clients = Client.objects.select_related('city', 'state').all()
+    clients = Client.objects.select_related('city', 'state', 'branch').all()
 
     search = request.GET.get('search', '').strip()
     city_filter = request.GET.get('city', '')
@@ -91,7 +91,7 @@ def client_list_view(request):
 
 
 def _get_filtered_clients(request):
-    clients = Client.objects.select_related('city', 'state').all()
+    clients = Client.objects.select_related('city', 'state', 'branch').all()
     search = request.GET.get('search', '').strip()
     city_filter = request.GET.get('city', '')
     status_filter = request.GET.get('status', '')
@@ -394,13 +394,110 @@ def client_import_csv(request):
 
 
 # ---------------------------------------------------------------------------
+# Branch
+# ---------------------------------------------------------------------------
+
+@role_required('admin', 'manager')
+@require_http_methods(['GET'])
+def branch_list_view(request):
+    branches = Branch.objects.select_related('city', 'state').all()
+    search = request.GET.get('search', '').strip()
+    if search:
+        branches = branches.filter(name__icontains=search)
+    context = {
+        'branches': branches,
+        'search': search,
+        'page_title': 'Branches',
+    }
+    if is_htmx(request):
+        return render(request, 'clients/_branch_list_table.html', context)
+    return render(request, 'clients/branch_list.html', context)
+
+
+@role_required('admin', 'manager')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def branch_create_view(request):
+    if request.method == 'POST':
+        form = BranchForm(request.POST)
+        if form.is_valid():
+            branch = form.save()
+            if is_htmx(request):
+                return _hx_toast('success', f'Branch {branch.name} created.', status=204, extra_events={'branch-saved': True})
+            messages.success(request, f'Branch {branch.name} created successfully.')
+            return redirect('clients:branch_list')
+    else:
+        form = BranchForm()
+
+    template = 'clients/_branch_form_partial.html' if is_htmx(request) else 'clients/branch_form.html'
+    return render(request, template, {'form': form, 'mode': 'create', 'page_title': 'Add Branch'})
+
+
+@role_required('admin', 'manager')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def branch_update_view(request, pk):
+    branch = get_object_or_404(Branch, pk=pk)
+    if request.method == 'POST':
+        form = BranchForm(request.POST, instance=branch)
+        if form.is_valid():
+            form.save()
+            if is_htmx(request):
+                return _hx_toast('success', f'Branch {branch.name} updated.', status=204, extra_events={'branch-saved': True})
+            messages.success(request, f'Branch {branch.name} updated successfully.')
+            return redirect('clients:branch_list')
+    else:
+        form = BranchForm(instance=branch)
+
+    template = 'clients/_branch_form_partial.html' if is_htmx(request) else 'clients/branch_form.html'
+    return render(request, template, {'form': form, 'mode': 'update', 'obj': branch, 'page_title': f'Edit Branch — {branch.name}'})
+
+
+@role_required('admin', 'manager')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def branch_delete_view(request, pk):
+    branch = get_object_or_404(Branch, pk=pk)
+    if request.method == 'POST':
+        name = branch.name
+        branch.delete()
+        if is_htmx(request):
+            return _hx_toast('success', f'Branch {name} deleted.', status=204, extra_events={'branch-saved': True})
+        messages.success(request, f'Branch {name} deleted successfully.')
+        return redirect('clients:branch_list')
+
+    template = 'clients/_branch_confirm_delete_partial.html' if is_htmx(request) else 'clients/branch_confirm_delete.html'
+    return render(request, template, {'obj': branch, 'page_title': f'Delete Branch — {branch.name}'})
+
+
+@role_required('admin', 'manager')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def branch_quick_create_view(request):
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        if not name:
+            return HttpResponse(json.dumps({'error': 'Branch name is required.'}), status=400, content_type='application/json')
+        branch = Branch.objects.create(name=name, address=request.POST.get('address', ''), state_id=request.POST.get('state') or None, city_id=request.POST.get('city') or None, pincode=request.POST.get('pincode', ''))
+        return HttpResponse(json.dumps({'id': branch.pk, 'label': branch.name}), status=201, content_type='application/json')
+    return render(request, 'clients/_branch_quick_form_partial.html')
+
+
+@role_required('admin', 'manager')
+@require_http_methods(['GET'])
+def branch_api_view(request):
+    branches = Branch.objects.filter(is_active=True).order_by('name').values('id', 'name')
+    return JsonResponse(list(branches), safe=False)
+
+
+# ---------------------------------------------------------------------------
 # Employee
 # ---------------------------------------------------------------------------
 
 @role_required('admin', 'manager')
 @require_http_methods(['GET'])
 def employee_list_view(request):
-    employees = Employee.objects.select_related('user', 'city', 'state').all()
+    employees = Employee.objects.select_related('user', 'city', 'state').prefetch_related('branches').all()
     search = request.GET.get('search', '').strip()
     department_filter = request.GET.get('department', '')
     status_filter = request.GET.get('status', '')
@@ -497,6 +594,7 @@ def employee_create_view(request):
             employee = form.save(commit=False)
             employee.user = user
             employee.save()
+            form.save_m2m()
 
             if is_htmx(request):
                 return _hx_toast('success', f'Employee {user.get_full_name()} created.', status=204, extra_events={'employee-saved': True})
@@ -506,7 +604,7 @@ def employee_create_view(request):
         form = EmployeeForm(is_create=True)
 
     template = 'clients/_employee_form_partial.html' if is_htmx(request) else 'clients/employee_form.html'
-    return render(request, template, {'form': form, 'mode': 'create', 'page_title': 'Add Employee'})
+    return render(request, template, {'form': form, 'mode': 'create', 'page_title': 'Add Employee', 'existing_branch_ids': []})
 
 
 @role_required('admin', 'manager')
@@ -541,7 +639,7 @@ def employee_update_view(request, pk):
         )
 
     template = 'clients/_employee_form_partial.html' if is_htmx(request) else 'clients/employee_form.html'
-    return render(request, template, {'form': form, 'mode': 'update', 'obj': employee, 'page_title': f'Edit Employee — {employee.user.get_full_name()}'})
+    return render(request, template, {'form': form, 'mode': 'update', 'obj': employee, 'page_title': f'Edit Employee — {employee.user.get_full_name()}', 'existing_branch_ids': list(employee.branches.values_list('id', flat=True))})
 
 
 @role_required('admin', 'manager')
@@ -566,7 +664,7 @@ def employee_delete_view(request, pk):
 @role_required('admin', 'manager')
 @require_http_methods(['GET'])
 def employee_detail_view(request, pk):
-    employee = get_object_or_404(Employee.objects.select_related('user', 'city', 'state'), pk=pk)
+    employee = get_object_or_404(Employee.objects.select_related('user', 'city', 'state').prefetch_related('branches'), pk=pk)
     return render(request, 'clients/employee_detail.html', {'obj': employee, 'page_title': employee.user.get_full_name()})
 
 

@@ -5,6 +5,13 @@ from . import views
 app_name = 'clients'
 
 urlpatterns = [
+    # Branch
+    path('branches/', views.branch_list_view, name='branch_list'),
+    path('branches/new/', views.branch_create_view, name='branch_create'),
+    path('branches/<int:pk>/edit/', views.branch_update_view, name='branch_update'),
+    path('branches/<int:pk>/delete/', views.branch_delete_view, name='branch_delete'),
+    path('api/branches/', views.branch_api_view, name='branch_api'),
+
     # Client
     path('clients/', views.client_list_view, name='client_list'),
     path('clients/export/', views.client_export_csv, name='client_export_csv'),
@@ -38,6 +45,7 @@ urlpatterns = [
     path('locations/<int:pk>/delete/', views.location_delete_view, name='location_delete'),
 
     # Quick-Create (inline add from other forms)
+    path('quick-new/branch/', views.branch_quick_create_view, name='branch_quick_create'),
     path('quick-new/client/', views.client_quick_create_view, name='client_quick_create'),
     path('quick-new/homeworker/', views.homeworker_quick_create_view, name='homeworker_quick_create'),
     path('quick-new/location/', views.location_quick_create_view, name='location_quick_create'),

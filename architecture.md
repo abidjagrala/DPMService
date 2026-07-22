@@ -27,26 +27,31 @@ dpmservice1/
 │   ├── urls.py
 │   ├── wsgi.py
 │   └── asgi.py
-└── accounts/                # users, auth, roles
-    ├── models.py
-    ├── forms.py
-    ├── views.py
-    ├── urls.py
-    ├── admin.py
-    ├── migrations/
-    └── templates/accounts/
-        ├── base.html
-        ├── register.html
-        ├── login.html
-        ├── dashboard_admin.html
-        ├── dashboard_manager.html
-        ├── dashboard_staff.html
-        ├── dashboard_client.html
-        ├── profile.html
-        ├── profile_edit.html
-        ├── password_change.html
-        ├── user_list.html
-        └── user_detail.html
+├── accounts/                # users, auth, roles
+│   ├── models.py
+│   ├── forms.py
+│   ├── views.py
+│   ├── urls.py
+│   ├── admin.py
+│   ├── migrations/
+│   └── templates/accounts/
+├── clients/                 # clients, employees, branches, homeworkers, locations
+│   ├── models.py            # Client, Employee, Branch, Homeworker, Location
+│   ├── forms.py
+│   ├── views.py
+│   ├── urls.py
+│   ├── migrations/
+│   └── templates/clients/
+├── tickets/                 # service tickets
+├── assets/                  # inventory / assets
+├── hosting/                 # domain & hosting, AMC
+├── masters/                 # states, cities, service types, asset types
+├── dashboard/               # dashboard views
+├── comments/                # ticket comments
+├── notifications/           # notification system
+├── authorization/           # roles & permissions
+├── system/                  # backup & restore
+└── network/                 # subnets, IPs, devices
 ```
 
 ## Apps
@@ -123,6 +128,7 @@ Root URLconf: `dpmservice/urls.py`.
 |--------------------------|------------------------|
 | `/admin/`                | `django.contrib.admin` |
 | `/accounts/`             | `accounts.urls` (namespace: `accounts`) |
+| `/company/`              | `clients.urls` (namespace: `clients`) |
 
 Within `accounts.urls`:
 
@@ -137,6 +143,19 @@ Within `accounts.urls`:
 | `accounts:password_change` | `/accounts/profile/password/` | Authenticated         |
 | `accounts:user_list`       | `/accounts/users/`            | Admin or Manager      |
 | `accounts:user_detail`     | `/accounts/users/<id>/`       | Admin only            |
+
+Within `clients.urls` (mounted at `/company/`):
+
+| Name                       | Path                          | Access                |
+|----------------------------|-------------------------------|-----------------------|
+| `clients:branch_list`      | `/company/branches/`          | Admin or Manager      |
+| `clients:branch_create`    | `/company/branches/new/`      | Admin or Manager      |
+| `clients:branch_update`    | `/company/branches/<pk>/edit/`| Admin or Manager      |
+| `clients:branch_delete`    | `/company/branches/<pk>/delete/`| Admin or Manager    |
+| `clients:client_list`      | `/company/clients/`           | Admin or Manager      |
+| `clients:employee_list`    | `/company/employees/`         | Admin or Manager      |
+| `clients:homeworker_list`  | `/company/homeworkers/`       | Admin, Manager, Client|
+| `clients:location_list`    | `/company/locations/`         | Admin or Manager      |
 
 ## Views
 
@@ -192,6 +211,53 @@ default produced by `startproject`). Before deployment:
   third-party keys into environment variables.
 - Replace the Tailwind Play CDN with a built Tailwind bundle.
 - Switch the database from SQLite to PostgreSQL (or equivalent).
+
+### `clients` app
+
+Owns client, employee, homeworker, location, and **branch** management.
+
+#### `Branch` (`clients.Branch`)
+
+Represents a physical branch/office of a client company.
+
+| Field       | Type              | Notes                                  |
+|-------------|-------------------|----------------------------------------|
+| `name`      | CharField(200)    | Branch name.                           |
+| `address`   | TextField         | Branch address.                        |
+| `city`      | FK → masters.City | Optional (`null=True, blank=True`).    |
+| `state`     | FK → masters.State| Optional (`null=True, blank=True`).    |
+| `pincode`   | CharField(10)     | Optional.                              |
+| `is_active` | BooleanField      | Default `True`.                        |
+| `created_at`| DateTimeField     | Auto on create.                        |
+| `updated_at`| DateTimeField     | Auto on update.                        |
+
+#### `Client` (`clients.Client`)
+
+Business client using DPM services. Has an optional FK to `Branch`.
+
+| Field          | Type              | Notes                                  |
+|----------------|-------------------|----------------------------------------|
+| `user`         | OneToOne → User   | Optional (`null=True`). Links to user with `role=CLIENT`. |
+| `company_name` | CharField(200)    | Client company name.                   |
+| `branch`       | FK → Branch       | Optional (`null=True, blank=True`). Client belongs to one branch. |
+| ...            | ...               | (other fields unchanged)              |
+
+#### `Employee` (`clients.Employee`)
+
+ARWASYS employee handling DPM services. Has M2M to `Branch`.
+
+| Field      | Type              | Notes                                  |
+|------------|-------------------|----------------------------------------|
+| `user`     | OneToOne → User   | Links to user with `role=STAFF`.       |
+| `branches` | M2M → Branch      | Blank allowed. Employee can belong to multiple branches. |
+| ...        | ...               | (other fields unchanged)              |
+
+#### Relationships
+
+```
+Branch (1) ──→ (M) Client       # Client.branch
+Branch (M) ←─→ (M) Employee     # Employee.branches (M2M)
+```
 
 ## Out of Scope (Future Work)
 

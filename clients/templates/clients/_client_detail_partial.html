@@ -41,6 +41,9 @@
         <dt class="text-base-content/60">{% trans "Pincode" %}</dt>
         <dd class="font-medium">{{ obj.pincode|default:"—" }}</dd>
 
+        <dt class="text-base-content/60">{% trans "Branch" %}</dt>
+        <dd class="font-medium">{{ obj.branch.name|default:"—" }}</dd>
+
         <dt class="text-base-content/60">{% trans "GST Number" %}</dt>
         <dd class="font-medium">{{ obj.gst_number|default:"—" }}</dd>
 

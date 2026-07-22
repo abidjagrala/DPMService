@@ -32,10 +32,16 @@ def _hx_toast(level: str, message: str, status: int = 200, extra_events: dict | 
 @role_required('admin', 'manager', 'staff', 'client')
 @require_http_methods(['GET'])
 def asset_list_view(request):
-    assets = Asset.objects.select_related('asset_type', 'client', 'homeworker__client').all()
+    assets = Asset.objects.select_related('asset_type', 'client', 'client__branch', 'homeworker__client').all()
 
     if request.user.is_client:
         assets = assets.filter(client__user=request.user)
+    elif request.user.is_staff_member:
+        branch_ids = list(request.user.employee_profile.branches.values_list('id', flat=True))
+        if branch_ids:
+            assets = assets.filter(client__branch_id__in=branch_ids)
+        else:
+            assets = assets.none()
 
     search = request.GET.get('search', '').strip()
     type_filter = request.GET.get('type', '')
@@ -75,7 +81,7 @@ def asset_list_view(request):
 
 
 def _get_filtered_assets(request):
-    assets = Asset.objects.select_related('asset_type', 'client', 'homeworker__client').all()
+    assets = Asset.objects.select_related('asset_type', 'client', 'client__branch', 'homeworker__client').all()
     search = request.GET.get('search', '').strip()
     type_filter = request.GET.get('type', '')
     status_filter = request.GET.get('status', '')
@@ -90,6 +96,14 @@ def _get_filtered_assets(request):
         assets = assets.filter(asset_type_id=type_filter)
     if status_filter in dict(Asset.Status.choices):
         assets = assets.filter(status=status_filter)
+    if request.user.is_client:
+        assets = assets.filter(client__user=request.user)
+    elif request.user.is_staff_member:
+        branch_ids = list(request.user.employee_profile.branches.values_list('id', flat=True))
+        if branch_ids:
+            assets = assets.filter(client__branch_id__in=branch_ids)
+        else:
+            assets = assets.none()
     return assets
 
 
@@ -97,8 +111,6 @@ def _get_filtered_assets(request):
 @require_http_methods(['GET'])
 def asset_export_csv(request):
     assets = _get_filtered_assets(request)
-    if request.user.is_client:
-        assets = assets.filter(client__user=request.user)
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="assets.csv"'
     writer = csv.writer(response)
@@ -488,7 +500,7 @@ def asset_detail_pdf(request, pk):
         field_row('Serial Number', asset.serial_number) + field_row('Type', asset.asset_type.name if asset.asset_type else None),
         field_row('Type', asset.asset_type.name if asset.asset_type else None) + field_row('Brand/Model', asset.brand_model),
         field_row('Client', asset.client.company_name if asset.client else None) + field_row('Homeworker', asset.homeworker.name if asset.homeworker else None),
-        field_row('Location', asset.location.name if asset.location else None) + field_row('Device Location', asset.device_location),
+        field_row('Device Location', asset.device_location),
         field_row('IP Address', asset.ip_address) + field_row('MAC Address', asset.mac_address),
         field_row('Username', asset.username) + field_row('Password', asset.password),
         field_row('Status', asset.get_status_display()) + field_row('Active', 'Yes' if asset.is_active else 'No'),

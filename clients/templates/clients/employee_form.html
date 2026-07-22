@@ -35,6 +35,16 @@
                             <label class="label"><span class="label-text-alt text-error">{{ field.errors.0 }}</span></label>
                         {% endif %}
                     </div>
+                {% elif field.name == 'branches' %}
+                    <div class="form-control" id="branches-widget">
+                        <label class="label py-1">
+                            <span class="label-text text-sm font-medium">{{ field.label }}</span>
+                        </label>
+                        <div class="border border-base-300 rounded-lg p-2 max-h-48 overflow-y-auto" id="branches-checkboxes">
+                            <div class="text-sm text-base-content/50 py-2">{% trans "Loading branches..." %}</div>
+                        </div>
+                        <div class="flex flex-wrap gap-1 mt-1" id="branches-badges"></div>
+                    </div>
                 {% else %}
                     <div class="form-control">
                         {% daisy_field field %}
@@ -50,4 +60,128 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    var API_URL = "{% url 'clients:branch_api' %}";
+    var EXISTING_IDS = {{ existing_branch_ids|safe }};
+    var selected = [];
+    var allBranches = [];
+
+    function setSelected(ids) {
+        selected = ids.map(String);
+        renderBadges();
+        syncHiddenInputs();
+    }
+
+    function toggleBranch(id) {
+        id = String(id);
+        var idx = selected.indexOf(id);
+        if (idx === -1) selected.push(id);
+        else selected.splice(idx, 1);
+        renderCheckboxes();
+        renderBadges();
+        syncHiddenInputs();
+    }
+
+    function renderBadges() {
+        var el = document.getElementById('branches-badges');
+        if (!el) return;
+        el.innerHTML = '';
+        selected.forEach(function(id) {
+            var branch = allBranches.find(function(b) { return String(b.id) === id; });
+            var label = branch ? branch.name : id;
+            var badge = document.createElement('span');
+            badge.className = 'badge badge-primary badge-sm gap-1';
+            badge.innerHTML = '<span>' + label + '</span><button type="button" class="btn btn-ghost btn-xs p-0" data-remove-branch="' + id + '">&times;</button>';
+            el.appendChild(badge);
+        });
+    }
+
+    function renderCheckboxes() {
+        var container = document.getElementById('branches-checkboxes');
+        if (!container) return;
+
+        if (allBranches.length === 0) {
+            container.innerHTML = '<div class="text-sm text-base-content/50 py-2">{% trans "No branches available" %}</div>';
+            return;
+        }
+
+        var html = '<input type="text" id="branches-search" class="input input-bordered input-sm w-full mb-2" placeholder="{% trans "Search branches..." %}">';
+        html += '<div id="branches-list">';
+        allBranches.forEach(function(branch) {
+            var checked = selected.indexOf(String(branch.id)) !== -1 ? 'checked' : '';
+            html += '<label class="flex items-center gap-2 p-1 hover:bg-base-200 rounded cursor-pointer">';
+            html += '<input type="checkbox" class="checkbox checkbox-sm checkbox-primary" value="' + branch.id + '" ' + checked + ' data-branch-check>';
+            html += '<span class="text-sm">' + branch.name + '</span></label>';
+        });
+        html += '</div>';
+        container.innerHTML = html;
+
+        var searchEl = document.getElementById('branches-search');
+        if (searchEl) {
+            searchEl.addEventListener('input', function() {
+                var q = this.value.toLowerCase();
+                var labels = document.querySelectorAll('#branches-list label');
+                allBranches.forEach(function(branch, i) {
+                    if (labels[i]) {
+                        var match = branch.name.toLowerCase().indexOf(q) !== -1;
+                        labels[i].style.display = match ? '' : 'none';
+                    }
+                });
+            });
+        }
+
+        container.querySelectorAll('input[data-branch-check]').forEach(function(cb) {
+            cb.addEventListener('change', function() {
+                toggleBranch(this.value);
+            });
+        });
+    }
+
+    function syncHiddenInputs() {
+        var widget = document.getElementById('branches-widget');
+        if (!widget) return;
+        widget.querySelectorAll('input[name="branches"]').forEach(function(el) { el.remove(); });
+        selected.forEach(function(id) {
+            var h = document.createElement('input');
+            h.type = 'hidden';
+            h.name = 'branches';
+            h.value = id;
+            widget.appendChild(h);
+        });
+    }
+
+    function loadBranches() {
+        var container = document.getElementById('branches-checkboxes');
+        if (!container) return;
+        container.innerHTML = '<div class="text-sm text-base-content/50 py-2">{% trans "Loading branches..." %}</div>';
+        fetch(API_URL)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                allBranches = data;
+                var keep = [];
+                selected.forEach(function(id) {
+                    if (data.some(function(b) { return String(b.id) === id; })) keep.push(id);
+                });
+                selected = keep;
+                renderCheckboxes();
+                renderBadges();
+                syncHiddenInputs();
+            });
+    }
+
+    setSelected(EXISTING_IDS || []);
+    loadBranches();
+
+    document.addEventListener('click', function(e) {
+        var removeBtn = e.target.closest('[data-remove-branch]');
+        if (removeBtn) {
+            toggleBranch(removeBtn.getAttribute('data-remove-branch'));
+        }
+    }, true);
+})();
+</script>
 {% endblock %}

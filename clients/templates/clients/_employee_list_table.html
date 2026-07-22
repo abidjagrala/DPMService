@@ -15,6 +15,7 @@
                         <th>{% trans "Email" %}</th>
                         <th>{% trans "Designation" %}</th>
                         <th>{% trans "Department" %}</th>
+                        <th>{% trans "Branches" %}</th>
                         <th>{% trans "Status" %}</th>
                         <th class="text-right">{% trans "Actions" %}</th>
                     </tr>
@@ -41,6 +42,13 @@
                         <td>{{ emp.designation }}</td>
                         <td>{{ emp.get_department_display }}</td>
                         <td>
+                            {% for branch in emp.branches.all %}
+                                <span class="badge badge-primary badge-sm">{{ branch.name }}</span>
+                            {% empty %}
+                                —
+                            {% endfor %}
+                        </td>
+                        <td>
                             {% if emp.is_active %}
                                 <span class="badge badge-success badge-sm">{% trans "Active" %}</span>
                             {% else %}
@@ -64,7 +72,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="8" class="text-center text-base-content/60 py-8">{% trans "No employees found." %}</td>
+                        <td colspan="9" class="text-center text-base-content/60 py-8">{% trans "No employees found." %}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -108,6 +116,10 @@
                         <div class="flex gap-2">
                             <span class="text-base-content/50 w-24 shrink-0">{% trans "Department" %}</span>
                             <span>{{ emp.get_department_display }}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="text-base-content/50 w-24 shrink-0">{% trans "Branches" %}</span>
+                            <span>{% for branch in emp.branches.all %}<span class="badge badge-primary badge-sm">{{ branch.name }}</span>{% empty %}—{% endfor %}</span>
                         </div>
                     </div>
                     <div class="flex items-center justify-between mt-2">

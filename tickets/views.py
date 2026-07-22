@@ -71,11 +71,17 @@ def public_tracking_view(request, ticket_number):
 @require_http_methods(['GET'])
 def ticket_list_view(request):
     tickets = ServiceTicket.objects.select_related(
-        'service_type', 'client', 'assigned_to__user'
+        'service_type', 'client', 'client__branch', 'assigned_to__user'
     ).prefetch_related('assets').all()
 
     if request.user.is_client:
         tickets = tickets.filter(client__user=request.user)
+    elif request.user.is_staff_member:
+        branch_ids = list(request.user.employee_profile.branches.values_list('id', flat=True))
+        if branch_ids:
+            tickets = tickets.filter(client__branch_id__in=branch_ids)
+        else:
+            tickets = tickets.none()
 
     status_filter = request.GET.get('status')
     search = request.GET.get('search', '').strip()

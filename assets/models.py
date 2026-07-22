@@ -73,14 +73,6 @@ class Asset(models.Model):
         null=True,
         blank=True,
     )
-    location = models.ForeignKey(
-        'clients.Location',
-        on_delete=models.SET_NULL,
-        related_name='assets',
-        verbose_name=_('location'),
-        null=True,
-        blank=True,
-    )
     device_location = models.CharField(
         _('device location'),
         max_length=255,

@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 
 from masters.models import City, State
 
-from .models import Client, Employee, Homeworker, Location
+from .models import Branch, Client, Employee, Homeworker, Location
 
 User = get_user_model()
 
@@ -12,6 +12,36 @@ EMPLOYEE_PHOTO_MAX = 1 * 1024 * 1024  # 1 MB
 AADHAR_CARD_MAX = 1 * 1024 * 1024  # 1 MB
 EMPLOYEE_PHOTO_TYPES = ['image/png', 'image/jpeg']
 AADHAR_CARD_TYPES = ['image/png', 'image/jpeg', 'application/pdf']
+
+
+class BranchForm(forms.ModelForm):
+    """Form for creating and updating Branch records."""
+
+    class Meta:
+        model = Branch
+        fields = ['name', 'address', 'state', 'city', 'pincode', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
+            'address': forms.Textarea(attrs={'class': 'textarea textarea-bordered w-full', 'rows': 3}),
+            'state': forms.Select(attrs={'class': 'select select-bordered w-full'}),
+            'city': forms.Select(attrs={'class': 'select select-bordered w-full'}),
+            'pincode': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'checkbox checkbox-primary'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['state'].queryset = self.fields['state'].queryset.filter(is_active=True)
+        self.fields['city'].queryset = self.fields['city'].queryset.filter(is_active=True)
+
+    def clean_name(self) -> str:
+        name = self.cleaned_data['name'].strip()
+        qs = Branch.objects.filter(name__iexact=name)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError(_('A branch with this name already exists.'))
+        return name
 
 
 class ClientForm(forms.ModelForm):
@@ -43,8 +73,8 @@ class ClientForm(forms.ModelForm):
         model = Client
         fields = [
             'company_name', 'contact_person', 'email', 'phone', 'alt_phone',
-            'address', 'state', 'city', 'pincode', 'gst_number', 'pan_number',
-            'is_active',
+            'address', 'state', 'city', 'pincode', 'branch',
+            'gst_number', 'pan_number', 'is_active',
         ]
         widgets = {
             'company_name': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
@@ -56,6 +86,7 @@ class ClientForm(forms.ModelForm):
             'state': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'city': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'pincode': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
+            'branch': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'gst_number': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
             'pan_number': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'checkbox checkbox-primary'}),
@@ -64,6 +95,10 @@ class ClientForm(forms.ModelForm):
     def __init__(self, *args, is_create: bool = True, **kwargs):
         super().__init__(*args, **kwargs)
         self.is_create = is_create
+        self.fields['branch'].queryset = Branch.objects.filter(is_active=True)
+        self.fields['branch'].required = False
+        self.fields['state'].queryset = self.fields['state'].queryset.filter(is_active=True)
+        self.fields['city'].queryset = self.fields['city'].queryset.filter(is_active=True)
         if not is_create:
             self.fields['password1'].widget = forms.HiddenInput()
             self.fields['password2'].widget = forms.HiddenInput()
@@ -131,8 +166,8 @@ class EmployeeForm(forms.ModelForm):
         model = Employee
         fields = [
             'designation', 'department', 'phone', 'alt_phone',
-            'address', 'state', 'city', 'pincode', 'is_active',
-            'employee_photo', 'aadhar_card',
+            'address', 'state', 'city', 'pincode', 'branches',
+            'is_active', 'employee_photo', 'aadhar_card',
         ]
         widgets = {
             'designation': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
@@ -143,6 +178,7 @@ class EmployeeForm(forms.ModelForm):
             'state': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'city': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'pincode': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
+            'branches': forms.SelectMultiple(attrs={'class': 'select select-bordered w-full hidden'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'checkbox checkbox-primary'}),
             'employee_photo': forms.ClearableFileInput(attrs={'class': 'file-input file-input-bordered file-input-sm w-full', 'accept': 'image/png,image/jpeg'}),
             'aadhar_card': forms.ClearableFileInput(attrs={'class': 'file-input file-input-bordered file-input-sm w-full', 'accept': 'image/png,image/jpeg,application/pdf'}),
@@ -151,6 +187,7 @@ class EmployeeForm(forms.ModelForm):
     def __init__(self, *args, is_create: bool = True, **kwargs):
         super().__init__(*args, **kwargs)
         self.is_create = is_create
+        self.fields['branches'].queryset = Branch.objects.filter(is_active=True)
         if not is_create:
             self.fields['password1'].widget = forms.HiddenInput()
             self.fields['password2'].widget = forms.HiddenInput()
@@ -170,7 +207,7 @@ class EmployeeForm(forms.ModelForm):
 
     def clean_employee_photo(self):
         photo = self.cleaned_data.get('employee_photo')
-        if photo:
+        if photo and hasattr(photo, 'content_type'):
             if photo.size > EMPLOYEE_PHOTO_MAX:
                 raise forms.ValidationError(_('File size must be under 1 MB.'))
             if photo.content_type not in EMPLOYEE_PHOTO_TYPES:
@@ -179,7 +216,7 @@ class EmployeeForm(forms.ModelForm):
 
     def clean_aadhar_card(self):
         aadhar = self.cleaned_data.get('aadhar_card')
-        if aadhar:
+        if aadhar and hasattr(aadhar, 'content_type'):
             if aadhar.size > AADHAR_CARD_MAX:
                 raise forms.ValidationError(_('File size must be under 1 MB.'))
             if aadhar.content_type not in AADHAR_CARD_TYPES:

@@ -12,6 +12,7 @@
                         <th>{% trans "Company" %}</th>
                         <th>{% trans "Contact" %}</th>
                         <th>{% trans "Phone" %}</th>
+                        <th>{% trans "Branch" %}</th>
                         <th>{% trans "City" %}</th>
                         <th>{% trans "Status" %}</th>
                         <th class="text-right">{% trans "Actions" %}</th>
@@ -25,6 +26,7 @@
                         </td>
                         <td>{{ client.contact_person }}</td>
                         <td>{{ client.phone }}</td>
+                        <td>{{ client.branch.name|default:"—" }}</td>
                         <td>{{ client.city.name|default:"—" }}</td>
                         <td>
                             {% if client.is_active %}
@@ -50,7 +52,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="text-center text-base-content/60 py-8">{% trans "No clients found." %}</td>
+                        <td colspan="7" class="text-center text-base-content/60 py-8">{% trans "No clients found." %}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -82,6 +84,10 @@
                         <div class="flex gap-2">
                             <span class="text-base-content/50 w-24 shrink-0">{% trans "Phone" %}</span>
                             <span>{{ client.phone }}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="text-base-content/50 w-24 shrink-0">{% trans "Branch" %}</span>
+                            <span>{{ client.branch.name|default:"—" }}</span>
                         </div>
                         <div class="flex gap-2">
                             <span class="text-base-content/50 w-24 shrink-0">{% trans "City" %}</span>

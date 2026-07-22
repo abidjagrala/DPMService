@@ -5,6 +5,51 @@ from django.utils.translation import gettext_lazy as _
 from masters.models import City, State
 
 
+class Branch(models.Model):
+    """Client company branch / office location."""
+
+    name = models.CharField(
+        _('branch name'),
+        max_length=200,
+    )
+    address = models.TextField(
+        _('address'),
+    )
+    city = models.ForeignKey(
+        City,
+        on_delete=models.PROTECT,
+        related_name='branches',
+        verbose_name=_('city'),
+        null=True,
+        blank=True,
+    )
+    state = models.ForeignKey(
+        State,
+        on_delete=models.PROTECT,
+        related_name='branches',
+        verbose_name=_('state'),
+        null=True,
+        blank=True,
+    )
+    pincode = models.CharField(
+        _('pincode'),
+        max_length=10,
+        blank=True,
+        default='',
+    )
+    is_active = models.BooleanField(_('active'), default=True)
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
+
+    class Meta:
+        verbose_name = _('branch')
+        verbose_name_plural = _('branches')
+        ordering = ['name']
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Client(models.Model):
     """Business client using DPM services."""
 
@@ -56,6 +101,14 @@ class Client(models.Model):
     pincode = models.CharField(
         _('pincode'),
         max_length=10,
+    )
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.SET_NULL,
+        related_name='clients',
+        verbose_name=_('branch'),
+        null=True,
+        blank=True,
     )
     gst_number = models.CharField(
         _('GST number'),
@@ -162,6 +215,12 @@ class Employee(models.Model):
         upload_to='employees/aadhar/',
         blank=True,
         null=True,
+    )
+    branches = models.ManyToManyField(
+        Branch,
+        blank=True,
+        related_name='employees',
+        verbose_name=_('branches'),
     )
     is_active = models.BooleanField(_('active'), default=True)
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
