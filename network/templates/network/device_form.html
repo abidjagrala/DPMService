@@ -9,7 +9,7 @@
             {% csrf_token %}
             {% daisy_form_errors form %}
             {% for field in form %}
-                {% if field.name == 'device_type' or field.name == 'client' or field.name == 'homeworker' %}
+                {% if field.name == 'device_type' or field.name == 'client' %}
                     <div class="form-control">
                         <label class="label py-1">
                             <span class="label-text text-sm font-medium">{{ field.label }}{% if field.field.required %} <span class="text-error">*</span>{% endif %}</span>

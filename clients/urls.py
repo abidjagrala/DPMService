@@ -31,13 +31,6 @@ urlpatterns = [
     path('employees/<int:pk>/edit/', views.employee_update_view, name='employee_update'),
     path('employees/<int:pk>/delete/', views.employee_delete_view, name='employee_delete'),
 
-    # Homeworker
-    path('homeworkers/', views.homeworker_list_view, name='homeworker_list'),
-    path('homeworkers/new/', views.homeworker_create_view, name='homeworker_create'),
-    path('homeworkers/<int:pk>/', views.homeworker_detail_view, name='homeworker_detail'),
-    path('homeworkers/<int:pk>/edit/', views.homeworker_update_view, name='homeworker_update'),
-    path('homeworkers/<int:pk>/delete/', views.homeworker_delete_view, name='homeworker_delete'),
-
     # Location
     path('locations/', views.location_list_view, name='location_list'),
     path('locations/new/', views.location_create_view, name='location_create'),
@@ -47,6 +40,5 @@ urlpatterns = [
     # Quick-Create (inline add from other forms)
     path('quick-new/branch/', views.branch_quick_create_view, name='branch_quick_create'),
     path('quick-new/client/', views.client_quick_create_view, name='client_quick_create'),
-    path('quick-new/homeworker/', views.homeworker_quick_create_view, name='homeworker_quick_create'),
     path('quick-new/location/', views.location_quick_create_view, name='location_quick_create'),
 ]

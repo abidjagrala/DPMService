@@ -23,7 +23,12 @@
                 {% endif %}
             </div>
         {% elif field.name == 'city' %}
-            <div class="form-control">
+            <div class="form-control"
+                 hx-get="{% url 'clients:client_city_select' %}"
+                 hx-trigger="change from:input[name='state']"
+                 hx-include="input[name='state']"
+                 hx-target="this"
+                 hx-swap="outerHTML">
                 <label class="label py-1">
                     <span class="label-text text-sm font-medium">{{ field.label }}{% if field.field.required %} <span class="text-error">*</span>{% endif %}</span>
                 </label>

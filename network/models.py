@@ -199,14 +199,6 @@ class NetworkDevice(models.Model):
         null=True,
         blank=True,
     )
-    homeworker = models.ForeignKey(
-        'clients.Homeworker',
-        on_delete=models.SET_NULL,
-        related_name='devices',
-        verbose_name=_('homeworker'),
-        null=True,
-        blank=True,
-    )
     location = models.CharField(
         _('location'),
         max_length=200,

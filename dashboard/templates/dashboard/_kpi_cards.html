@@ -10,12 +10,6 @@
         <div class="stat-value text-2xl">{{ total_employees }}</div>
     </div>
     {% endif %}
-    {% if not user.is_staff_member %}
-    <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
-        <div class="stat-title text-xs">{% trans "Homeworkers" %}</div>
-        <div class="stat-value text-2xl">{{ total_homeworkers }}</div>
-    </div>
-    {% endif %}
     <div class="stat bg-base-100 border border-base-300 rounded-box shadow-sm p-4">
         <div class="stat-title text-xs">{% trans "Total Tickets" %}</div>
         <div class="stat-value text-2xl">{{ total_tickets }}</div>

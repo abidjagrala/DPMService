@@ -110,7 +110,7 @@
                     <tbody>
                         {% for a in assignments %}
                         <tr>
-                            <td>{{ a.client.company_name|default:a.homeworker.name }}</td>
+                            <td>{{ a.client.company_name|default:"—" }}</td>
                             <td>{{ a.assigned_by.get_full_name }}</td>
                             <td>{{ a.assigned_date|date:"M j, Y g:i A" }}</td>
                             <td>
@@ -140,6 +140,69 @@
             {% trans "Delete" %}
         </button>
     </div>
+
+    {% if service_tickets %}
+    <div class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-base">{% trans "Service Tickets History" %}</h2>
+            <div class="divider my-1"></div>
+            <div class="overflow-x-auto">
+                <table class="table table-zebra table-sm">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Ticket" %}</th>
+                            <th>{% trans "Subject" %}</th>
+                            <th>{% trans "Client" %}</th>
+                            <th>{% trans "Priority" %}</th>
+                            <th>{% trans "Status" %}</th>
+                            <th>{% trans "Assigned To" %}</th>
+                            <th>{% trans "Created" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in service_tickets %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'tickets:ticket_detail' pk=t.pk %}" class="link link-primary font-medium text-sm">{{ t.ticket_number }}</a>
+                            </td>
+                            <td class="text-sm">{{ t.subject|truncatewords:8 }}</td>
+                            <td class="text-sm">{{ t.client.company_name }}</td>
+                            <td>
+                                {% if t.priority == 'urgent' %}
+                                    <span class="badge badge-error badge-sm">{% trans "Urgent" %}</span>
+                                {% elif t.priority == 'high' %}
+                                    <span class="badge badge-warning badge-sm">{% trans "High" %}</span>
+                                {% elif t.priority == 'medium' %}
+                                    <span class="badge badge-info badge-sm">{% trans "Medium" %}</span>
+                                {% else %}
+                                    <span class="badge badge-ghost badge-sm">{% trans "Low" %}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if t.status == 'new' %}
+                                    <span class="badge badge-primary badge-sm">{% trans "New" %}</span>
+                                {% elif t.status == 'assigned' %}
+                                    <span class="badge badge-secondary badge-sm">{% trans "Assigned" %}</span>
+                                {% elif t.status == 'in_progress' %}
+                                    <span class="badge badge-info badge-sm">{% trans "In Progress" %}</span>
+                                {% elif t.status == 'on_hold' %}
+                                    <span class="badge badge-warning badge-sm">{% trans "On Hold" %}</span>
+                                {% elif t.status == 'completed' %}
+                                    <span class="badge badge-success badge-sm">{% trans "Completed" %}</span>
+                                {% elif t.status == 'cancelled' %}
+                                    <span class="badge badge-ghost badge-sm">{% trans "Cancelled" %}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-sm">{{ t.assigned_to.user.get_full_name|default:"—" }}</td>
+                            <td class="text-sm">{{ t.created_at|date:"M j, Y" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <div x-show="drawerOpen" x-cloak class="fixed inset-0 z-40 bg-black/50"></div>
     <aside x-show="drawerOpen" x-cloak

@@ -39,7 +39,7 @@ def dashboard_view(request):
 @require_http_methods(['GET'])
 def dashboard_kpis(request):
     empty = {
-        'total_clients': 0, 'total_employees': 0, 'total_homeworkers': 0,
+        'total_clients': 0, 'total_employees': 0,
         'total_tickets': 0, 'open_tickets': 0, 'in_progress_tickets': 0,
         'completed_tickets': 0, 'tickets_today': 0,
         'total_assets': 0, 'assigned_assets': 0, 'available_assets': 0, 'maintenance_assets': 0,
@@ -99,17 +99,6 @@ def dashboard_expiry_alerts(request):
 def dashboard_client_summary(request):
     return render(request, 'dashboard/_client_summary.html', {
         'client_summary': _safe(services.get_client_summary, Client.objects.none(), request.user),
-    })
-
-
-@login_required
-@require_http_methods(['GET'])
-def dashboard_homeworker_summary(request):
-    return render(request, 'dashboard/_homeworker_summary.html', {
-        'homeworker_summary': _safe(services.get_homeworker_summary, {
-            'total': 0, 'assigned_assets': 0,
-            'open_tickets': 0, 'closed_tickets': 0,
-        }, request.user),
     })
 
 
@@ -262,10 +251,5 @@ def dashboard_others_tab(request):
     ctx = _safe(services.get_entity_counts_with_status, {
         'total_clients': 0, 'active_clients': 0, 'inactive_clients': 0,
         'total_employees': 0, 'active_employees': 0, 'inactive_employees': 0,
-        'total_homeworkers': 0, 'active_homeworkers': 0, 'inactive_homeworkers': 0,
-    }, user)
-    ctx['homeworker_summary'] = _safe(services.get_homeworker_summary, {
-        'total': 0, 'assigned_assets': 0,
-        'open_tickets': 0, 'closed_tickets': 0,
     }, user)
     return render(request, 'dashboard/_tab_others.html', ctx)

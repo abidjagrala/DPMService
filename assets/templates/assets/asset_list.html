@@ -51,7 +51,7 @@
         <div class="card-body p-0">
             <form method="get" class="flex items-center gap-3 p-4 border-b border-base-300 flex-wrap">
                 <input type="text" name="search" value="{{ search|default:'' }}"
-                       placeholder="{% trans 'Search by tag, type or homeworker...' %}"
+                       placeholder="{% trans 'Search by tag, type, or client...' %}"
                        class="input input-bordered input-sm flex-1 min-w-[200px]">
                 <div x-data="searchableSelect({name: 'type', value: '{{ selected_type|default:'' }}', placeholder: '{% trans "All types" %}', options: [{value: '', label: '{% trans "All types" %}'}, {% for t in asset_types %}{value: '{{ t.pk }}', label: '{{ t.name|escapejs }}'}{% if not forloop.last %},{% endif %}{% endfor %}]})" @click.outside="open = false" class="ss-wrapper">
                     <input type="hidden" :name="name" :value="value">

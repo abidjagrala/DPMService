@@ -32,7 +32,7 @@ def _hx_toast(level: str, message: str, status: int = 200, extra_events: dict | 
 @role_required('admin', 'manager', 'staff', 'client')
 @require_http_methods(['GET'])
 def asset_list_view(request):
-    assets = Asset.objects.select_related('asset_type', 'client', 'client__branch', 'homeworker__client').all()
+    assets = Asset.objects.select_related('asset_type', 'client', 'client__branch').all()
 
     if request.user.is_client:
         assets = assets.filter(client__user=request.user)
@@ -51,7 +51,6 @@ def asset_list_view(request):
         assets = assets.filter(
             Q(serial_number__icontains=search) |
             Q(asset_type__name__icontains=search) |
-            Q(homeworker__name__icontains=search) |
             Q(client__company_name__icontains=search)
         )
     if type_filter:
@@ -81,7 +80,7 @@ def asset_list_view(request):
 
 
 def _get_filtered_assets(request):
-    assets = Asset.objects.select_related('asset_type', 'client', 'client__branch', 'homeworker__client').all()
+    assets = Asset.objects.select_related('asset_type', 'client', 'client__branch').all()
     search = request.GET.get('search', '').strip()
     type_filter = request.GET.get('type', '')
     status_filter = request.GET.get('status', '')
@@ -89,7 +88,6 @@ def _get_filtered_assets(request):
         assets = assets.filter(
             Q(serial_number__icontains=search) |
             Q(asset_type__name__icontains=search) |
-            Q(homeworker__name__icontains=search) |
             Q(client__company_name__icontains=search)
         )
     if type_filter:
@@ -117,7 +115,7 @@ def asset_export_csv(request):
     writer.writerow([
         'ID', 'Serial Number', 'Type', 'Brand/Model',
         'Purchase Date', 'Warranty Expiry',
-        'Status', 'Client', 'Homeworker', 'IP Address', 'MAC Address',
+        'Status', 'Client', 'IP Address', 'MAC Address',
         'Notes', 'Active',
         'Created At', 'Updated At',
     ])
@@ -131,7 +129,6 @@ def asset_export_csv(request):
             a.warranty_expiry or '',
             a.get_status_display(),
             a.client.company_name if a.client else '',
-            a.homeworker.name if a.homeworker else '',
             a.ip_address,
             a.mac_address,
             a.notes,
@@ -226,17 +223,21 @@ def asset_delete_view(request, pk):
 @require_http_methods(['GET'])
 def asset_detail_view(request, pk):
     asset = get_object_or_404(
-        Asset.objects.select_related('asset_type', 'client', 'homeworker__client'),
+        Asset.objects.select_related('asset_type', 'client'),
         pk=pk
     )
 
     if request.user.is_client and (not asset.client or asset.client.user != request.user):
         return HttpResponseForbidden('You do not have access to this asset.')
 
-    assignments = asset.assignments.select_related('client', 'homeworker__client', 'assigned_by')[:10]
+    assignments = asset.assignments.select_related('client', 'assigned_by')[:10]
+    service_tickets = asset.service_tickets.select_related(
+        'service_type', 'client', 'assigned_to__user',
+    ).order_by('-created_at')[:20]
     return render(request, 'assets/asset_detail.html', {
         'obj': asset,
         'assignments': assignments,
+        'service_tickets': service_tickets,
         'page_title': str(asset),
     })
 
@@ -263,25 +264,22 @@ def asset_assign_view(request, pk):
         form = AssetAssignForm(request.POST)
         if form.is_valid():
             client = form.cleaned_data['client']
-            homeworker = form.cleaned_data['homeworker']
             notes = form.cleaned_data['notes']
 
             assignment = AssetAssignment.objects.create(
                 asset=asset,
                 client=client,
-                homeworker=homeworker,
                 assigned_by=request.user,
                 notes=notes,
             )
 
             asset.client = client
-            asset.homeworker = homeworker
             asset.status = Asset.Status.ASSIGNED
             asset.save()
 
-            notify_device_assigned(asset, client=client, homeworker=homeworker)
+            notify_device_assigned(asset, client=client)
 
-            target_name = client.company_name if client else homeworker.name
+            target_name = client.company_name
             if is_htmx(request):
                 return _hx_toast('success', f'Asset assigned to {target_name}.', status=204, extra_events={'asset-saved': True})
             messages.success(request, f'Asset assigned to {target_name}.')
@@ -312,7 +310,6 @@ def asset_return_view(request, pk):
         assignment.save()
 
     asset.client = None
-    asset.homeworker = None
     asset.status = Asset.Status.AVAILABLE
     asset.save()
 
@@ -330,22 +327,9 @@ def asset_status_change_view(request, pk):
 
     if request.method == 'POST':
         new_status = request.POST.get('status', '')
-        homeworker_id = request.POST.get('homeworker', '')
         if new_status in dict(Asset.Status.choices):
-            if new_status == Asset.Status.ASSIGNED and not homeworker_id:
-                if is_htmx(request):
-                    return _hx_toast('error', 'Homeworker is required when setting status to Assigned.', status=200)
-                messages.error(request, 'Homeworker is required when setting status to Assigned.')
-                return redirect('assets:asset_detail', pk=asset.pk)
-
             asset.status = new_status
-            if new_status == Asset.Status.ASSIGNED and homeworker_id:
-                from clients.models import Homeworker
-                hw = Homeworker.objects.filter(pk=homeworker_id, is_active=True).first()
-                if hw:
-                    asset.homeworker = hw
-            elif new_status != Asset.Status.ASSIGNED:
-                asset.homeworker = None
+            if new_status != Asset.Status.ASSIGNED:
                 asset.client = None
             asset.save()
             if is_htmx(request):
@@ -357,11 +341,9 @@ def asset_status_change_view(request, pk):
             messages.error(request, 'Invalid status.')
         return redirect('assets:asset_detail', pk=asset.pk)
 
-    from clients.models import Homeworker
     context = {
         'obj': asset,
         'statuses': Asset.Status.choices,
-        'homeworkers': Homeworker.objects.filter(is_active=True),
     }
     return render(request, 'assets/_asset_status_change_partial.html', context)
 
@@ -382,14 +364,14 @@ def asset_detail_pdf(request, pk):
     from accounts.models import CompanyInfo
 
     asset = get_object_or_404(
-        Asset.objects.select_related('asset_type', 'client', 'homeworker__client'),
+        Asset.objects.select_related('asset_type', 'client'),
         pk=pk
     )
 
     if request.user.is_client and (not asset.client or asset.client.user != request.user):
         return HttpResponseForbidden('You do not have access to this asset.')
 
-    assignments = asset.assignments.select_related('client', 'homeworker__client', 'assigned_by')[:10]
+    assignments = asset.assignments.select_related('client', 'assigned_by')[:10]
     company = CompanyInfo.get_instance()
 
     buffer = BytesIO()
@@ -499,7 +481,7 @@ def asset_detail_pdf(request, pk):
     details_data = [
         field_row('Serial Number', asset.serial_number) + field_row('Type', asset.asset_type.name if asset.asset_type else None),
         field_row('Type', asset.asset_type.name if asset.asset_type else None) + field_row('Brand/Model', asset.brand_model),
-        field_row('Client', asset.client.company_name if asset.client else None) + field_row('Homeworker', asset.homeworker.name if asset.homeworker else None),
+        field_row('Client', asset.client.company_name if asset.client else None) + ['', ''],
         field_row('Device Location', asset.device_location),
         field_row('IP Address', asset.ip_address) + field_row('MAC Address', asset.mac_address),
         field_row('Username', asset.username) + field_row('Password', asset.password),
@@ -563,7 +545,7 @@ def asset_detail_pdf(request, pk):
 
     if assignments:
         for a in assignments:
-            assigned_to = a.client.company_name if a.client else (a.homeworker.name if a.homeworker else '—')
+            assigned_to = a.client.company_name if a.client else '—'
             assigned_by = a.assigned_by.get_full_name() if a.assigned_by else '—'
             ah_data.append([
                 Paragraph(assigned_to, value_style),

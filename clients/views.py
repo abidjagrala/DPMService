@@ -15,8 +15,8 @@ from django.views.decorators.http import require_http_methods
 from accounts.views import is_htmx, role_required
 from masters.models import City, State
 
-from .forms import BranchForm, ClientForm, EmployeeForm, HomeworkerForm, LocationForm
-from .models import Branch, Client, Employee, Homeworker, Location
+from .forms import BranchForm, ClientForm, EmployeeForm, LocationForm
+from .models import Branch, Client, Employee, Location
 
 User = get_user_model()
 
@@ -669,124 +669,6 @@ def employee_detail_view(request, pk):
 
 
 # ---------------------------------------------------------------------------
-# Homeworker
-# ---------------------------------------------------------------------------
-
-@role_required('admin', 'manager', 'client')
-@require_http_methods(['GET'])
-def homeworker_list_view(request):
-    homeworkers = Homeworker.objects.select_related('client', 'city', 'state').all()
-
-    if request.user.is_client:
-        homeworkers = homeworkers.filter(client__user=request.user)
-
-    search = request.GET.get('search', '').strip()
-    client_filter = request.GET.get('client', '')
-    status_filter = request.GET.get('status', '')
-
-    if search:
-        homeworkers = homeworkers.filter(
-            Q(name__icontains=search) |
-            Q(email__icontains=search) |
-            Q(phone__icontains=search) |
-            Q(client__company_name__icontains=search)
-        )
-    if client_filter:
-        homeworkers = homeworkers.filter(client_id=client_filter)
-    if status_filter == 'active':
-        homeworkers = homeworkers.filter(is_active=True)
-    elif status_filter == 'inactive':
-        homeworkers = homeworkers.filter(is_active=False)
-
-    context = {
-        'homeworkers': homeworkers,
-        'search': search,
-        'clients': Client.objects.filter(is_active=True),
-        'selected_client': client_filter,
-        'selected_status': status_filter,
-        'page_title': 'Homeworkers',
-    }
-    if is_htmx(request):
-        return render(request, 'clients/_homeworker_list_table.html', context)
-    return render(request, 'clients/homeworker_list.html', context)
-
-
-@role_required('admin', 'manager', 'client')
-@csrf_protect
-@require_http_methods(['GET', 'POST'])
-def homeworker_create_view(request):
-    if request.method == 'POST':
-        form = HomeworkerForm(request.POST, user=request.user)
-        if form.is_valid():
-            homeworker = form.save()
-            if is_htmx(request):
-                return _hx_toast('success', f'Homeworker {homeworker.name} created.', status=204, extra_events={'homeworker-saved': True})
-            messages.success(request, f'Homeworker {homeworker.name} created successfully.')
-            return redirect('clients:homeworker_list')
-    else:
-        form = HomeworkerForm(user=request.user)
-
-    template = 'clients/_homeworker_form_partial.html' if is_htmx(request) else 'clients/homeworker_form.html'
-    return render(request, template, {'form': form, 'mode': 'create', 'page_title': 'Add Homeworker'})
-
-
-@role_required('admin', 'manager', 'client')
-@csrf_protect
-@require_http_methods(['GET', 'POST'])
-def homeworker_update_view(request, pk):
-    homeworker = get_object_or_404(Homeworker, pk=pk)
-
-    if request.user.is_client and homeworker.client.user != request.user:
-        return HttpResponseForbidden('You do not have access to this homeworker.')
-
-    if request.method == 'POST':
-        form = HomeworkerForm(request.POST, instance=homeworker, user=request.user)
-        if form.is_valid():
-            form.save()
-            if is_htmx(request):
-                return _hx_toast('success', f'Homeworker {homeworker.name} updated.', status=204, extra_events={'homeworker-saved': True})
-            messages.success(request, f'Homeworker {homeworker.name} updated successfully.')
-            return redirect('clients:homeworker_list')
-    else:
-        form = HomeworkerForm(instance=homeworker, user=request.user)
-
-    template = 'clients/_homeworker_form_partial.html' if is_htmx(request) else 'clients/homeworker_form.html'
-    return render(request, template, {'form': form, 'mode': 'update', 'obj': homeworker, 'page_title': f'Edit Homeworker — {homeworker.name}'})
-
-
-@role_required('admin', 'manager', 'client')
-@csrf_protect
-@require_http_methods(['GET', 'POST'])
-def homeworker_delete_view(request, pk):
-    homeworker = get_object_or_404(Homeworker, pk=pk)
-
-    if request.user.is_client and homeworker.client.user != request.user:
-        return HttpResponseForbidden('You do not have access to this homeworker.')
-
-    if request.method == 'POST':
-        name = homeworker.name
-        homeworker.delete()
-        if is_htmx(request):
-            return _hx_toast('success', f'Homeworker {name} deleted.', status=204, extra_events={'homeworker-saved': True})
-        messages.success(request, f'Homeworker {name} deleted successfully.')
-        return redirect('clients:homeworker_list')
-
-    template = 'clients/_homeworker_confirm_delete_partial.html' if is_htmx(request) else 'clients/homeworker_confirm_delete.html'
-    return render(request, template, {'obj': homeworker, 'page_title': f'Delete Homeworker — {homeworker.name}'})
-
-
-@role_required('admin', 'manager', 'client')
-@require_http_methods(['GET'])
-def homeworker_detail_view(request, pk):
-    homeworker = get_object_or_404(Homeworker.objects.select_related('client', 'city', 'state'), pk=pk)
-
-    if request.user.is_client and homeworker.client.user != request.user:
-        return HttpResponseForbidden('You do not have access to this homeworker.')
-
-    return render(request, 'clients/homeworker_detail.html', {'obj': homeworker, 'page_title': homeworker.name})
-
-
-# ---------------------------------------------------------------------------
 # Location
 # ---------------------------------------------------------------------------
 
@@ -884,24 +766,6 @@ def client_quick_create_view(request):
         client = Client.objects.create(user=user, company_name=company_name, contact_person=contact_person, email=email, phone=phone, address=request.POST.get('address', ''), pincode=request.POST.get('pincode', '000000'), city_id=request.POST.get('city') or None, state_id=request.POST.get('state') or None)
         return HttpResponse(json.dumps({'id': client.pk, 'label': client.company_name}), status=201, content_type='application/json')
     return render(request, 'clients/_client_quick_form_partial.html')
-
-
-@role_required('admin', 'manager')
-@csrf_protect
-@require_http_methods(['GET', 'POST'])
-def homeworker_quick_create_view(request):
-    if request.method == 'POST':
-        name = request.POST.get('name', '').strip()
-        phone = request.POST.get('phone', '').strip()
-        client_id = request.POST.get('client')
-        if not name or not phone or not client_id:
-            return HttpResponse(json.dumps({'error': 'Name, phone and client are required.'}), status=400, content_type='application/json')
-        client = get_object_or_404(Client, pk=client_id)
-        homeworker = Homeworker.objects.create(client=client, name=name, phone=phone, email=request.POST.get('email', ''), address=request.POST.get('address', ''), pincode=request.POST.get('pincode', '000000'), state_id=request.POST.get('state') or None, city_id=request.POST.get('city') or None)
-        return HttpResponse(json.dumps({'id': homeworker.pk, 'label': homeworker.name}), status=201, content_type='application/json')
-    client_id = request.GET.get('client', '')
-    clients = Client.objects.filter(is_active=True).order_by('company_name')
-    return render(request, 'clients/_homeworker_quick_form_partial.html', {'selected_client': client_id, 'clients': clients})
 
 
 @role_required('admin', 'manager')

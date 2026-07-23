@@ -6,7 +6,7 @@ from django.test import TestCase, RequestFactory
 from django.utils import timezone
 
 from assets.models import Asset
-from clients.models import Client, Employee, Homeworker
+from clients.models import Client, Employee
 from comments.models import Comment
 from hosting.models import DomainHosting
 from masters.models import AssetType, City, ServiceType, State
@@ -19,7 +19,7 @@ from .services import (
     get_tickets_by_status, get_client_wise_tickets,
     get_asset_status_distribution, get_client_state_distribution,
     get_recent_tickets, get_recent_activities, get_expiry_alerts,
-    get_client_summary, get_homeworker_summary,
+    get_client_summary,
     get_my_tasks, get_recent_comments,
 )
 
@@ -156,30 +156,20 @@ class ApplyFiltersTest(BaseDashboardTest):
 # ---------------------------------------------------------------------------
 
 class EntityCountsTest(BaseDashboardTest):
-    def setUp(self):
-        super().setUp()
-        self.hw = Homeworker.objects.create(
-            client=self.client_obj, name='HW One',
-            phone='111', address='addr', pincode='400001',
-        )
-
     def test_admin_sees_all(self):
         counts = get_entity_counts(self.admin)
         self.assertEqual(counts['total_clients'], 1)
         self.assertEqual(counts['total_employees'], 1)
-        self.assertEqual(counts['total_homeworkers'], 1)
 
-    def test_client_sees_own_homeworkers(self):
+    def test_client_sees_own(self):
         counts = get_entity_counts(self.client_user)
         self.assertEqual(counts['total_clients'], 0)
         self.assertEqual(counts['total_employees'], 0)
-        self.assertEqual(counts['total_homeworkers'], 1)
 
     def test_staff_restricted(self):
         counts = get_entity_counts(self.staff_user)
         self.assertEqual(counts['total_clients'], 0)
         self.assertEqual(counts['total_employees'], 0)
-        self.assertEqual(counts['total_homeworkers'], 0)
 
 
 class TicketCountsTest(BaseDashboardTest):
@@ -387,43 +377,13 @@ class ExpiryAlertsTest(BaseDashboardTest):
 
 
 class ClientSummaryTest(BaseDashboardTest):
-    def setUp(self):
-        super().setUp()
-        Homeworker.objects.create(
-            client=self.client_obj, name='HW1',
-            phone='111', address='addr', pincode='400001',
-        )
-
     def test_admin_sees_summary(self):
         summary = get_client_summary(self.admin)
         self.assertTrue(summary.count() > 0)
-        first = summary.first()
-        self.assertEqual(first.homeworker_count, 1)
 
     def test_restricted_returns_empty(self):
         summary = get_client_summary(self.staff_user)
         self.assertEqual(summary.count(), 0)
-
-
-class HomeworkerSummaryTest(BaseDashboardTest):
-    def setUp(self):
-        super().setUp()
-        self.hw = Homeworker.objects.create(
-            client=self.client_obj, name='HW1',
-            phone='111', address='addr', pincode='400001',
-        )
-
-    def test_admin_summary(self):
-        summary = get_homeworker_summary(self.admin)
-        self.assertEqual(summary['total'], 1)
-
-    def test_client_summary(self):
-        summary = get_homeworker_summary(self.client_user)
-        self.assertEqual(summary['total'], 1)
-
-    def test_staff_restricted(self):
-        summary = get_homeworker_summary(self.staff_user)
-        self.assertEqual(summary['total'], 0)
 
 
 class MyTasksTest(BaseDashboardTest):

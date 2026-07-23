@@ -1,7 +1,7 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from clients.models import Client, Homeworker
+from clients.models import Client
 from masters.models import AssetType
 
 from .models import Asset, AssetAssignment
@@ -15,7 +15,7 @@ class AssetForm(forms.ModelForm):
         fields = [
             'serial_number', 'asset_type', 'brand_model',
             'purchase_date', 'warranty_expiry',
-            'status', 'client', 'homeworker', 'device_location',
+            'status', 'client', 'device_location',
             'ip_address', 'mac_address',
             'notes', 'username', 'password', 'is_active',
         ]
@@ -27,7 +27,6 @@ class AssetForm(forms.ModelForm):
             'warranty_expiry': forms.DateInput(attrs={'class': 'input input-bordered w-full', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'client': forms.Select(attrs={'class': 'select select-bordered w-full'}),
-            'homeworker': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'device_location': forms.TextInput(attrs={'class': 'input input-bordered w-full', 'placeholder': 'e.g. Building A, Floor 3, Desk 12'}),
             'ip_address': forms.TextInput(attrs={'class': 'input input-bordered w-full', 'placeholder': '192.168.1.10'}),
             'mac_address': forms.TextInput(attrs={'class': 'input input-bordered w-full', 'placeholder': 'AA:BB:CC:DD:EE:FF'}),
@@ -40,9 +39,7 @@ class AssetForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['client'].queryset = Client.objects.filter(is_active=True)
-        self.fields['homeworker'].queryset = Homeworker.objects.filter(is_active=True)
         self.fields['client'].required = False
-        self.fields['homeworker'].required = False
 
     def save(self, commit=True):
         instance = super().save(commit=False)
@@ -54,28 +51,14 @@ class AssetForm(forms.ModelForm):
             instance.save()
         return instance
 
-    def clean(self) -> dict:
-        cleaned_data = super().clean()
-        status = cleaned_data.get('status')
-        homeworker = cleaned_data.get('homeworker')
-        if status == Asset.Status.ASSIGNED and not homeworker:
-            raise forms.ValidationError(_('Homeworker is required when status is Assigned.'))
-        return cleaned_data
-
 
 class AssetAssignForm(forms.Form):
-    """Form for assigning an asset to a client or homeworker."""
+    """Form for assigning an asset to a client."""
 
     client = forms.ModelChoiceField(
         queryset=Client.objects.filter(is_active=True),
-        required=False,
+        required=True,
         label=_('Assign to Client'),
-        widget=forms.Select(attrs={'class': 'select select-bordered w-full'}),
-    )
-    homeworker = forms.ModelChoiceField(
-        queryset=Homeworker.objects.filter(is_active=True),
-        required=False,
-        label=_('Assign to Homeworker'),
         widget=forms.Select(attrs={'class': 'select select-bordered w-full'}),
     )
     notes = forms.CharField(
@@ -86,12 +69,6 @@ class AssetAssignForm(forms.Form):
 
     def clean(self) -> dict:
         cleaned_data = super().clean()
-        client = cleaned_data.get('client')
-        homeworker = cleaned_data.get('homeworker')
-        if not client and not homeworker:
-            raise forms.ValidationError(_('Please select either a client or a homeworker.'))
-        if client and homeworker:
-            raise forms.ValidationError(_('Please select only one: client or homeworker.'))
         return cleaned_data
 
 
@@ -103,7 +80,7 @@ class ClientAssetForm(forms.ModelForm):
         fields = [
             'serial_number', 'asset_type', 'brand_model',
             'purchase_date', 'warranty_expiry',
-            'status', 'homeworker', 'device_location', 'ip_address', 'mac_address',
+            'status', 'device_location', 'ip_address', 'mac_address',
             'notes',
         ]
         widgets = {
@@ -113,7 +90,6 @@ class ClientAssetForm(forms.ModelForm):
             'purchase_date': forms.DateInput(attrs={'class': 'input input-bordered w-full', 'type': 'date'}),
             'warranty_expiry': forms.DateInput(attrs={'class': 'input input-bordered w-full', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'select select-bordered w-full'}),
-            'homeworker': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'device_location': forms.TextInput(attrs={'class': 'input input-bordered w-full', 'placeholder': 'e.g. Building A, Floor 3, Desk 12'}),
             'ip_address': forms.TextInput(attrs={'class': 'input input-bordered w-full', 'placeholder': '192.168.1.10'}),
             'mac_address': forms.TextInput(attrs={'class': 'input input-bordered w-full', 'placeholder': 'AA:BB:CC:DD:EE:FF'}),
@@ -123,11 +99,6 @@ class ClientAssetForm(forms.ModelForm):
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self._user = user
-        if user and user.is_client:
-            self.fields['homeworker'].queryset = Homeworker.objects.filter(is_active=True, client__user=user)
-        else:
-            self.fields['homeworker'].queryset = Homeworker.objects.filter(is_active=True)
-        self.fields['homeworker'].required = False
         self.fields['device_location'].required = False
         self.fields['warranty_expiry'].required = False
         self.fields['ip_address'].required = False
@@ -141,11 +112,3 @@ class ClientAssetForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
-
-    def clean(self) -> dict:
-        cleaned_data = super().clean()
-        status = cleaned_data.get('status')
-        homeworker = cleaned_data.get('homeworker')
-        if status == Asset.Status.ASSIGNED and not homeworker:
-            raise forms.ValidationError(_('Homeworker is required when status is Assigned.'))
-        return cleaned_data

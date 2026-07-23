@@ -14,7 +14,6 @@ urlpatterns = [
     path('htmx/activities/', views.dashboard_activities, name='htmx_activities'),
     path('htmx/expiry-alerts/', views.dashboard_expiry_alerts, name='htmx_expiry_alerts'),
     path('htmx/client-summary/', views.dashboard_client_summary, name='htmx_client_summary'),
-    path('htmx/homeworker-summary/', views.dashboard_homeworker_summary, name='htmx_homeworker_summary'),
     path('htmx/domain-hosting/', views.dashboard_domain_hosting, name='htmx_domain_hosting'),
     path('htmx/my-tasks/', views.dashboard_my_tasks, name='htmx_my_tasks'),
     path('htmx/comments/', views.dashboard_comments, name='htmx_comments'),

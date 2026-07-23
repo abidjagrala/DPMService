@@ -250,3 +250,100 @@ class MailSettings(models.Model):
         django_settings.EMAIL_HOST_PASSWORD = self.password
         if self.from_email:
             django_settings.DEFAULT_FROM_EMAIL = f'{self.from_name} <{self.from_email}>' if self.from_name else self.from_email
+
+
+class SmsSettings(models.Model):
+    """Singleton model for MSG91 SMS configuration."""
+
+    class Route(models.TextChoices):
+        PROMOTIONAL = '1', _('Promotional')
+        TRANSACTIONAL = '4', _('Transactional')
+
+    auth_key = models.CharField(_('MSG91 auth key'), max_length=200, blank=True, default='')
+    sender_id = models.CharField(
+        _('sender ID'),
+        max_length=6,
+        help_text=_('6-character alphanumeric sender ID'),
+    )
+    route = models.CharField(
+        _('route'),
+        max_length=2,
+        choices=Route.choices,
+        default=Route.TRANSACTIONAL,
+    )
+    country = models.PositiveIntegerField(_('country code'), default=91)
+    is_active = models.BooleanField(_('enable SMS sending'), default=False)
+    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
+
+    class Meta:
+        verbose_name = _('SMS settings')
+        verbose_name_plural = _('SMS settings')
+
+    def __str__(self):
+        return f'SMS via MSG91 ({self.sender_id})'
+
+    def clean(self):
+        if not self.pk and SmsSettings.objects.exists():
+            raise ValidationError(_('Only one SMS settings record is allowed.'))
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_instance(cls):
+        """Return the singleton instance, creating one if it doesn't exist."""
+        obj, _ = cls.objects.get_or_create(pk=1, defaults={
+            'auth_key': '',
+            'sender_id': 'DPMINS',
+            'route': cls.Route.TRANSACTIONAL,
+            'country': 91,
+        })
+        return obj
+
+
+class WhatsappSettings(models.Model):
+    """Singleton model for MSG91 WhatsApp configuration."""
+
+    auth_key = models.CharField(_('MSG91 auth key'), max_length=200, blank=True, default='')
+    template_id = models.CharField(
+        _('template ID'),
+        max_length=200,
+        blank=True,
+        default='',
+        help_text=_('Default WhatsApp template ID for notifications'),
+    )
+    whatsapp_number = models.CharField(
+        _('WhatsApp business number'),
+        max_length=20,
+        blank=True,
+        default='',
+        help_text=_('Sender WhatsApp number with country code'),
+    )
+    is_active = models.BooleanField(_('enable WhatsApp sending'), default=False)
+    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
+
+    class Meta:
+        verbose_name = _('WhatsApp settings')
+        verbose_name_plural = _('WhatsApp settings')
+
+    def __str__(self):
+        return f'WhatsApp via MSG91 ({self.whatsapp_number})'
+
+    def clean(self):
+        if not self.pk and WhatsappSettings.objects.exists():
+            raise ValidationError(_('Only one WhatsApp settings record is allowed.'))
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_instance(cls):
+        """Return the singleton instance, creating one if it doesn't exist."""
+        obj, _ = cls.objects.get_or_create(pk=1, defaults={
+            'auth_key': '',
+            'template_id': '',
+            'whatsapp_number': '',
+        })
+        return obj

@@ -12,7 +12,7 @@ class NetworkDeviceForm(forms.ModelForm):
         model = NetworkDevice
         fields = [
             'name', 'device_type', 'ip_address', 'subnet', 'mac_address', 'brand',
-            'model_name', 'serial_number', 'client', 'homeworker', 'location',
+            'model_name', 'serial_number', 'client', 'location',
             'username', 'password', 'notes', 'is_active',
         ]
         widgets = {
@@ -25,7 +25,6 @@ class NetworkDeviceForm(forms.ModelForm):
             'model_name': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
             'serial_number': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
             'client': forms.Select(attrs={'class': 'select select-bordered w-full'}),
-            'homeworker': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'location': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
             'username': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
             'password': forms.PasswordInput(attrs={'class': 'input input-bordered w-full', 'autocomplete': 'off'}),
@@ -35,8 +34,5 @@ class NetworkDeviceForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        from clients.models import Client, Homeworker
         self.fields['client'].queryset = Client.objects.filter(is_active=True)
         self.fields['client'].required = False
-        self.fields['homeworker'].queryset = Homeworker.objects.filter(is_active=True)
-        self.fields['homeworker'].required = False

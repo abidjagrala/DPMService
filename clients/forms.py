@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 
 from masters.models import City, State
 
-from .models import Branch, Client, Employee, Homeworker, Location
+from .models import Branch, Client, Employee, Location
 
 User = get_user_model()
 
@@ -187,6 +187,8 @@ class EmployeeForm(forms.ModelForm):
     def __init__(self, *args, is_create: bool = True, **kwargs):
         super().__init__(*args, **kwargs)
         self.is_create = is_create
+        self.fields['state'].queryset = self.fields['state'].queryset.filter(is_active=True)
+        self.fields['city'].queryset = self.fields['city'].queryset.filter(is_active=True)
         self.fields['branches'].queryset = Branch.objects.filter(is_active=True)
         if not is_create:
             self.fields['password1'].widget = forms.HiddenInput()
@@ -233,48 +235,6 @@ class EmployeeForm(forms.ModelForm):
             elif not password1:
                 self.add_error('password1', _('Password is required for new employees.'))
         return cleaned_data
-
-
-class HomeworkerForm(forms.ModelForm):
-    """Form for creating and updating Homeworker records."""
-
-    class Meta:
-        model = Homeworker
-        fields = [
-            'client', 'name', 'email', 'phone', 'address',
-            'state', 'city', 'pincode', 'is_active',
-        ]
-        widgets = {
-            'client': forms.Select(attrs={'class': 'select select-bordered w-full'}),
-            'name': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
-            'email': forms.EmailInput(attrs={'class': 'input input-bordered w-full'}),
-            'phone': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
-            'address': forms.Textarea(attrs={'class': 'textarea textarea-bordered w-full', 'rows': 3}),
-            'state': forms.Select(attrs={'class': 'select select-bordered w-full'}),
-            'city': forms.Select(attrs={'class': 'select select-bordered w-full'}),
-            'pincode': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'checkbox checkbox-primary'}),
-        }
-
-    def __init__(self, *args, user=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._user = user
-        if user and user.is_client:
-            self.fields['client'].widget = forms.HiddenInput()
-            self.fields['client'].required = False
-            self.fields['client'].queryset = Client.objects.filter(user=user)
-        else:
-            self.fields['client'].queryset = Client.objects.filter(is_active=True)
-        self.fields['state'].queryset = self.fields['state'].queryset.filter(is_active=True)
-        self.fields['city'].queryset = self.fields['city'].queryset.filter(is_active=True)
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        if self._user and self._user.is_client:
-            instance.client = self._user.client_profile
-        if commit:
-            instance.save()
-        return instance
 
 
 class LocationForm(forms.ModelForm):

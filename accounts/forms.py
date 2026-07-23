@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate, get_user_model, password_validatio
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
 from django.utils.translation import gettext_lazy as _
 
-from .models import CompanyInfo, MailSettings
+from .models import CompanyInfo, MailSettings, SmsSettings, WhatsappSettings
 
 User = get_user_model()
 
@@ -277,5 +277,30 @@ class MailSettingsForm(forms.ModelForm):
             'password': forms.PasswordInput(attrs={'class': 'input input-bordered input-sm w-full'}, render_value=True),
             'from_name': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
             'from_email': forms.EmailInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'checkbox checkbox-sm'}),
+        }
+
+
+class SmsSettingsForm(forms.ModelForm):
+    class Meta:
+        model = SmsSettings
+        fields = ['auth_key', 'sender_id', 'route', 'country', 'is_active']
+        widgets = {
+            'auth_key': forms.PasswordInput(attrs={'class': 'input input-bordered input-sm w-full'}, render_value=True),
+            'sender_id': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'route': forms.Select(attrs={'class': 'select select-bordered select-sm w-full'}),
+            'country': forms.NumberInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'checkbox checkbox-sm'}),
+        }
+
+
+class WhatsappSettingsForm(forms.ModelForm):
+    class Meta:
+        model = WhatsappSettings
+        fields = ['auth_key', 'template_id', 'whatsapp_number', 'is_active']
+        widgets = {
+            'auth_key': forms.PasswordInput(attrs={'class': 'input input-bordered input-sm w-full'}, render_value=True),
+            'template_id': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
+            'whatsapp_number': forms.TextInput(attrs={'class': 'input input-bordered input-sm w-full'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'checkbox checkbox-sm'}),
         }

@@ -6,7 +6,7 @@ from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
 from assets.models import Asset
-from clients.models import Client, Employee, Homeworker
+from clients.models import Client, Employee
 from comments.models import Comment
 from hosting.models import DomainHosting
 from tickets.models import ServiceTicket
@@ -61,18 +61,15 @@ def get_entity_counts(user=None):
         return {
             'total_clients': 0,
             'total_employees': 0,
-            'total_homeworkers': Homeworker.objects.filter(is_active=True, client__user=user).count(),
         }
     if _is_restricted(user):
         return {
             'total_clients': 0,
             'total_employees': 0,
-            'total_homeworkers': 0,
         }
     return {
         'total_clients': Client.objects.filter(is_active=True).count(),
         'total_employees': Employee.objects.filter(is_active=True).count(),
-        'total_homeworkers': Homeworker.objects.filter(is_active=True).count(),
     }
 
 
@@ -81,11 +78,9 @@ def get_entity_counts_with_status(user=None):
         return {
             'total_clients': 0, 'active_clients': 0, 'inactive_clients': 0,
             'total_employees': 0, 'active_employees': 0, 'inactive_employees': 0,
-            'total_homeworkers': 0, 'active_homeworkers': 0, 'inactive_homeworkers': 0,
         }
     all_clients = Client.objects.all()
     all_employees = Employee.objects.all()
-    all_homeworkers = Homeworker.objects.all()
     return {
         'total_clients': all_clients.count(),
         'active_clients': all_clients.filter(is_active=True).count(),
@@ -93,9 +88,6 @@ def get_entity_counts_with_status(user=None):
         'total_employees': all_employees.count(),
         'active_employees': all_employees.filter(is_active=True).count(),
         'inactive_employees': all_employees.filter(is_active=False).count(),
-        'total_homeworkers': all_homeworkers.count(),
-        'active_homeworkers': all_homeworkers.filter(is_active=True).count(),
-        'inactive_homeworkers': all_homeworkers.filter(is_active=False).count(),
     }
 
 
@@ -402,13 +394,12 @@ def get_asset_warranty_alerts(user=None):
 
 
 def get_client_summary(user=None):
-    """Top 10 clients with homeworker/asset/ticket counts."""
+    """Top 10 clients with asset and ticket counts."""
     if _is_restricted(user):
         if user.is_client:
             client = Client.objects.filter(user=user).first()
             if client:
                 return Client.objects.filter(pk=client.pk).annotate(
-                    homeworker_count=Count('homeworkers', filter=Q(homeworkers__is_active=True)),
                     asset_count=Count('assets', filter=Q(assets__is_active=True)),
                     open_ticket_count=Count(
                         'service_tickets', filter=Q(service_tickets__status__in=['new', 'assigned', 'in_progress'])
@@ -416,49 +407,12 @@ def get_client_summary(user=None):
                 )
         return Client.objects.none()
     clients = Client.objects.filter(is_active=True).annotate(
-        homeworker_count=Count('homeworkers', filter=Q(homeworkers__is_active=True)),
         asset_count=Count('assets', filter=Q(assets__is_active=True)),
         open_ticket_count=Count(
             'service_tickets', filter=Q(service_tickets__status__in=['new', 'assigned', 'in_progress'])
         ),
     ).order_by('-open_ticket_count')[:10]
     return clients
-
-
-def get_homeworker_summary(user=None):
-    """Global homeworker stats."""
-    if _is_restricted(user):
-        if user.is_client:
-            hw = Homeworker.objects.filter(is_active=True, client__user=user)
-            open_tickets = ServiceTicket.objects.filter(
-                is_active=True, status__in=['new', 'assigned', 'in_progress'], client__user=user
-            ).count()
-            closed_tickets = ServiceTicket.objects.filter(
-                is_active=True, status='completed', client__user=user
-            ).count()
-            return {
-                'total': hw.count(),
-                'assigned_assets': Asset.objects.filter(homeworker__isnull=False, is_active=True, client__user=user).count(),
-                'open_tickets': open_tickets,
-                'closed_tickets': closed_tickets,
-            }
-        return {
-            'total': 0,
-            'assigned_assets': 0,
-            'open_tickets': 0,
-            'closed_tickets': 0,
-        }
-    hw = Homeworker.objects.filter(is_active=True)
-    return {
-        'total': hw.count(),
-        'assigned_assets': Asset.objects.filter(homeworker__isnull=False, is_active=True).count(),
-        'open_tickets': ServiceTicket.objects.filter(
-            is_active=True, status__in=['new', 'assigned', 'in_progress']
-        ).count(),
-        'closed_tickets': ServiceTicket.objects.filter(
-            is_active=True, status='completed'
-        ).count(),
-    }
 
 
 def get_domain_hosting_panel(user=None):

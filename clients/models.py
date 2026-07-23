@@ -251,64 +251,6 @@ class Employee(models.Model):
         return f'EMP-{seq:04d}'
 
 
-class Homeworker(models.Model):
-    """Client's employee who works from home — receives devices."""
-
-    client = models.ForeignKey(
-        Client,
-        on_delete=models.CASCADE,
-        related_name='homeworkers',
-        verbose_name=_('client'),
-    )
-    name = models.CharField(
-        _('name'),
-        max_length=150,
-    )
-    email = models.EmailField(
-        _('email address'),
-        blank=True,
-        default='',
-    )
-    phone = models.CharField(
-        _('phone number'),
-        max_length=20,
-    )
-    address = models.TextField(
-        _('address'),
-    )
-    state = models.ForeignKey(
-        State,
-        on_delete=models.PROTECT,
-        related_name='homeworkers',
-        verbose_name=_('state'),
-        null=True,
-        blank=True,
-    )
-    city = models.ForeignKey(
-        City,
-        on_delete=models.PROTECT,
-        related_name='homeworkers',
-        verbose_name=_('city'),
-        null=True,
-        blank=True,
-    )
-    pincode = models.CharField(
-        _('pincode'),
-        max_length=10,
-    )
-    is_active = models.BooleanField(_('active'), default=True)
-    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
-    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
-
-    class Meta:
-        verbose_name = _('homeworker')
-        verbose_name_plural = _('homeworkers')
-        ordering = ['name']
-
-    def __str__(self) -> str:
-        return f'{self.name} ({self.client.company_name})'
-
-
 class Location(models.Model):
     """Company location / office address."""
 

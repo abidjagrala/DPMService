@@ -1,0 +1,129 @@
+{% extends "accounts/base.html" %}
+{% load daisy i18n %}
+
+{% block title %}{{ page_title }} — DPM Service{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto" x-data="smsTest()">
+    <div class="mb-3">
+        <a href="{% url 'accounts:dashboard' %}" class="btn btn-ghost btn-sm">&larr; Back to Dashboard</a>
+    </div>
+
+    <form method="post" novalidate class="space-y-4">
+        <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title">{% trans "SMS Settings" %}</h2>
+                <p class="text-sm text-base-content/60">{% trans "Configure MSG91 settings for sending SMS notifications." %}</p>
+
+                {% csrf_token %}
+                {% daisy_form_errors form %}
+
+                <div class="form-control">
+                    <label class="label cursor-pointer justify-start gap-3">
+                        {% daisy_field form.is_active add_label=False %}
+                        <span class="label-text font-medium">{% trans "Enable SMS Sending" %}</span>
+                    </label>
+                    <label class="label"><span class="label-text-alt text-base-content/50">{% trans "Toggle to enable or disable all outgoing SMS" %}</span></label>
+                </div>
+
+                <div class="divider text-xs text-base-content/50">{% trans "MSG91 Configuration" %}</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">{% daisy_field form.auth_key %}</div>
+                    <div class="form-control">{% daisy_field form.sender_id %}</div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">{% daisy_field form.route %}</div>
+                    <div class="form-control">{% daisy_field form.country %}</div>
+                </div>
+
+                <div class="card-actions justify-end mt-2">
+                    <a href="{% url 'accounts:dashboard' %}" class="btn btn-ghost">{% trans "Cancel" %}</a>
+                    <button type="submit" class="btn btn-primary">{% trans "Save Changes" %}</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="card bg-base-100 border border-base-300 shadow-sm mt-4">
+        <div class="card-body">
+            <h3 class="card-title text-sm">{% trans "Test SMS" %}</h3>
+            <p class="text-xs text-base-content/60">{% trans "Send a test SMS to verify your settings work." %}</p>
+            <div class="flex items-center gap-3 mt-2">
+                <input type="tel"
+                       x-model="testPhone"
+                       placeholder="{% trans 'Enter phone with country code (e.g. 91XXXXXXXXXX)' %}"
+                       class="input input-bordered input-sm flex-1"
+                       required>
+                <button type="button"
+                        class="btn btn-outline btn-sm"
+                        :class="testLoading ? 'loading' : ''"
+                        :disabled="testLoading || !testPhone"
+                        @click="sendTest()">
+                    <svg x-show="!testLoading" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                    <span x-text="testLoading ? '{% trans "Sending..." %}' : '{% trans "Send Test SMS" %}'"></span>
+                </button>
+                <div x-show="testResult" class="flex items-center gap-2 text-sm">
+                    <span x-show="testSuccess" class="text-success flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        {% trans "SMS sent successfully!" %}
+                    </span>
+                    <span x-show="!testSuccess" class="text-error flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        <span x-text="testError"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function smsTest() {
+    return {
+        testLoading: false,
+        testResult: false,
+        testSuccess: false,
+        testError: '',
+        testPhone: '',
+        sendTest() {
+            this.testLoading = true;
+            this.testResult = false;
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+                || document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+            const body = new FormData();
+            body.append('phone', this.testPhone);
+            fetch('{% url "accounts:sms_settings_test" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                },
+                body: body,
+            })
+            .then(r => r.json())
+            .then(data => {
+                this.testResult = true;
+                this.testSuccess = data.success;
+                this.testError = data.error || '';
+            })
+            .catch(err => {
+                console.error('SMS test error:', err);
+                this.testResult = true;
+                this.testSuccess = false;
+                this.testError = 'Network error. Please try again.';
+            })
+            .finally(() => {
+                this.testLoading = false;
+            });
+        }
+    }
+}
+</script>
+{% endblock %}

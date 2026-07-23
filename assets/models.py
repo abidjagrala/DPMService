@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from clients.models import Client, Homeworker, Location
+from clients.models import Client, Location
 from masters.models import AssetType
 
 
@@ -62,14 +62,6 @@ class Asset(models.Model):
         on_delete=models.SET_NULL,
         related_name='assets',
         verbose_name=_('client'),
-        null=True,
-        blank=True,
-    )
-    homeworker = models.ForeignKey(
-        Homeworker,
-        on_delete=models.SET_NULL,
-        related_name='assets',
-        verbose_name=_('homeworker'),
         null=True,
         blank=True,
     )
@@ -138,17 +130,10 @@ class Asset(models.Model):
             seq = 100001
         return f'AST-{seq:06d}'
 
-    def clean(self):
-        from django.core.exceptions import ValidationError
-        if self.status == self.Status.ASSIGNED and not self.homeworker:
-            raise ValidationError({'homeworker': _('Homeworker is required when status is Assigned.')})
-
     @property
     def holder_name(self) -> str:
         if self.client:
             return self.client.company_name
-        if self.homeworker:
-            return self.homeworker.name
         return '—'
 
 
@@ -166,14 +151,6 @@ class AssetAssignment(models.Model):
         on_delete=models.SET_NULL,
         related_name='asset_assignments',
         verbose_name=_('client'),
-        null=True,
-        blank=True,
-    )
-    homeworker = models.ForeignKey(
-        Homeworker,
-        on_delete=models.SET_NULL,
-        related_name='asset_assignments',
-        verbose_name=_('assigned to homeworker'),
         null=True,
         blank=True,
     )
@@ -203,5 +180,5 @@ class AssetAssignment(models.Model):
         ordering = ['-assigned_date']
 
     def __str__(self) -> str:
-        target = self.client or self.homeworker or 'Unassigned'
+        target = self.client or 'Unassigned'
         return f'{self.asset.serial_number or self.asset.pk} → {target}'

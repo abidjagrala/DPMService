@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from accounts.models import User
 from assets.models import Asset, AssetAssignment
-from clients.models import Client, Employee, Homeworker
+from clients.models import Client, Employee
 from masters.models import AssetType, City, ServiceType, State, TransportType
 from network.models import IPAddress, Subnet
 from tickets.models import ServiceTicket, TicketComment, TicketHistory
@@ -107,13 +107,12 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
 class AssetAssignmentSerializer(serializers.ModelSerializer):
     client_name = serializers.CharField(source='client.company_name', read_only=True, default='')
-    homeworker_name = serializers.CharField(source='homeworker.name', read_only=True, default='')
     assigned_by_name = serializers.CharField(source='assigned_by.get_full_name', read_only=True, default='')
 
     class Meta:
         model = AssetAssignment
         fields = [
-            'id', 'asset', 'client', 'client_name', 'homeworker', 'homeworker_name',
+            'id', 'asset', 'client', 'client_name',
             'assigned_by', 'assigned_by_name', 'assigned_date', 'return_date', 'notes',
         ]
         read_only_fields = ['id', 'assigned_date']

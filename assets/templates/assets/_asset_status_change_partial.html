@@ -34,32 +34,6 @@
                 </div>
             </div>
         </div>
-        <div class="form-control mb-4" x-show="selectedStatus === 'assigned'" x-cloak>
-            <label class="label"><span class="label-text font-medium">{% trans "Assign to Homeworker" %} <span class="text-error">*</span></span></label>
-            <div x-data="searchableSelect({name: 'homeworker', value: '{{ obj.homeworker.pk|default:'' }}', placeholder: '{% trans "Select homeworker" %}', options: [{value: '', label: '{% trans "Select homeworker" %}'}, {% for hw in homeworkers %}{value: '{{ hw.pk }}', label: '{{ hw.name|escapejs }} ({{ hw.client.company_name|escapejs }})'}{% if not forloop.last %},{% endif %}{% endfor %}]})" @click.outside="open = false" class="ss-wrapper">
-                <input type="hidden" :name="name" :value="value" :required="selectedStatus === 'assigned'">
-                <div class="ss-input-wrap">
-                    <input type="text" x-model="search" @focus="onFocus()" @input="open = true"
-                           class="input input-bordered input-sm w-full" :placeholder="placeholder">
-                    <span x-show="search" @click="clear()" class="ss-clear-btn">&#10005;</span>
-                </div>
-                <div x-show="open" x-cloak class="ss-dropdown">
-                    <template x-if="filtered.length > 0">
-                        <div>
-                            <template x-for="(opt, idx) in filtered" :key="idx">
-                                <div @click="select(opt)"
-                                     class="ss-item"
-                                     :class="{'ss-active': value == opt.value}"
-                                     x-text="opt.label"></div>
-                            </template>
-                        </div>
-                    </template>
-                    <template x-if="filtered.length === 0">
-                        <div class="ss-empty">No results found</div>
-                    </template>
-                </div>
-            </div>
-        </div>
         <div class="flex justify-end gap-2">
             <button type="button" class="btn btn-ghost btn-sm" @click="$dispatch('close-drawer')">{% trans "Cancel" %}</button>
             <button type="submit" class="btn btn-primary btn-sm">{% trans "Update Status" %}</button>

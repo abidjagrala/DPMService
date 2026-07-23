@@ -73,14 +73,6 @@
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'clients:homeworker_list' %}"
-                               class="{% if request.resolver_match.url_name == 'homeworker_list' %}active{% endif %}">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
-                                <span class="transition-all duration-300 whitespace-nowrap overflow-hidden"
-                                      :class="sidebarCollapsed && window.innerWidth >= 1024 ? 'w-0 opacity-0' : 'opacity-100'">Homeworkers</span>
-                            </a>
-                        </li>
-                        <li>
                             <a href="{% url 'accounts:company_info_edit' %}"
                                class="{% if request.resolver_match.url_name == 'company_info_edit' %}active{% endif %}">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -97,20 +89,6 @@
                             </a>
                         </li>
                     </ul>
-                </li>
-            {% endif %}
-
-            {% if user.is_client %}
-                <li class="menu-title mt-4"><span class="transition-all duration-300"
-                      :class="sidebarCollapsed && window.innerWidth >= 1024 ? 'opacity-0 h-0 overflow-hidden' : ''">Company</span></li>
-                <li>
-                    <a href="{% url 'clients:homeworker_list' %}"
-                       class="{% if request.resolver_match.app_name == 'clients' %}active{% endif %} justify-center lg:justify-start"
-                       :title="sidebarCollapsed && window.innerWidth >= 1024 ? 'Homeworkers' : ''">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
-                        <span class="transition-all duration-300 whitespace-nowrap overflow-hidden"
-                              :class="sidebarCollapsed && window.innerWidth >= 1024 ? 'w-0 opacity-0' : 'opacity-100'">Homeworkers</span>
-                    </a>
                 </li>
             {% endif %}
 
@@ -166,6 +144,36 @@
             {% endif %}
 
             {% if user.is_admin or user.is_manager or user.is_superuser %}
+                <li class="menu-title mt-4"><span class="transition-all duration-300"
+                      :class="sidebarCollapsed && window.innerWidth >= 1024 ? 'opacity-0 h-0 overflow-hidden' : ''">Notifications</span></li>
+                <li>
+                    <a href="{% url 'accounts:mail_settings_edit' %}"
+                       class="{% if request.resolver_match.url_name == 'mail_settings_edit' %}active{% endif %} justify-center lg:justify-start"
+                       :title="sidebarCollapsed && window.innerWidth >= 1024 ? 'Mail Settings' : ''">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/></svg>
+                        <span class="transition-all duration-300 whitespace-nowrap overflow-hidden"
+                              :class="sidebarCollapsed && window.innerWidth >= 1024 ? 'w-0 opacity-0' : 'opacity-100'">Mail Settings</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'accounts:sms_settings_edit' %}"
+                       class="{% if request.resolver_match.url_name == 'sms_settings_edit' %}active{% endif %} justify-center lg:justify-start"
+                       :title="sidebarCollapsed && window.innerWidth >= 1024 ? 'SMS Settings' : ''">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/></svg>
+                        <span class="transition-all duration-300 whitespace-nowrap overflow-hidden"
+                              :class="sidebarCollapsed && window.innerWidth >= 1024 ? 'w-0 opacity-0' : 'opacity-100'">SMS Settings</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'accounts:whatsapp_settings_edit' %}"
+                       class="{% if request.resolver_match.url_name == 'whatsapp_settings_edit' %}active{% endif %} justify-center lg:justify-start"
+                       :title="sidebarCollapsed && window.innerWidth >= 1024 ? 'WhatsApp Settings' : ''">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path d="M17.924 2.382a2.003 2.003 0 00-2.804 0l-.546.546-1.138-1.138-.546.546a2.003 2.003 0 000 2.804l.546.546-1.138 1.138-.546-.546a2.003 2.003 0 00-2.804 0l-.546.546L9.73 5.484l.546-.546a2.003 2.003 0 000-2.804l-.546-.546-1.138 1.138-.546-.546a2.003 2.003 0 00-2.804 0L2.58 3.768a2.003 2.003 0 000 2.804l.546.546L1.986 8.22l1.414 1.414 1.142-1.142.546.546a2.003 2.003 0 002.804 0l.546-.546L9.73 8.096l-.546.546a2.003 2.003 0 000 2.804l.546.546-1.138 1.138-.546-.546a2.003 2.003 0 00-2.804 0l-.546.546L2.58 12.168a2.003 2.003 0 000 2.804l.546.546 1.414 1.414 1.414-1.414.546.546a2.003 2.003 0 002.804 0l.546-.546 1.138 1.138.546-.546a2.003 2.003 0 000-2.804l-.546-.546 1.138-1.138.546.546a2.003 2.003 0 002.804 0l.546-.546 1.138 1.138.546-.546a2.003 2.003 0 000-2.804l-.546-.546 1.414-1.414-1.414-1.414z"/></svg>
+                        <span class="transition-all duration-300 whitespace-nowrap overflow-hidden"
+                              :class="sidebarCollapsed && window.innerWidth >= 1024 ? 'w-0 opacity-0' : 'opacity-100'">WhatsApp Settings</span>
+                    </a>
+                </li>
+
                 <li class="menu-title mt-4"><span class="transition-all duration-300"
                       :class="sidebarCollapsed && window.innerWidth >= 1024 ? 'opacity-0 h-0 overflow-hidden' : ''">Settings</span></li>
                 <li x-data="{ open: false }">
@@ -230,14 +238,6 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/><path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z"/></svg>
                                 <span class="transition-all duration-300 whitespace-nowrap overflow-hidden"
                                       :class="sidebarCollapsed && window.innerWidth >= 1024 ? 'w-0 opacity-0' : 'opacity-100'">Transport Types</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'accounts:mail_settings_edit' %}"
-                               class="{% if request.resolver_match.url_name == 'mail_settings_edit' %}active{% endif %}">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                                <span class="transition-all duration-300 whitespace-nowrap overflow-hidden"
-                                      :class="sidebarCollapsed && window.innerWidth >= 1024 ? 'w-0 opacity-0' : 'opacity-100'">Mail Settings</span>
                             </a>
                         </li>
                 {% if user.is_superuser or user.is_admin %}

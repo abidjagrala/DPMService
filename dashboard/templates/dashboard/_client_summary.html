@@ -7,7 +7,6 @@
                 <thead>
                     <tr>
                         <th>{% trans "Client" %}</th>
-                        <th class="text-center">{% trans "HW" %}</th>
                         <th class="text-center">{% trans "Assets" %}</th>
                         <th class="text-center">{% trans "Open" %}</th>
                     </tr>
@@ -18,7 +17,6 @@
                         <td>
                             <a href="{% url 'clients:client_detail' pk=c.pk %}" class="link link-primary font-medium text-sm">{{ c.company_name }}</a>
                         </td>
-                        <td class="text-center text-sm">{{ c.homeworker_count }}</td>
                         <td class="text-center text-sm">{{ c.asset_count }}</td>
                         <td class="text-center">
                             {% if c.open_ticket_count > 0 %}
@@ -29,7 +27,7 @@
                         </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="4" class="text-center text-base-content/60 py-4">{% trans "No clients." %}</td></tr>
+                    <tr><td colspan="3" class="text-center text-base-content/60 py-4">{% trans "No clients." %}</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

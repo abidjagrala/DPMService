@@ -513,6 +513,161 @@ def mail_settings_test_view(request):
 
 
 # ---------------------------------------------------------------------------
+# SMS Settings (singleton)
+# ---------------------------------------------------------------------------
+
+@role_required('admin')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def sms_settings_edit_view(request):
+    from .forms import SmsSettingsForm
+    from .models import SmsSettings
+
+    sms_config = SmsSettings.get_instance()
+
+    if request.method == 'POST':
+        form = SmsSettingsForm(request.POST, instance=sms_config)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('SMS settings updated successfully.'))
+            return redirect('accounts:sms_settings_edit')
+    else:
+        form = SmsSettingsForm(instance=sms_config)
+
+    return render(request, 'accounts/sms_settings_edit.html', {
+        'form': form,
+        'obj': sms_config,
+        'page_title': _('SMS Settings'),
+    })
+
+
+@role_required('admin')
+@csrf_protect
+@require_http_methods(['POST'])
+def sms_settings_test_view(request):
+    """Send a test SMS using the current MSG91 settings."""
+    import json as json_mod
+    from .models import SmsSettings
+
+    sms_config = SmsSettings.get_instance()
+    if not sms_config.is_active:
+        return JsonResponse({'success': False, 'error': _('SMS sending is disabled. Enable it first.')})
+    if not sms_config.auth_key:
+        return JsonResponse({'success': False, 'error': _('Please set an auth key first.')})
+
+    test_phone = request.POST.get('phone', '').strip()
+    if not test_phone:
+        return JsonResponse({'success': False, 'error': _('Please enter a phone number.')})
+
+    try:
+        import urllib.request
+        payload = json_mod.dumps({
+            'sender': sms_config.sender_id,
+            'route': str(sms_config.route),
+            'country': str(sms_config.country),
+            'sms': [{
+                'message': 'DPM Service — Test SMS. If you received this, your SMS settings are working correctly.',
+                'to': [test_phone],
+            }],
+        }).encode('utf-8')
+
+        req = urllib.request.Request(
+            'https://api.msg91.com/api/v2/sendsms',
+            data=payload,
+            headers={
+                'authkey': sms_config.auth_key,
+                'Content-Type': 'application/json',
+            },
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            result = json_mod.loads(resp.read().decode('utf-8'))
+
+        if result.get('type') == 'success':
+            return JsonResponse({'success': True})
+        return JsonResponse({'success': False, 'error': result.get('message', 'Unknown error from MSG91')})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+# ---------------------------------------------------------------------------
+# WhatsApp Settings (singleton)
+# ---------------------------------------------------------------------------
+
+@role_required('admin')
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def whatsapp_settings_edit_view(request):
+    from .forms import WhatsappSettingsForm
+    from .models import WhatsappSettings
+
+    wa_config = WhatsappSettings.get_instance()
+
+    if request.method == 'POST':
+        form = WhatsappSettingsForm(request.POST, instance=wa_config)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('WhatsApp settings updated successfully.'))
+            return redirect('accounts:whatsapp_settings_edit')
+    else:
+        form = WhatsappSettingsForm(instance=wa_config)
+
+    return render(request, 'accounts/whatsapp_settings_edit.html', {
+        'form': form,
+        'obj': wa_config,
+        'page_title': _('WhatsApp Settings'),
+    })
+
+
+@role_required('admin')
+@csrf_protect
+@require_http_methods(['POST'])
+def whatsapp_settings_test_view(request):
+    """Send a test WhatsApp template message using the current MSG91 settings."""
+    import json as json_mod
+    from .models import WhatsappSettings
+
+    wa_config = WhatsappSettings.get_instance()
+    if not wa_config.is_active:
+        return JsonResponse({'success': False, 'error': _('WhatsApp sending is disabled. Enable it first.')})
+    if not wa_config.auth_key:
+        return JsonResponse({'success': False, 'error': _('Please set an auth key first.')})
+    if not wa_config.template_id:
+        return JsonResponse({'success': False, 'error': _('Please set a template ID first.')})
+    if not wa_config.whatsapp_number:
+        return JsonResponse({'success': False, 'error': _('Please set your WhatsApp business number first.')})
+
+    test_phone = request.POST.get('phone', '').strip()
+    if not test_phone:
+        return JsonResponse({'success': False, 'error': _('Please enter a phone number.')})
+
+    try:
+        import urllib.request
+        payload = json_mod.dumps({
+            'sender': wa_config.whatsapp_number,
+            'number': test_phone,
+            'template_id': wa_config.template_id,
+            'variables': ['DPM Service'],
+        }).encode('utf-8')
+
+        req = urllib.request.Request(
+            'https://api.msg91.com/api/v5/whatsapp/send/template',
+            data=payload,
+            headers={
+                'authkey': wa_config.auth_key,
+                'Content-Type': 'application/json',
+            },
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            result = json_mod.loads(resp.read().decode('utf-8'))
+
+        if result.get('type') == 'success':
+            return JsonResponse({'success': True})
+        return JsonResponse({'success': False, 'error': result.get('message', 'Unknown error from MSG91')})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+# ---------------------------------------------------------------------------
 # Two-Factor Authentication (TOTP)
 # ---------------------------------------------------------------------------
 
