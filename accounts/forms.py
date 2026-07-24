@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import authenticate, get_user_model, password_validation
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
+from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from .models import CompanyInfo, MailSettings, SmsSettings, WhatsappSettings
@@ -174,6 +175,12 @@ class AdminUserForm(forms.ModelForm):
         widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}),
         help_text='',
     )
+    client_profile = forms.ModelChoiceField(
+        label=_('Client'),
+        queryset=None,
+        required=False,
+        empty_label=_('Select client...'),
+    )
 
     class Meta:
         model = User
@@ -182,6 +189,19 @@ class AdminUserForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.is_create = kwargs.pop('is_create', False)
         super().__init__(*args, **kwargs)
+
+        from clients.models import Client
+        if self.instance.pk:
+            linked_client = Client.objects.filter(user=self.instance).first()
+            available_clients = Client.objects.filter(models.Q(user__isnull=True) | models.Q(user=self.instance)).order_by('company_name')
+        else:
+            linked_client = None
+            available_clients = Client.objects.filter(user__isnull=True).order_by('company_name')
+
+        self.fields['client_profile'].queryset = available_clients
+        if linked_client:
+            self.fields['client_profile'].initial = linked_client
+
         if self.is_create:
             self.fields['password1'].required = True
             self.fields['password2'].required = True
@@ -204,6 +224,7 @@ class AdminUserForm(forms.ModelForm):
         cleaned = super().clean()
         password1 = cleaned.get('password1')
         password2 = cleaned.get('password2')
+        role = cleaned.get('role')
 
         if self.is_create or password1 or password2:
             if not password1:
@@ -217,6 +238,12 @@ class AdminUserForm(forms.ModelForm):
                     password_validation.validate_password(password2, self.instance)
                 except forms.ValidationError as error:
                     self.add_error('password2', error)
+
+        if role == User.Role.CLIENT:
+            client_profile = cleaned.get('client_profile')
+            if not client_profile:
+                self.add_error('client_profile', _('Please select a client for client-role users.'))
+
         return cleaned
 
     def save(self, commit=True):
@@ -228,7 +255,24 @@ class AdminUserForm(forms.ModelForm):
             user.set_password(User.objects.make_random_password())
         if commit:
             user.save()
+            self._save_client_link(user)
         return user
+
+    def _save_client_link(self, user):
+        from clients.models import Client
+        role = self.cleaned_data.get('role')
+        client_profile = self.cleaned_data.get('client_profile')
+
+        old_linked = Client.objects.filter(user=user).first()
+        if old_linked and old_linked != client_profile:
+            old_linked.user = None
+            old_linked.save(update_fields=['user'])
+
+        if role == User.Role.CLIENT and client_profile:
+            client_profile.user = user
+            client_profile.save(update_fields=['user'])
+        elif role != User.Role.CLIENT:
+            pass
 
 
 class CompanyInfoForm(forms.ModelForm):

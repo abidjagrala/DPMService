@@ -11,6 +11,7 @@ from django.views.decorators.http import require_http_methods
 
 from accounts.views import is_htmx, role_required
 from assets.models import Asset
+from clients.models import Branch
 
 from comments.forms import CommentForm
 
@@ -84,12 +85,15 @@ def ticket_list_view(request):
             tickets = tickets.none()
 
     status_filter = request.GET.get('status')
+    branch_filter = request.GET.get('branch', '').strip()
     search = request.GET.get('search', '').strip()
     date_from = request.GET.get('date_from', '').strip()
     date_to = request.GET.get('date_to', '').strip()
 
     if status_filter in dict(ServiceTicket.Status.choices):
         tickets = tickets.filter(status=status_filter)
+    if branch_filter:
+        tickets = tickets.filter(client__branch_id=branch_filter)
     if search:
         tickets = tickets.filter(
             Q(ticket_number__icontains=search) |
@@ -113,6 +117,8 @@ def ticket_list_view(request):
         'paginator': paginator,
         'statuses': ServiceTicket.Status.choices,
         'selected_status': status_filter,
+        'selected_branch': branch_filter,
+        'branches': Branch.objects.filter(is_active=True).order_by('name'),
         'search': search,
         'date_from': date_from,
         'date_to': date_to,

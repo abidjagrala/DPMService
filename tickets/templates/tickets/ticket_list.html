@@ -69,6 +69,29 @@
                         </template>
                     </div>
                 </div>
+                <div x-data="searchableSelect({name: 'branch', value: '{{ selected_branch|default:'' }}', placeholder: '{% trans "All branches" %}', options: [{value: '', label: '{% trans "All branches" %}'}, {% for b in branches %}{value: '{{ b.pk }}', label: '{{ b.name|escapejs }}'}{% if not forloop.last %},{% endif %}{% endfor %}]})" @click.outside="open = false" class="ss-wrapper">
+                    <input type="hidden" :name="name" :value="value">
+                    <div class="ss-input-wrap">
+                        <input type="text" x-model="search" @focus="onFocus()" @input="open = true"
+                               class="input input-bordered input-sm w-full" :placeholder="placeholder">
+                        <span x-show="search" @click="clear()" class="ss-clear-btn">&#10005;</span>
+                    </div>
+                    <div x-show="open" x-cloak class="ss-dropdown">
+                        <template x-if="filtered.length > 0">
+                            <div>
+                                <template x-for="(opt, idx) in filtered" :key="idx">
+                                    <div @click="select(opt)"
+                                         class="ss-item"
+                                         :class="{'ss-active': value == opt.value}"
+                                         x-text="opt.label"></div>
+                                </template>
+                            </div>
+                        </template>
+                        <template x-if="filtered.length === 0">
+                            <div class="ss-empty">No results found</div>
+                        </template>
+                    </div>
+                </div>
                 <div class="flex items-center gap-1">
                     <label class="text-sm text-base-content/70 whitespace-nowrap">{% trans "From:" %}</label>
                     <input type="date" name="date_from" value="{{ date_from|default:'' }}"
@@ -80,7 +103,7 @@
                            class="input input-bordered input-sm w-auto">
                 </div>
                 <button type="submit" class="btn btn-primary btn-sm">{% trans "Filter" %}</button>
-                {% if search or selected_status or date_from or date_to %}
+                {% if search or selected_status or selected_branch or date_from or date_to %}
                     <a href="{% url 'tickets:ticket_list' %}" class="btn btn-ghost btn-sm">{% trans "Clear" %}</a>
                 {% endif %}
             </form>

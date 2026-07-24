@@ -224,6 +224,7 @@ def user_detail_view(request, user_id):
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def user_create_view(request):
+    from clients.models import Client
     if request.method == 'POST':
         form = AdminUserForm(request.POST, is_create=True)
         if form.is_valid():
@@ -235,10 +236,12 @@ def user_create_view(request):
     else:
         form = AdminUserForm(is_create=True)
 
+    available_clients = Client.objects.filter(is_active=True).order_by('company_name')
     template = 'accounts/_user_form_partial.html' if is_htmx(request) else 'accounts/user_form.html'
     return render(request, template, {
         'form': form,
         'mode': 'create',
+        'available_clients': available_clients,
     })
 
 
@@ -246,6 +249,7 @@ def user_create_view(request):
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def user_update_view(request, user_id):
+    from clients.models import Client
     target_user = get_object_or_404(User, pk=user_id)
 
     if request.method == 'POST':
@@ -265,11 +269,13 @@ def user_update_view(request, user_id):
     else:
         form = AdminUserForm(instance=target_user, is_create=False)
 
+    available_clients = Client.objects.filter(is_active=True).order_by('company_name')
     template = 'accounts/_user_form_partial.html' if is_htmx(request) else 'accounts/user_form.html'
     return render(request, template, {
         'form': form,
         'mode': 'update',
         'user_obj': target_user,
+        'available_clients': available_clients,
     })
 
 

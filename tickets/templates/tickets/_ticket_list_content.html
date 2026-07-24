@@ -13,6 +13,7 @@
                         <th>{% trans "Priority" %}</th>
                         <th>{% trans "Subject" %}</th>
                         <th>{% trans "Client" %}</th>
+                        <th>{% trans "Branch" %}</th>
                         <th>{% trans "Assigned To" %}</th>
                         <th>{% trans "Status" %}</th>
                         <th class="text-right">{% trans "Actions" %}</th>
@@ -41,6 +42,7 @@
                         </td>
                         <td>{{ t.subject|truncatechars:40 }}</td>
                         <td>{{ t.client.company_name|truncatechars:30 }}</td>
+                        <td>{{ t.client.branch.name|default:"-" }}</td>
                         <td>{% if t.assigned_to %}{{ t.assigned_to.user.get_full_name|default:t.assigned_to.user.email }}{% else %}—{% endif %}</td>
                         <td>
                             {% if t.status == 'new' %}
@@ -91,7 +93,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" class="text-center text-base-content/60 py-8">{% trans "No tickets found." %}</td>
+                        <td colspan="8" class="text-center text-base-content/60 py-8">{% trans "No tickets found." %}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -154,6 +156,12 @@
                         <div class="flex items-center gap-2">
                             <span class="text-base-content/50 w-16 shrink-0">{% trans "Client" %}</span>
                             <span class="truncate">{{ t.client.company_name|truncatechars:30 }}</span>
+                        </div>
+                        {% endif %}
+                        {% if t.client.branch %}
+                        <div class="flex items-center gap-2">
+                            <span class="text-base-content/50 w-16 shrink-0">{% trans "Branch" %}</span>
+                            <span class="truncate">{{ t.client.branch.name }}</span>
                         </div>
                         {% endif %}
                         {% if t.assigned_to %}

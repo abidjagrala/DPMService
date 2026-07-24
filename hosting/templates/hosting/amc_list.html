@@ -72,8 +72,14 @@
                         <option value="{{ c.pk }}" {% if selected_client == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.company_name }}</option>
                     {% endfor %}
                 </select>
+                <select name="branch" class="select select-bordered select-sm">
+                    <option value="">{% trans "All branches" %}</option>
+                    {% for b in branches %}
+                        <option value="{{ b.pk }}" {% if selected_branch == b.pk|stringformat:"s" %}selected{% endif %}>{{ b.name }}</option>
+                    {% endfor %}
+                </select>
                 <button type="submit" class="btn btn-primary btn-sm">{% trans "Filter" %}</button>
-                {% if search or selected_status or selected_client %}
+                {% if search or selected_status or selected_client or selected_branch %}
                     <a href="{% url 'hosting:amc_list' %}" class="btn btn-ghost btn-sm">{% trans "Clear" %}</a>
                 {% endif %}
             </form>

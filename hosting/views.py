@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
 from accounts.views import is_htmx, role_required
-from clients.models import Client
+from clients.models import Branch, Client
 
 from .forms import DomainHostingForm, DomainHostingInvoiceForm, AMCForm
 from .models import DomainHosting, DomainHostingInvoice, AnnualMaintenanceContract
@@ -423,6 +423,7 @@ def amc_list_view(request):
     search = request.GET.get('search', '').strip()
     status_filter = request.GET.get('status', '')
     client_filter = request.GET.get('client', '')
+    branch_filter = request.GET.get('branch', '').strip()
     if search:
         amcs = amcs.filter(
             Q(title__icontains=search) |
@@ -432,6 +433,8 @@ def amc_list_view(request):
         amcs = amcs.filter(payment_status=status_filter)
     if client_filter:
         amcs = amcs.filter(client_id=client_filter)
+    if branch_filter:
+        amcs = amcs.filter(client__branch_id=branch_filter)
     if request.user.is_staff_member:
         branch_ids = list(request.user.employee_profile.branches.values_list('id', flat=True))
         if branch_ids:
@@ -443,8 +446,10 @@ def amc_list_view(request):
         'search': search,
         'selected_status': status_filter,
         'selected_client': client_filter,
+        'selected_branch': branch_filter,
         'status_choices': AnnualMaintenanceContract.PaymentStatus.choices,
         'clients': Client.objects.filter(is_active=True),
+        'branches': Branch.objects.filter(is_active=True).order_by('name'),
         'page_title': 'Annual Maintenance Contracts',
     }
     if is_htmx(request):

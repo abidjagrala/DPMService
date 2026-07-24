@@ -11,6 +11,7 @@
                     <tr>
                         <th>{% trans "Title" %}</th>
                         <th>{% trans "Client" %}</th>
+                        <th>{% trans "Branch" %}</th>
                         <th>{% trans "Expiry Date" %}</th>
                         <th>{% trans "Amount" %}</th>
                         <th>{% trans "Payment Status" %}</th>
@@ -22,6 +23,7 @@
                     <tr>
                         <td class="font-medium">{{ amc.title }}</td>
                         <td>{{ amc.client.company_name }}</td>
+                        <td>{{ amc.client.branch.name|default:"-" }}</td>
                         <td>{{ amc.expiry_date|date:"d M Y" }}</td>
                         <td>₹{{ amc.amount|floatformat:2 }}</td>
                         <td>
@@ -56,7 +58,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="text-center text-base-content/60 py-8">{% trans "No AMCs found." %}</td>
+                        <td colspan="7" class="text-center text-base-content/60 py-8">{% trans "No AMCs found." %}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -89,6 +91,9 @@
                                 {% endif %}
                             </div>
                             <p class="text-sm text-base-content/60">{{ amc.client.company_name }}</p>
+                            {% if amc.client.branch %}
+                            <p class="text-xs text-base-content/50">{{ amc.client.branch.name }}</p>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="text-sm space-y-1 mt-2">

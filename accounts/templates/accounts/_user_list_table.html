@@ -5,6 +5,7 @@
                 <th>Email</th>
                 <th>Name</th>
                 <th>Role</th>
+                <th>Client</th>
                 <th>Status</th>
                 <th>Joined</th>
                 {% if request.user.is_admin or request.user.is_superuser %}
@@ -30,6 +31,7 @@
                             <span class="badge badge-success badge-sm">{{ u.get_role_display }}</span>
                         {% endif %}
                     </td>
+                    <td>{% if u.client_profile %}{{ u.client_profile.company_name }}{% else %}&mdash;{% endif %}</td>
                     <td>
                         {% if u.is_active %}
                             <span class="badge badge-success badge-outline badge-sm">Active</span>
@@ -63,7 +65,7 @@
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="6" class="text-center text-base-content/60 py-8">No users found.</td>
+                    <td colspan="7" class="text-center text-base-content/60 py-8">No users found.</td>
                 </tr>
             {% endfor %}
         </tbody>

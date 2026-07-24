@@ -44,6 +44,11 @@
                 <dt class="text-base-content/60">Staff access</dt>
                 <dd class="sm:col-span-2 font-medium">{{ user_obj.is_staff|yesno:"Yes,No" }}</dd>
 
+                {% if user_obj.client_profile %}
+                <dt class="text-base-content/60">Client</dt>
+                <dd class="sm:col-span-2 font-medium">{{ user_obj.client_profile.company_name }}</dd>
+                {% endif %}
+
                 <dt class="text-base-content/60">Superuser</dt>
                 <dd class="sm:col-span-2 font-medium">{{ user_obj.is_superuser|yesno:"Yes,No" }}</dd>
 

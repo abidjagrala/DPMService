@@ -1,8 +1,10 @@
-{% load daisy %}
+{% load daisy i18n %}
 
 <form hx-post="{% if mode == 'create' %}{% url 'accounts:user_create' %}{% else %}{% url 'accounts:user_update' user_obj.pk %}{% endif %}"
       hx-target="this"
       hx-swap="outerHTML"
+      x-data="{ role: '{{ form.role.value|default:'client' }}', selectedClient: '{{ form.client_profile.value|default:'' }}' }"
+      x-init="$nextTick(() => { const s = $el.querySelector('[name=role]'); if(s) s.addEventListener('change', e => role = e.target.value); })"
       class="space-y-3">
     {% csrf_token %}
     {% daisy_form_errors form %}
@@ -12,6 +14,35 @@
         {% daisy_field form.last_name %}
     </div>
     {% daisy_field form.role %}
+    <div x-show="role === 'client'" x-transition x-cloak>
+        <label class="label py-1"><span class="label-text text-sm font-medium">{% trans "Client" %} <span class="text-error">*</span></span></label>
+        <div x-data="searchableSelect({name: 'client_profile', value: '{{ form.client_profile.value|default:'' }}', placeholder: '{% trans "Select client..." %}', options: [{value: '', label: '{% trans "Select client..." %}'}, {% for c in available_clients %}{value: '{{ c.pk }}', label: '{{ c.company_name|escapejs }}'}{% if not forloop.last %},{% endif %}{% endfor %}]})" @click.outside="open = false" class="ss-wrapper">
+            <input type="hidden" :name="name" :value="value">
+            <div class="ss-input-wrap">
+                <input type="text" x-model="search" @focus="onFocus()" @input="open = true"
+                       class="input input-bordered input-sm w-full" :placeholder="placeholder">
+                <span x-show="search" @click="clear()" class="ss-clear-btn">&#10005;</span>
+            </div>
+            <div x-show="open" x-cloak class="ss-dropdown">
+                <template x-if="filtered.length > 0">
+                    <div>
+                        <template x-for="(opt, idx) in filtered" :key="idx">
+                            <div @click="select(opt)"
+                                 class="ss-item"
+                                 :class="{'ss-active': value == opt.value}"
+                                 x-text="opt.label"></div>
+                        </template>
+                    </div>
+                </template>
+                <template x-if="filtered.length === 0">
+                    <div class="ss-empty">No results found</div>
+                </template>
+            </div>
+        </div>
+        {% if form.client_profile.errors %}
+        <ul class="text-xs text-error mt-1 list-disc list-inside">{% for e in form.client_profile.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+        {% endif %}
+    </div>
     <div class="grid grid-cols-2 gap-3">
         {% daisy_field form.is_active %}
         {% daisy_field form.is_staff %}
