@@ -45,7 +45,7 @@ def _hx_redirect(url, level=None, message=None):
 
 
 def _admin_required(request):
-    if not request.user.is_authenticated or not request.user.is_superuser:
+    if not request.user.is_authenticated or not (request.user.is_superuser or request.user.is_admin):
         return False
     return True
 

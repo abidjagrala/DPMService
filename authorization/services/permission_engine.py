@@ -14,7 +14,7 @@ def _cache_key(user_id):
 
 
 def get_user_permissions(user):
-    if user.is_superuser:
+    if user.is_superuser or user.is_admin:
         return {
             'modules': {m: {p: True for p in ['view', 'create', 'edit', 'delete', 'export', 'import', 'approve', 'assign']}
                         for m in ['dashboard', 'clients', 'employees', 'homeworkers', 'assets', 'devices',
@@ -114,7 +114,7 @@ def is_menu_visible(user, menu_item_id):
 
 
 def has_any_permission(user):
-    if user.is_superuser:
+    if user.is_superuser or user.is_admin:
         return True
     from authorization.models import UserRoleAssignment
     return UserRoleAssignment.objects.filter(user=user, is_active=True).exists()
