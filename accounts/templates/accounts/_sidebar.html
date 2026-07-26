@@ -4,10 +4,9 @@
        x-show="sidebarOpen"
        x-transition.opacity
        @click.outside="if (window.innerWidth < 1024) sidebarOpen = false">
-    <div class="h-16 flex items-center border-b border-base-300 overflow-hidden transition-all duration-300"
-         :class="sidebarCollapsed && window.innerWidth >= 1024 ? 'justify-center px-0' : 'px-4'">
-        <a href="{% url 'accounts:dashboard' %}" class="sidebar-brand flex items-center gap-2 min-w-0"
-           :class="sidebarCollapsed && window.innerWidth >= 1024 ? 'justify-center' : ''">
+    <div class="h-16 flex items-center justify-center border-b border-base-300 overflow-hidden transition-all duration-300"
+         :class="sidebarCollapsed && window.innerWidth >= 1024 ? 'px-0' : 'px-4'">
+        <a href="{% url 'accounts:dashboard' %}" class="sidebar-brand flex items-center gap-2 min-w-0 justify-center">
             <img src="{% static 'images/dpm-logo-light.webp' %}" alt="DPM Service"
                  class="h-8 w-auto flex-shrink-0 logo-light" />
             <img src="{% static 'images/dpm-logo-dark.webp' %}" alt="DPM Service"
