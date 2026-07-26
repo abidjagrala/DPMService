@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'notifications',
     'authorization',
     'system',
+    'ai',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
@@ -211,5 +212,14 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_HTTPONLY = True
+
+# ---------------------------------------------------------------------------
+# AI Configuration (OpenAI)
+# ---------------------------------------------------------------------------
+OPENAI_API_KEY = config('OPENAI_API_KEY', default='')
+AI_MODEL = config('AI_MODEL', default='gpt-4o-mini')
+AI_MAX_TOKENS = config('AI_MAX_TOKENS', default=500, cast=int)
+AI_CACHE_TTL = config('AI_CACHE_TTL', default=86400, cast=int)  # 24 hours
+AI_DAILY_BUDGET = config('AI_DAILY_BUDGET', default=1.00, cast=float)
 
 

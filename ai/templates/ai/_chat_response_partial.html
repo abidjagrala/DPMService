@@ -1,0 +1,33 @@
+<div class="chat chat-end">
+  <div class="chat-header text-sm opacity-70">You</div>
+  <div class="chat-bubble chat-bubble-primary">{{ user_msg }}</div>
+</div>
+
+<div class="chat chat-start">
+  <div class="chat-header text-sm opacity-70">AI Assistant</div>
+  <div class="chat-bubble chat-bubble-ghost">
+    {{ ai_response|linebreaksbr }}
+  </div>
+  {% if data %}
+  <div class="overflow-x-auto mt-2">
+    <table class="table table-xs">
+      <thead>
+        <tr>
+          {% for key in data.0.keys %}
+          <th>{{ key }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in data %}
+        <tr>
+          {% for val in row.values %}
+          <td>{{ val }}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>

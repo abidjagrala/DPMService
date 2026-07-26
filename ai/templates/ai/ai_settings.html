@@ -1,0 +1,78 @@
+{% extends "accounts/base.html" %}
+{% load daisy i18n %}
+
+{% block title %}{{ page_title }} — DPM Service{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="mb-3">
+        <a href="{% url 'accounts:dashboard' %}" class="btn btn-ghost btn-sm">&larr; Back to Dashboard</a>
+    </div>
+
+    <form method="post" novalidate class="space-y-4">
+        <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title">{% trans "AI Settings" %}</h2>
+                <p class="text-sm text-base-content/60">{% trans "Configure AI API provider and model settings." %}</p>
+
+                {% csrf_token %}
+                {% daisy_form_errors form %}
+
+                <div class="form-control">
+                    <label class="label cursor-pointer justify-start gap-3">
+                        {% daisy_field form.is_active add_label=False %}
+                        <span class="label-text font-medium">{% trans "Enable AI Features" %}</span>
+                    </label>
+                    <label class="label"><span class="label-text-alt text-base-content/50">{% trans "Toggle to enable or disable all AI features" %}</span></label>
+                </div>
+
+                <div class="divider text-xs text-base-content/50">{% trans "Provider" %}</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">{% daisy_field form.provider %}</div>
+                    <div class="form-control">{% daisy_field form.model_name %}</div>
+                </div>
+
+                <div class="divider text-xs text-base-content/50">{% trans "Authentication" %}</div>
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="form-control">{% daisy_field form.api_key %}</div>
+                </div>
+
+                <div class="divider text-xs text-base-content/50">{% trans "Advanced" %}</div>
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="form-control">{% daisy_field form.base_url %}</div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="form-control">{% daisy_field form.max_tokens %}</div>
+                    <div class="form-control">{% daisy_field form.temperature %}</div>
+                    <div class="form-control">{% daisy_field form.cache_ttl %}</div>
+                </div>
+
+                <div class="divider text-xs text-base-content/50">{% trans "Budget" %}</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">{% daisy_field form.daily_budget %}</div>
+                </div>
+
+                <div class="card-actions justify-end mt-2">
+                    <a href="{% url 'accounts:dashboard' %}" class="btn btn-ghost">{% trans "Cancel" %}</a>
+                    <button type="submit" class="btn btn-primary">{% trans "Save Changes" %}</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="card bg-base-100 border border-base-300 shadow-sm mt-4">
+        <div class="card-body">
+            <h3 class="card-title text-sm">{% trans "Provider Info" %}</h3>
+            <div class="text-xs text-base-content/60 space-y-1">
+                <p><strong>{% trans "OpenAI" %}:</strong> gpt-4o-mini, gpt-4o, gpt-3.5-turbo</p>
+                <p><strong>{% trans "Google Gemini" %}:</strong> gemini-2.0-flash, gemini-1.5-pro</p>
+                <p><strong>{% trans "DeepSeek" %}:</strong> deepseek-chat, deepseek-coder</p>
+                <p><strong>{% trans "Anthropic" %}:</strong> claude-3-5-sonnet, claude-3-haiku</p>
+                <p><strong>{% trans "Groq" %}:</strong> llama-3.1-70b-versatile, mixtral-8x7b-32768</p>
+                <p><strong>{% trans "Mistral" %}:</strong> mistral-small-latest, mistral-large-latest</p>
+                <p><strong>{% trans "Ollama" %}:</strong> llama3, mistral, codellama (set custom base URL)</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends "accounts/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto p-6">
+  <h1 class="text-2xl font-bold mb-6">AI Assistant</h1>
+
+  <div id="chat-messages" class="space-y-4 mb-6 max-h-[500px] overflow-y-auto p-4 bg-base-200 rounded-lg">
+    {% for msg in messages %}
+    <div class="chat {% if msg.role == 'user' %}chat-end{% else %}chat-start{% endif %}">
+      <div class="chat-header text-sm opacity-70">
+        {% if msg.role == 'user' %}You{% else %}AI Assistant{% endif %}
+      </div>
+      <div class="chat-bubble chat-bubble-{% if msg.role == 'user' %}primary{% else %}ghost{% endif %}">
+        {{ msg.content|linebreaksbr }}
+      </div>
+    </div>
+    {% empty %}
+    <div class="text-center text-base-content/50 py-8">
+      <p class="text-lg mb-2">Ask me anything about your data</p>
+      <p class="text-sm">Try the suggestions below or type your own question</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <form hx-post="{% url 'ai:chat' %}"
+        hx-target="#chat-messages"
+        hx-swap="beforeend"
+        class="flex gap-2 mb-4">
+    {% csrf_token %}
+    <input type="text"
+           name="message"
+           placeholder="Ask about tickets, clients, domains..."
+           class="input input-bordered flex-1"
+           autocomplete="off"
+           required
+           autofocus>
+    <button type="submit" class="btn btn-primary">
+      Send
+    </button>
+  </form>
+
+  <!-- Prompt Suggestions -->
+  <div class="space-y-3">
+    <p class="text-xs text-base-content/50 font-medium uppercase tracking-wide">Try these prompts</p>
+
+    <!-- Tickets -->
+    <div>
+      <p class="text-xs text-base-content/40 mb-1">Tickets</p>
+      <div class="flex flex-wrap gap-1">
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">How many open tickets are there?</button>
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">Show me all urgent tickets</button>
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">Which tickets are overdue?</button>
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">What tickets were created this week?</button>
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">How many tickets were completed this month?</button>
+      </div>
+    </div>
+
+    <!-- Clients -->
+    <div>
+      <p class="text-xs text-base-content/40 mb-1">Clients</p>
+      <div class="flex flex-wrap gap-1">
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">Show me all active clients</button>
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">Which clients are in Mumbai?</button>
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">How many clients do we have?</button>
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">Which clients have the most tickets?</button>
+      </div>
+    </div>
+
+    <!-- Domain & Hosting -->
+    <div>
+      <p class="text-xs text-base-content/40 mb-1">Domain &amp; Hosting</p>
+      <div class="flex flex-wrap gap-1">
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">Which domains are expiring this month?</button>
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">How many domains are expired?</button>
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">Show me domains expiring in the next 7 days</button>
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">Which provider has the most services?</button>
+      </div>
+    </div>
+
+    <!-- AMC -->
+    <div>
+      <p class="text-xs text-base-content/40 mb-1">AMC</p>
+      <div class="flex flex-wrap gap-1">
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">Show me overdue AMCs</button>
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">Which AMCs are expiring soon?</button>
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">How much AMC revenue is pending?</button>
+      </div>
+    </div>
+
+    <!-- Employees -->
+    <div>
+      <p class="text-xs text-base-content/40 mb-1">Employees</p>
+      <div class="flex flex-wrap gap-1">
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">How many employees are active?</button>
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">Which employees are in technical department?</button>
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">Show me employees with no recent tickets</button>
+      </div>
+    </div>
+
+    <!-- Insights -->
+    <div>
+      <p class="text-xs text-base-content/40 mb-1">Insights</p>
+      <div class="flex flex-wrap gap-1">
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">What's the overall status of Acme's services?</button>
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">Which clients need a follow-up call?</button>
+        <button type="button" class="btn btn-xs btn-ghost normal-case" onclick="setPrompt(this)">What's the busiest day for tickets this month?</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function setPrompt(btn) {
+  const input = document.querySelector('input[name="message"]');
+  input.value = btn.textContent;
+  input.focus();
+}
+</script>
+{% endblock %}
