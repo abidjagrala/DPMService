@@ -86,10 +86,17 @@ class AIService:
             )
             return {'error': str(e)}
 
-        # 3. Parse
-        raw = response.choices[0].message.content
+        # 3. Parse — strip markdown code fences if present
+        raw = response.choices[0].message.content or ''
+        stripped = raw.strip()
+        if stripped.startswith('```'):
+            # Remove opening fence (```json or ```)
+            stripped = stripped.split('\n', 1)[1] if '\n' in stripped else stripped[3:]
+            # Remove closing fence
+            if stripped.rstrip().endswith('```'):
+                stripped = stripped.rstrip()[:-3].rstrip()
         try:
-            result = json.loads(raw)
+            result = json.loads(stripped)
         except json.JSONDecodeError:
             result = {'raw': raw}
 

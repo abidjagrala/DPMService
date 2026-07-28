@@ -51,9 +51,6 @@ class AIChat:
         if 'error' in result:
             return {'error': result['error'], 'natural_response': f"AI Error: {result['error']}"}
 
-        if 'raw' in result and 'natural_response' not in result:
-            return {'natural_response': f"Unexpected AI response. Raw: {result.get('raw', '')[:500]}"}
-
         # Try to execute ORM filters if provided
         data = None
         filters = result.get('suggested_orm_filters', {})
