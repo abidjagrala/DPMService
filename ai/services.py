@@ -131,9 +131,15 @@ class AIService:
     def _get_cached(self, prompt_hash: str) -> dict | None:
         try:
             entry = AICacheEntry.objects.get(prompt_hash=prompt_hash)
-            if not entry.is_expired:
-                return entry.response
-            entry.delete()
+            if entry.is_expired:
+                entry.delete()
+                return None
+            cached = entry.response
+            # Skip broken cache entries (raw fallback without natural_response)
+            if 'raw' in cached and 'natural_response' not in cached:
+                entry.delete()
+                return None
+            return cached
         except AICacheEntry.DoesNotExist:
             pass
         return None
