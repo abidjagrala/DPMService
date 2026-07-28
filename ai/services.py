@@ -25,7 +25,14 @@ class AIService:
         self.model = getattr(settings, 'AI_MODEL', 'gpt-4o-mini')
         self.max_tokens = getattr(settings, 'AI_MAX_TOKENS', 500)
         self.cache_ttl = getattr(settings, 'AI_CACHE_TTL', 86400)
-        self.client = OpenAI(api_key=api_key) if api_key else None
+        base_url = getattr(settings, 'AI_BASE_URL', None)
+        if api_key:
+            client_kwargs = {'api_key': api_key}
+            if base_url:
+                client_kwargs['base_url'] = base_url
+            self.client = OpenAI(**client_kwargs)
+        else:
+            self.client = None
 
     def query(
         self,
@@ -52,16 +59,19 @@ class AIService:
         # 2. Call API
         start = time.monotonic()
         try:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
+            api_params = {
+                'model': self.model,
+                'messages': [
                     {'role': 'system', 'content': system_prompt},
                     {'role': 'user', 'content': user_prompt},
                 ],
-                max_tokens=tokens_budget,
-                temperature=temperature,
-                response_format={'type': 'json_object'},
-            )
+                'max_tokens': tokens_budget,
+                'temperature': temperature,
+            }
+            # Only use response_format for OpenAI models that support it
+            if 'gpt' in self.model or 'o1' in self.model or 'o3' in self.model:
+                api_params['response_format'] = {'type': 'json_object'}
+            response = self.client.chat.completions.create(**api_params)
             elapsed_ms = int((time.monotonic() - start) * 1000)
         except Exception as e:
             elapsed_ms = int((time.monotonic() - start) * 1000)

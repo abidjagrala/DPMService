@@ -158,6 +158,7 @@ class AISettings(models.Model):
         django_settings.AI_MAX_TOKENS = self.max_tokens
         django_settings.AI_CACHE_TTL = self.cache_ttl
         django_settings.AI_DAILY_BUDGET = float(self.daily_budget)
+        django_settings.AI_BASE_URL = self.base_url or None
 
     @classmethod
     def load(cls):
