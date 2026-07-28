@@ -69,7 +69,8 @@ class AIService:
                 'temperature': temperature,
             }
             # Only use response_format for OpenAI models that support it
-            if 'gpt' in self.model or 'o1' in self.model or 'o3' in self.model:
+            is_openai = any(m in self.model for m in ['gpt', 'o1', 'o3', 'o4'])
+            if is_openai:
                 api_params['response_format'] = {'type': 'json_object'}
             response = self.client.chat.completions.create(**api_params)
             elapsed_ms = int((time.monotonic() - start) * 1000)
