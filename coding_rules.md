@@ -20,11 +20,13 @@ Conventions in this codebase. Rules marked **MUST** are non-negotiable;
 - **MUST** use **function-based views (FBV)** for HTTP request handlers.
   Class-based views (generic or otherwise) are not used in this project.
 - **MUST** decorate each FBV with:
-  1. `@login_required` or `@role_required(...)` (authorization, outermost)
+  1. `@module_required('module', 'perm')` + `@model_required('model', 'perm')` (authorization, outermost)
   2. `@csrf_protect` if the view writes state (often implicit; declare it on
      auth-related views regardless)
   3. `@never_cache` on auth-flow views (login, register, logout)
   4. `@require_http_methods([...])` (innermost) to constrain methods
+- **MUST NOT** use `@role_required(...)` on new views — it is deprecated in
+  favor of `@module_required` / `@model_required` from the authorization app.
 - **MUST** use Django's URL `reverse` / `{% url %}`. **MUST NOT** hardcode
   paths in code or templates.
 - **MUST** namespace app `urls.py` with `app_name = '<app>'`.
@@ -32,6 +34,9 @@ Conventions in this codebase. Rules marked **MUST** are non-negotiable;
   on a single endpoint.
 - **MUST** redirect-after-POST on successful form submission. Render the form
   back (without redirect) on validation failure.
+- **MUST** handle errors with proper error pages — never return raw
+  `HttpResponseForbidden(...)` text. Use `render(request, 'accounts/403.html', status=403)`
+  or let the `module_required`/`model_required` decorators handle it.
 
 ## Models
 
@@ -148,7 +153,8 @@ Before requesting review, the author has checked:
 - [ ] `python3 manage.py check` is clean.
 - [ ] `python3 manage.py makemigrations --check --dry-run` finds nothing.
 - [ ] New URLs are namespaced and named.
-- [ ] New views use the decorator stack from the **Django** section.
+- [ ] New views use `@module_required` / `@model_required` (not `@role_required`).
 - [ ] New forms validate email/password per the **Forms** section.
 - [ ] Templates extend the project base and use `{% csrf_token %}` where needed.
+- [ ] Error responses use proper error pages (not raw `HttpResponseForbidden`).
 - [ ] No secrets in the diff.

@@ -1,268 +1,359 @@
 # Architecture
 
 DPM Service — internal architecture reference. This document describes the
-runtime structure, data model, authentication flow, and conventions used by
-the project as it stands today.
+runtime structure, data model, authentication flow, authorization system, and
+conventions used by the project.
 
 ## Overview
 
 - **Framework:** Django 5.2
 - **Python:** 3.10.1 (pinned via `.python-version` / pyenv)
 - **Database (dev):** SQLite (`db.sqlite3`)
+- **Database (prod):** MySQL (via `DJANGO_MODE=production`)
 - **Templating:** Django templates with `APP_DIRS=True`
-- **Frontend:** Tailwind CSS via Play CDN (`https://cdn.tailwindcss.com`)
-  — **dev only**; must be replaced with a built Tailwind asset pipeline
-  before any production deployment.
+- **Frontend:** Tailwind CSS via built pipeline (`static/dist/`), DaisyUI components, HTMX
 - **Form rendering:** `django-crispy-forms` + `crispy-tailwind` template pack
+- **Charts/Reports:** ReportLab (PDF generation)
+- **2FA:** pyotp (TOTP), qrcode
+- **AI:** OpenAI-compatible API integration
 
 ## Project Layout
 
 ```
 dpmservice1/
 ├── manage.py
-├── architecture.md          # this file
+├── architecture.md
 ├── coding_rules.md
-├── dpmservice/              # project package (settings, root urls, wsgi/asgi)
+├── requirements.txt
+├── dpmservice/              # project package (settings, root urls, wsgi)
 │   ├── settings.py
 │   ├── urls.py
-│   ├── wsgi.py
-│   └── asgi.py
-├── accounts/                # users, auth, roles
-│   ├── models.py
-│   ├── forms.py
-│   ├── views.py
-│   ├── urls.py
-│   ├── admin.py
-│   ├── migrations/
-│   └── templates/accounts/
-├── clients/                 # clients, employees, branches, homeworkers, locations
-│   ├── models.py            # Client, Employee, Branch, Homeworker, Location
-│   ├── forms.py
-│   ├── views.py
-│   ├── urls.py
-│   ├── migrations/
-│   └── templates/clients/
+│   ├── views.py             # error handlers (400, 403, 404, 500)
+│   └── wsgi.py
+├── accounts/                # users, auth, roles, settings (mail/sms/whatsapp)
+├── clients/                 # clients, employees, branches, locations
 ├── tickets/                 # service tickets
-├── assets/                  # inventory / assets
+├── assets/                  # inventory / assets / assignments
 ├── hosting/                 # domain & hosting, AMC
-├── masters/                 # states, cities, service types, asset types
-├── dashboard/               # dashboard views
-├── comments/                # ticket comments
-├── notifications/           # notification system
-├── authorization/           # roles & permissions
+├── masters/                 # states, cities, service types, asset types, transport types
+├── network/                 # subnets, IPs, network devices
+├── dashboard/               # dashboard views & KPIs
+├── comments/                # generic comments (via contenttypes)
+├── notifications/           # email/SMS/WhatsApp notification dispatch
+├── authorization/           # RBAC: roles, module/model/field/menu permissions
 ├── system/                  # backup & restore
-└── network/                 # subnets, IPs, devices
+├── ai/                      # AI tools (chat, suggestions, settings)
+└── api/                     # REST API (DRF)
 ```
 
-## Apps
+## Apps Summary
 
-### `accounts`
-
-Owns the user identity layer: custom user model, authentication views,
-profile management, and the administrative user list.
-
-It exposes no public Python API beyond the standard Django user contract
-(`get_user_model()`, role properties on the user instance, and `role_required`
-in `accounts.views`).
+| App | Module Code | Purpose |
+|-----|-------------|---------|
+| `accounts` | `settings` | User model, auth, 2FA, profile, mail/SMS/WhatsApp settings |
+| `clients` | `clients`, `employees` | Client, Employee, Branch, Location management |
+| `tickets` | `tickets` | Service ticket CRUD, status, PDF, comments |
+| `assets` | `assets` | Asset management, assignments, returns |
+| `hosting` | `domain_hosting` | Domain/hosting management, invoices, AMC |
+| `masters` | `masters` | Reference data: State, City, ServiceType, AssetType, TransportType |
+| `network` | `devices` | Network devices (subnets, IPs, devices) |
+| `dashboard` | `dashboard` | Dashboard KPIs and summaries |
+| `comments` | — | Generic comment system (contenttypes framework) |
+| `notifications` | `notifications` | Email/SMS/WhatsApp dispatch via MSG91 |
+| `authorization` | `authorization` | Full RBAC system (see below) |
+| `system` | `system` | Database backup & restore |
+| `ai` | `ai` | AI chat, suggestions, provider settings |
+| `api` | — | REST API endpoints (DRF) |
 
 ## Data Model
 
 ### `User` (`accounts.User`)
 
-Custom user inheriting from `AbstractBaseUser + PermissionsMixin`. Replaces
-the default `username` field with `email`.
+Custom user inheriting from `AbstractBaseUser + PermissionsMixin`. Uses
+`email` as `USERNAME_FIELD`.
 
-| Field          | Type            | Notes                                      |
-|----------------|-----------------|--------------------------------------------|
-| `email`        | EmailField (unique) | Login identifier (`USERNAME_FIELD`).   |
-| `first_name`   | CharField(150)  | Optional.                                  |
-| `last_name`    | CharField(150)  | Optional.                                  |
-| `role`         | CharField(20)   | Enum: `admin`, `manager`, `staff`, `client`. Default `client`. |
-| `is_active`    | BooleanField    | Login allowed when `True`.                 |
-| `is_staff`     | BooleanField    | Controls Django admin access (orthogonal to `role`). |
-| `is_superuser` | BooleanField    | From `PermissionsMixin`.                   |
-| `date_joined`  | DateTimeField   | Auto on create.                            |
-| `last_login`   | DateTimeField   | Managed by Django auth.                    |
+| Field | Type | Notes |
+|-------|------|-------|
+| `email` | EmailField (unique) | Login identifier |
+| `first_name` | CharField(150) | Optional |
+| `last_name` | CharField(150) | Optional |
+| `role` | CharField(20) | Enum: `admin`, `manager`, `staff`, `client`. Default `client` |
+| `is_active` | BooleanField | Login allowed when True |
+| `is_staff` | BooleanField | Controls Django admin access |
+| `is_superuser` | BooleanField | From PermissionsMixin |
+| `totp_secret` | CharField(32) | TOTP 2FA secret |
+| `two_factor_enabled` | BooleanField | 2FA toggle |
+| `password_reset_token` | UUIDField | Password reset token |
 
-Helper properties on `User`:
-- `is_admin`, `is_manager`, `is_staff_member`, `is_client` (role checks).
-  Note: `is_staff_member` exists deliberately to avoid collision with
-  Django's built-in `is_staff` field.
+Helper properties: `is_admin`, `is_manager`, `is_staff_member`, `is_client`.
 
-### Roles
+### Core Models
 
-| Role     | Self-register | Admin site | `role_required` access |
-|----------|---------------|------------|------------------------|
-| Admin    | No (created by admin) | Yes (`is_staff=True`) | All role-gated views |
-| Manager  | No            | Yes (`is_staff=True` by `create_manager`) | Manager-and-above views |
-| Staff    | No            | Yes (`is_staff=True` by `create_staff`)   | Staff views |
-| Client   | Yes (default for `register_view`) | No  | Client views only |
+```
+User ──1:1──→ Client (client_profile)     # Client linked to a user
+User ──1:1──→ Employee (employee_profile) # Employee linked to a user
+Client ──FK──→ Branch                     # Client belongs to a branch
+Employee ──M2M──→ Branch                  # Employee can belong to multiple branches
 
-Public registration via `register_view` always creates a `client`-role user.
-Higher roles must be created through the Django admin or
-`User.objects.create_manager/staff/superuser`.
+ServiceTicket ──FK──→ Client              # Ticket belongs to a client
+ServiceTicket ──FK──→ Employee (assigned_to)
+ServiceTicket ──FK──→ User (created_by)
+ServiceTicket ──M2M──→ Asset              # Ticket can involve multiple assets
+ServiceTicket ──FK──→ ServiceType
+ServiceTicket ──FK──→ Location
+ServiceTicket ──FK──→ TransportType
+
+TicketComment ──FK──→ ServiceTicket
+TicketHistory ──FK──→ ServiceTicket
+
+Asset ──FK──→ Client
+Asset ──FK──→ AssetType
+AssetAssignment ──FK──→ Asset
+AssetAssignment ──FK──→ Employee (holder)
+
+NetworkDevice ──FK──→ Subnet
+Subnet ──FK──→ Client
+
+DomainHosting ──FK──→ Client
+HostingInvoice ──FK──→ DomainHosting
+AMC ──FK──→ Client
+
+Branch ──FK──→ City ──FK──→ State
+Location ──FK──→ City
+```
 
 ## Authentication
 
-- **Login identifier:** email (case-normalised via `BaseUserManager.normalize_email`
-  and `clean_email`).
-- **Backend:** Django's default `ModelBackend`. Because `USERNAME_FIELD = 'email'`,
-  passing the email as `username` to `authenticate()` is the canonical pattern.
-- **Login flow:** `EmailLoginForm` → `authenticate()` → `login(request, user)`.
-  Honours an optional `next` parameter from POST or GET.
-- **Logout flow:** POST-only (CSRF-protected) via `logout_view`.
-- **Authorization:** Two layers.
-  1. `@login_required` on any view requiring authentication.
-  2. `@role_required(*roles)` (in `accounts.views`) for role-gated views.
-     Superusers bypass role checks.
-- **Settings:**
-  - `LOGIN_URL = 'accounts:login'`
-  - `LOGIN_REDIRECT_URL = 'accounts:dashboard'`
-  - `LOGOUT_REDIRECT_URL = 'accounts:login'`
+- **Login identifier:** email (case-normalised)
+- **Backend:** Django's `ModelBackend`
+- **2FA:** TOTP via pyotp — optional, user-enabled from profile
+- **Login throttle:** 5 attempts, 5-minute lockout
+- **Session idle timeout:** 20 minutes (via `IdleSessionMiddleware`)
+
+### Login Flow
+
+```
+EmailLoginForm → validate captcha → authenticate()
+  ├─ 2FA enabled → redirect to TOTP verify → login()
+  ├─ 2FA not set up → redirect to TOTP setup → login()
+  └─ No 2FA → login() directly
+```
+
+### Settings
+
+```
+LOGIN_URL = 'accounts:login'
+LOGIN_REDIRECT_URL = 'accounts:dashboard'
+LOGOUT_REDIRECT_URL = 'accounts:login'
+```
+
+## Authorization System (RBAC)
+
+**Location:** `authorization/` app
+
+The authorization system provides granular, configurable permissions per role,
+managed via the admin UI at `/authorization/`.
+
+### Permission Layers
+
+1. **Module Permissions** — view/create/edit/delete/export/import per module
+2. **Model Permissions** — view/create/edit/delete per model
+3. **Field Permissions** — hidden/readonly/editable per field
+4. **Menu Permissions** — visibility per sidebar menu item
+5. **Notification Settings** — per-role notification preferences
+
+### Module Codes
+
+| Code | Label |
+|------|-------|
+| `dashboard` | Dashboard |
+| `clients` | Clients |
+| `employees` | Employees |
+| `assets` | Assets |
+| `devices` | Devices |
+| `tickets` | Tickets |
+| `domain_hosting` | Domain & Hosting |
+| `masters` | Masters |
+| `settings` | Settings |
+| `ai` | AI |
+| `system` | System |
+| `authorization` | Authorization & Roles |
+| `notifications` | Notifications |
+
+### Model Names (for ModelPermission)
+
+`client`, `employee`, `asset`, `assetassignment`, `subnet`, `ipaddress`,
+`networkdevice`, `serviceticket`, `ticketcomment`, `tickethistory`,
+`domainhosting`, `hostinginvoice`, `amc`, `servicetype`, `assettype`,
+`transporttype`, `state`, `city`, `location`, `branch`, `user`, `group`, `role`
+
+### How Permissions Are Checked
+
+**Decorators** (in `authorization/services/permission_engine.py`):
+
+```python
+@module_required('tickets', 'view')       # module-level check
+@model_required('serviceticket', 'create') # model-level check
+```
+
+**Permission resolution order:**
+
+1. Superuser → all permissions granted automatically
+2. `User.role == 'admin'` → all permissions granted automatically
+3. `User.role == 'manager'` → all permissions granted (via role-based defaults)
+4. `User.role == 'staff'` → scoped module/model defaults (tickets, assets, devices, hosting)
+5. `User.role == 'client'` → scoped module/model defaults (tickets, assets)
+6. `UserRoleAssignment` objects → override defaults with explicit RBAC permissions
+7. `ModulePermission` / `ModelPermission` records → checked from DB
+
+**Key function:** `get_user_permissions(user)` — aggregates all permissions,
+cached in Django cache (5-minute TTL). Call `clear_user_permissions(user_id)`
+or `clear_all_permissions()` to invalidate.
+
+### Role-Based Default Permissions (Fallback)
+
+When no `UserRoleAssignment` exists for a user, defaults are applied based on
+`User.role`:
+
+| Role | Modules | Models |
+|------|---------|--------|
+| admin/superuser | All | All |
+| manager | All | All |
+| staff | dashboard, tickets, assets, devices, domain_hosting | serviceticket, asset, networkdevice, domainhosting |
+| client | dashboard, tickets, assets | serviceticket, asset |
+
+### Authorization Admin UI
+
+| URL | View | Purpose |
+|-----|------|---------|
+| `/authorization/` | `auth_dashboard` | Overview |
+| `/authorization/groups/` | CRUD | Group management |
+| `/authorization/roles/` | CRUD + clone | Role management |
+| `/authorization/permissions/modules/` | Matrix | Module permission editor |
+| `/authorization/permissions/models/` | Matrix | Model permission editor |
+| `/authorization/permissions/fields/` | Matrix | Field permission editor |
+| `/authorization/permissions/menus/` | Matrix | Menu visibility editor |
+| `/authorization/assignments/` | CRUD | User-to-role assignment |
+| `/authorization/audit-log/` | List | Audit trail |
+| `/authorization/seed/` | Action | Seed default modules/menus |
+
+## Error Handling
+
+**File:** `dpmservice/views.py`
+
+Custom error pages for all HTTP error codes:
+
+| Handler | Template | Fallback |
+|---------|----------|----------|
+| `custom_400` | `accounts/400.html` | Inline HTML |
+| `custom_403` | `accounts/403.html` | Inline HTML |
+| `custom_404` | `accounts/404.html` | Inline HTML |
+| `custom_500` | `accounts/500.html` | Inline HTML |
+
+All handlers use `_safe_render()` which falls back to inline HTML if the
+template fails to render (prevents white screen of death in production).
+
+Registered in `dpmservice/urls.py`:
+```python
+handler400 = custom_400
+handler403 = custom_403
+handler404 = custom_404
+handler500 = custom_500
+```
 
 ## URL Structure
 
 Root URLconf: `dpmservice/urls.py`.
 
-| Path                     | Include                |
-|--------------------------|------------------------|
-| `/admin/`                | `django.contrib.admin` |
-| `/accounts/`             | `accounts.urls` (namespace: `accounts`) |
-| `/company/`              | `clients.urls` (namespace: `clients`) |
-
-Within `accounts.urls`:
-
-| Name                       | Path                          | Access                |
-|----------------------------|-------------------------------|-----------------------|
-| `accounts:register`        | `/accounts/register/`         | Anonymous             |
-| `accounts:login`           | `/accounts/login/`            | Anonymous             |
-| `accounts:logout`          | `/accounts/logout/` (POST)    | Authenticated         |
-| `accounts:dashboard`       | `/accounts/dashboard/`        | Authenticated (per-role template) |
-| `accounts:profile`         | `/accounts/profile/`          | Authenticated         |
-| `accounts:profile_edit`    | `/accounts/profile/edit/`     | Authenticated         |
-| `accounts:password_change` | `/accounts/profile/password/` | Authenticated         |
-| `accounts:user_list`       | `/accounts/users/`            | Admin or Manager      |
-| `accounts:user_detail`     | `/accounts/users/<id>/`       | Admin only            |
-
-Within `clients.urls` (mounted at `/company/`):
-
-| Name                       | Path                          | Access                |
-|----------------------------|-------------------------------|-----------------------|
-| `clients:branch_list`      | `/company/branches/`          | Admin or Manager      |
-| `clients:branch_create`    | `/company/branches/new/`      | Admin or Manager      |
-| `clients:branch_update`    | `/company/branches/<pk>/edit/`| Admin or Manager      |
-| `clients:branch_delete`    | `/company/branches/<pk>/delete/`| Admin or Manager    |
-| `clients:client_list`      | `/company/clients/`           | Admin or Manager      |
-| `clients:employee_list`    | `/company/employees/`         | Admin or Manager      |
-| `clients:homeworker_list`  | `/company/homeworkers/`       | Admin, Manager, Client|
-| `clients:location_list`    | `/company/locations/`         | Admin or Manager      |
+| Path | Include | Namespace |
+|------|---------|-----------|
+| `/admin/` | `django.contrib.admin` | — |
+| `/accounts/` | `accounts.urls` | `accounts` |
+| `/masters/` | `masters.urls` | `masters` |
+| `/company/` | `clients.urls` | `clients` |
+| `/inventory/` | `assets.urls` | `assets` |
+| `/` (root) | `tickets.urls` | `tickets` |
+| `/dashboard/` | `dashboard.urls` | `dashboard` |
+| `/hosting/` | `hosting.urls` | `hosting` |
+| `/comments/` | `comments.urls` | `comments` |
+| `/api/` | `api.urls` | `api` |
+| `/notifications/` | `notifications.urls` | `notifications` |
+| `/authorization/` | `authorization.urls` | `authorization` |
+| `/system/` | `system.urls` | `system` |
+| `/ai/` | `ai.urls` | `ai` |
 
 ## Views
 
-All views are **function-based**. Class-based views are not used in this
-project (see `coding_rules.md`).
+All views are **function-based** (no CBVs).
 
-Each view explicitly declares its HTTP methods via
-`@require_http_methods([...])`. Mutating views are `@csrf_protect` (implicit
-through Django middleware, but stated explicitly on auth-adjacent views).
-Authentication views are `@never_cache` to prevent stale auth UI.
+### Decorator Stack (applied in this order)
 
-## Forms
+```python
+@module_required('tickets', 'view')       # authorization check (outermost)
+@model_required('serviceticket', 'view')   # model-level authorization
+@csrf_protect                              # CSRF protection (POST)
+@require_http_methods(['GET', 'POST'])     # method constraint (innermost)
+```
 
-`accounts/forms.py` owns all form validation and password handling:
+### HTMX Support
 
-| Form                     | Purpose                                              |
-|--------------------------|------------------------------------------------------|
-| `UserRegistrationForm`   | Public self-registration; locks role to `client`.    |
-| `EmailLoginForm`         | Email + password authentication; mirrors `AuthenticationForm` API (`get_user()`). |
-| `ProfileUpdateForm`      | User edits own first/last name + email.              |
-| `AdminUserCreationForm`  | Admin creates a user of any role.                    |
-| `AdminUserChangeForm`    | Admin edits a user (read-only hashed password field).|
+Views check `is_htmx(request)` to return partial templates for HTMX requests.
+HTMX responses use `_hx_toast()` for toast notifications with
+`HX-Trigger` headers.
 
-All forms perform their own `clean_email` to enforce case-insensitive uniqueness.
-Password forms call `password_validation.validate_password`.
+### Ticket Views Permission Matrix
 
-## Admin
+| View | Module Perm | Model Perm | Additional Check |
+|------|-------------|------------|-----------------|
+| `ticket_list_view` | `tickets.view` | — | Client sees own, Staff sees branch |
+| `ticket_create_view` | `tickets.create` | `serviceticket.create` | Client auto-assigned |
+| `ticket_update_view` | `tickets.edit` | `serviceticket.edit` | Client: own tickets only |
+| `ticket_detail_view` | `tickets.view` | `serviceticket.view` | Client: own tickets only |
+| `ticket_status_view` | `tickets.edit` | `serviceticket.edit` | Client: own tickets only |
+| `ticket_delete_view` | `tickets.delete` | `serviceticket.delete` | — |
+| `ticket_detail_pdf` | `tickets.view` | `serviceticket.view` | Client: own tickets only |
+| `ticket_assets_api` | `tickets.view` | — | JSON API |
 
-`accounts/admin.py` registers `User` with `UserAdmin` (subclass of Django's
-`BaseUserAdmin`) using the two admin forms above. Fieldsets group personal
-info, role/permissions, and timestamps separately.
+## Templates
 
-## Frontend
+- **Base:** `accounts/templates/accounts/base.html` (full app shell with sidebar, topbar, toasts)
+- **App bases:** Each app has its own `base.html` extending `accounts/base.html`
+- **Partials:** HTMX-compatible partials prefixed with `_` (e.g., `_ticket_form_partial.html`)
+- **Error pages:** `accounts/400.html`, `accounts/403.html`, `accounts/404.html`, `accounts/500.html`
+- **CSS:** Tailwind + DaisyUI via `static/dist/main.css`
+- **JS:** Alpine.js, HTMX (bundled in `static/dist/`)
 
-- Tailwind utility classes only. No custom CSS files.
-- Layout via `accounts/templates/accounts/base.html`.
-- Forms rendered with `{% load crispy_forms_tags %}` and `{{ form|crispy }}`.
-- Per-role dashboard: `dashboard_view` dispatches to one of four templates
-  based on `request.user.role`.
+### Template Tags
 
-## Migrations
+| Tag Library | Tags | Purpose |
+|-------------|------|---------|
+| `daisy` | `daisy_field`, `daisy_form_errors`, `searchable_select`, `basename` | DaisyUI form rendering |
+| `comments` | `show_comments` | Generic comment display |
+| `i18n` | `{% trans %}` | Translation |
 
-- One migration per logical schema change.
-- Initial migration: `accounts/migrations/0001_initial.py` (creates `User`).
-- Migrations are committed alongside the model changes they accompany.
+## Frontend Stack
+
+- **CSS:** Tailwind CSS (built), DaisyUI component library
+- **JS:** Alpine.js (reactivity), HTMX (AJAX partials)
+- **Theme:** Light/Dark toggle via `data-theme` attribute
+- **Searchable Selects:** Custom `searchableSelect` Alpine.js component
+- **Quick Add Modals:** Inline creation forms via HTMX
 
 ## Configuration & Secrets
 
-Currently `SECRET_KEY` is hardcoded in `dpmservice/settings.py` (development
-default produced by `startproject`). Before deployment:
+All sensitive values read from environment variables via `python-decouple`:
 
-- Move `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS`, database credentials, and any
-  third-party keys into environment variables.
-- Replace the Tailwind Play CDN with a built Tailwind bundle.
-- Switch the database from SQLite to PostgreSQL (or equivalent).
+| Variable | Purpose |
+|----------|---------|
+| `SECRET_KEY` | Django secret key |
+| `DEBUG` | Debug mode |
+| `DJANGO_MODE` | `development` or `production` |
+| `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` | MySQL (prod) |
+| `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` | SMTP |
+| `OPENAI_API_KEY`, `AI_MODEL`, `AI_BASE_URL` | AI integration |
 
-### `clients` app
+## Migrations
 
-Owns client, employee, homeworker, location, and **branch** management.
-
-#### `Branch` (`clients.Branch`)
-
-Represents a physical branch/office of a client company.
-
-| Field       | Type              | Notes                                  |
-|-------------|-------------------|----------------------------------------|
-| `name`      | CharField(200)    | Branch name.                           |
-| `address`   | TextField         | Branch address.                        |
-| `city`      | FK → masters.City | Optional (`null=True, blank=True`).    |
-| `state`     | FK → masters.State| Optional (`null=True, blank=True`).    |
-| `pincode`   | CharField(10)     | Optional.                              |
-| `is_active` | BooleanField      | Default `True`.                        |
-| `created_at`| DateTimeField     | Auto on create.                        |
-| `updated_at`| DateTimeField     | Auto on update.                        |
-
-#### `Client` (`clients.Client`)
-
-Business client using DPM services. Has an optional FK to `Branch`.
-
-| Field          | Type              | Notes                                  |
-|----------------|-------------------|----------------------------------------|
-| `user`         | OneToOne → User   | Optional (`null=True`). Links to user with `role=CLIENT`. |
-| `company_name` | CharField(200)    | Client company name.                   |
-| `branch`       | FK → Branch       | Optional (`null=True, blank=True`). Client belongs to one branch. |
-| ...            | ...               | (other fields unchanged)              |
-
-#### `Employee` (`clients.Employee`)
-
-ARWASYS employee handling DPM services. Has M2M to `Branch`.
-
-| Field      | Type              | Notes                                  |
-|------------|-------------------|----------------------------------------|
-| `user`     | OneToOne → User   | Links to user with `role=STAFF`.       |
-| `branches` | M2M → Branch      | Blank allowed. Employee can belong to multiple branches. |
-| ...        | ...               | (other fields unchanged)              |
-
-#### Relationships
-
-```
-Branch (1) ──→ (M) Client       # Client.branch
-Branch (M) ←─→ (M) Employee     # Employee.branches (M2M)
-```
-
-## Out of Scope (Future Work)
-
-- Email verification / password reset flows
-- Two-factor authentication
-- Audit log of admin actions on users
-- API surface (DRF or similar) — not yet introduced
-- Production-grade static asset pipeline
+- One migration per logical schema change
+- Migrations committed alongside model changes
+- Never edit applied migrations on shared branches

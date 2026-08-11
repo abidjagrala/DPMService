@@ -79,6 +79,16 @@ cd dpm.dnscloud.in
 python manage.py createsuperuser
 ```
 
+### After Every Deploy
+```bash
+source /home/dhmahqqz/virtualenv/dpm.dnscloud.in/3.10/bin/activate
+cd dpm.dnscloud.in
+python manage.py migrate --noinput
+python manage.py collectstatic --noinput
+python manage.py shell -c "from authorization.services.permission_engine import clear_all_permissions; clear_all_permissions()"
+touch dpmservice/wsgi.py
+```
+
 ---
 
 ## 4. Manual Deployment (Alternative)
@@ -120,6 +130,8 @@ python manage.py createsuperuser
 - [ ] Admin panel accessible (`/admin/`)
 - [ ] Login page works
 - [ ] Database migrations applied
+- [ ] Permission cache cleared after deployment
+- [ ] Authorization modules seeded (via admin UI or `seed_authorization`)
 - [ ] `.env` file NOT in repository (use cPanel Environment Variables)
 - [ ] `DEBUG=False` in production
 - [ ] `ALLOWED_HOSTS` includes your domain
