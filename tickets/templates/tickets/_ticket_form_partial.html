@@ -5,7 +5,7 @@
     {% daisy_form_errors form %}
 
     {# ── Client field (visible only when form has it) ── #}
-    {% if form.client is defined %}
+    {% if "client" in form.fields %}
     {% with field=form.client %}
     <div class="form-control">
         <label class="label py-1">
@@ -25,7 +25,7 @@
     {% endif %}
 
     {# ── Remaining fields (hidden until client is selected) ── #}
-    {% if form.client is defined %}
+    {% if "client" in form.fields %}
     <div id="ticket-rest-fields" style="display:none;" class="space-y-3">
     {% else %}
     <div id="ticket-rest-fields" class="space-y-3">
