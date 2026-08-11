@@ -2,8 +2,8 @@ from functools import wraps
 
 from django.conf import settings
 from django.core.cache import cache
-from django.http import HttpResponseForbidden
-from django.shortcuts import redirect, render
+from django.http import HttpResponseForbidden, HttpResponseServerError
+from django.shortcuts import redirect
 from django.contrib import messages
 
 CACHE_TTL = 300
@@ -77,6 +77,9 @@ def get_user_permissions(user):
         else:
             menu_perms[menu_id] = menu_perms[menu_id] or mp.is_visible
 
+    if not module_perms and not model_perms:
+        _apply_role_based_defaults(user, module_perms, model_perms)
+
     result = {
         'modules': module_perms,
         'models': model_perms,
@@ -86,6 +89,38 @@ def get_user_permissions(user):
 
     cache.set(key, result, CACHE_TTL)
     return result
+
+
+def _apply_role_based_defaults(user, module_perms, model_perms):
+    all_perms = ['view', 'create', 'edit', 'delete', 'export', 'import']
+    all_modules = ['dashboard', 'clients', 'employees', 'assets', 'devices',
+                   'tickets', 'domain_hosting', 'notifications', 'settings',
+                   'masters', 'ai', 'system']
+    all_models = ['client', 'employee', 'asset', 'assetassignment', 'subnet',
+                  'ipaddress', 'networkdevice', 'serviceticket', 'ticketcomment',
+                  'tickethistory', 'domainhosting', 'hostinginvoice', 'amc',
+                  'servicetype', 'assettype', 'transporttype', 'state', 'city',
+                  'location', 'branch', 'user']
+
+    role = getattr(user, 'role', None)
+
+    if role == 'manager':
+        for m in all_modules:
+            module_perms[m] = {p: True for p in all_perms}
+        for m in all_models:
+            model_perms[m] = {p: True for p in all_perms}
+
+    elif role == 'staff':
+        for m in ['dashboard', 'tickets', 'assets', 'devices', 'domain_hosting']:
+            module_perms[m] = {p: True for p in all_perms}
+        for m in ['serviceticket', 'ticketcomment', 'tickethistory', 'asset', 'networkdevice', 'domainhosting']:
+            model_perms[m] = {p: True for p in all_perms}
+
+    elif role == 'client':
+        for m in ['dashboard', 'tickets', 'assets']:
+            module_perms[m] = {p: True for p in all_perms}
+        for m in ['serviceticket', 'ticketcomment', 'asset']:
+            model_perms[m] = {p: True for p in all_perms}
 
 
 def clear_user_permissions(user_id):
@@ -123,6 +158,15 @@ def has_any_permission(user):
     return UserRoleAssignment.objects.filter(user=user, is_active=True).exists()
 
 
+def _safe_render_403(request):
+    try:
+        from django.shortcuts import render as _render
+        return _render(request, 'accounts/403.html', status=403)
+    except Exception:
+        html = '<html><body><h1>403 - Permission Denied</h1><p>You do not have permission to access this page.</p><a href="/">Go Home</a></body></html>'
+        return HttpResponseForbidden(html)
+
+
 def module_required(module_code, perm='view'):
     def decorator(view_func):
         @wraps(view_func)
@@ -133,7 +177,7 @@ def module_required(module_code, perm='view'):
                 if request.headers.get('HX-Request') == 'true':
                     return HttpResponseForbidden('Access denied.')
                 messages.error(request, f'You do not have permission to access this module.')
-                return render(request, 'accounts/403.html', status=403)
+                return _safe_render_403(request)
             return view_func(request, *args, **kwargs)
         return _wrapped
     return decorator
@@ -149,7 +193,7 @@ def model_required(model_name, perm='view'):
                 if request.headers.get('HX-Request') == 'true':
                     return HttpResponseForbidden('Access denied.')
                 messages.error(request, f'You do not have permission for this action.')
-                return render(request, 'accounts/403.html', status=403)
+                return _safe_render_403(request)
             return view_func(request, *args, **kwargs)
         return _wrapped
     return decorator
