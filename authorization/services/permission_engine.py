@@ -18,11 +18,14 @@ def get_user_permissions(user):
         return {
             'modules': {m: {p: True for p in ['view', 'create', 'edit', 'delete', 'export', 'import', 'approve', 'assign']}
                         for m in ['dashboard', 'clients', 'employees', 'homeworkers', 'assets', 'devices',
-                                  'tickets', 'domain_hosting', 'notifications', 'settings', 'authorization']},
+                                  'tickets', 'domain_hosting', 'notifications', 'settings', 'authorization',
+                                  'masters', 'ai', 'system']},
             'models': {m: {p: True for p in ['view', 'create', 'edit', 'delete', 'export', 'import', 'approve', 'assign']}
                        for m in ['client', 'employee', 'homeworker', 'asset', 'assetassignment', 'subnet',
                                  'ipaddress', 'networkdevice', 'serviceticket', 'ticketcomment', 'tickethistory',
-                                 'domainhosting', 'servicetype', 'assettype', 'state', 'city', 'user', 'group', 'role']},
+                                 'domainhosting', 'hostinginvoice', 'amc', 'servicetype', 'assettype',
+                                 'transporttype', 'state', 'city', 'location', 'branch',
+                                 'user', 'group', 'role']},
             'fields': {},
             'menus': {},
         }

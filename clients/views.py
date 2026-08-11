@@ -12,7 +12,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
-from accounts.views import is_htmx, role_required
+from accounts.views import is_htmx
+from authorization.services.permission_engine import module_required, model_required
 from masters.models import City, State
 
 from .forms import BranchForm, ClientForm, EmployeeForm, LocationForm
@@ -42,7 +43,7 @@ def _render_city_searchable_select(state_id, field_name='city'):
     return _render_searchable_select(field_name, '', options, 'Search...')
 
 
-@role_required('admin', 'manager')
+@module_required('clients', 'view')
 @require_http_methods(['GET'])
 def client_city_select_partial(request):
     state_id = request.GET.get('state', '')
@@ -53,7 +54,7 @@ def client_city_select_partial(request):
 # Client
 # ---------------------------------------------------------------------------
 
-@role_required('admin', 'manager')
+@module_required('clients', 'view')
 @require_http_methods(['GET'])
 def client_list_view(request):
     clients = Client.objects.select_related('city', 'state', 'branch').all()
@@ -110,7 +111,7 @@ def _get_filtered_clients(request):
     return clients
 
 
-@role_required('admin', 'manager')
+@module_required('clients', 'export')
 @require_http_methods(['GET'])
 def client_export_csv(request):
     clients = _get_filtered_clients(request)
@@ -131,7 +132,8 @@ def client_export_csv(request):
     return response
 
 
-@role_required('admin', 'manager')
+@module_required('clients', 'create')
+@model_required('client', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 @transaction.atomic
@@ -165,7 +167,8 @@ def client_create_view(request):
     return render(request, template, {'form': form, 'mode': 'create', 'page_title': 'Add Client'})
 
 
-@role_required('admin', 'manager')
+@module_required('clients', 'edit')
+@model_required('client', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def client_update_view(request, pk):
@@ -198,7 +201,8 @@ def client_update_view(request, pk):
     return render(request, template, {'form': form, 'mode': 'update', 'obj': client, 'page_title': f'Edit Client — {client.company_name}'})
 
 
-@role_required('admin', 'manager')
+@module_required('clients', 'delete')
+@model_required('client', 'delete')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def client_delete_view(request, pk):
@@ -215,7 +219,7 @@ def client_delete_view(request, pk):
     return render(request, template, {'obj': client, 'page_title': f'Delete Client — {client.company_name}'})
 
 
-@role_required('admin', 'manager')
+@module_required('clients', 'view')
 @require_http_methods(['GET'])
 def client_detail_view(request, pk):
     client = get_object_or_404(Client.objects.select_related('city', 'state'), pk=pk)
@@ -227,7 +231,7 @@ def client_detail_view(request, pk):
     })
 
 
-@role_required('admin', 'manager')
+@module_required('clients', 'view')
 @require_http_methods(['GET'])
 def client_download_template(request):
     response = HttpResponse(content_type='text/csv')
@@ -246,7 +250,7 @@ def client_download_template(request):
     return response
 
 
-@role_required('admin', 'manager')
+@module_required('clients', 'import')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def client_import_csv(request):
@@ -397,7 +401,7 @@ def client_import_csv(request):
 # Branch
 # ---------------------------------------------------------------------------
 
-@role_required('admin', 'manager')
+@module_required('clients', 'view')
 @require_http_methods(['GET'])
 def branch_list_view(request):
     branches = Branch.objects.select_related('city', 'state').all()
@@ -414,7 +418,8 @@ def branch_list_view(request):
     return render(request, 'clients/branch_list.html', context)
 
 
-@role_required('admin', 'manager')
+@module_required('clients', 'create')
+@model_required('branch', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def branch_create_view(request):
@@ -433,7 +438,8 @@ def branch_create_view(request):
     return render(request, template, {'form': form, 'mode': 'create', 'page_title': 'Add Branch'})
 
 
-@role_required('admin', 'manager')
+@module_required('clients', 'edit')
+@model_required('branch', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def branch_update_view(request, pk):
@@ -453,7 +459,8 @@ def branch_update_view(request, pk):
     return render(request, template, {'form': form, 'mode': 'update', 'obj': branch, 'page_title': f'Edit Branch — {branch.name}'})
 
 
-@role_required('admin', 'manager')
+@module_required('clients', 'delete')
+@model_required('branch', 'delete')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def branch_delete_view(request, pk):
@@ -470,7 +477,8 @@ def branch_delete_view(request, pk):
     return render(request, template, {'obj': branch, 'page_title': f'Delete Branch — {branch.name}'})
 
 
-@role_required('admin', 'manager')
+@module_required('clients', 'create')
+@model_required('branch', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def branch_quick_create_view(request):
@@ -483,7 +491,7 @@ def branch_quick_create_view(request):
     return render(request, 'clients/_branch_quick_form_partial.html')
 
 
-@role_required('admin', 'manager')
+@module_required('clients', 'view')
 @require_http_methods(['GET'])
 def branch_api_view(request):
     branches = Branch.objects.filter(is_active=True).order_by('name').values('id', 'name')
@@ -494,7 +502,7 @@ def branch_api_view(request):
 # Employee
 # ---------------------------------------------------------------------------
 
-@role_required('admin', 'manager')
+@module_required('employees', 'view')
 @require_http_methods(['GET'])
 def employee_list_view(request):
     employees = Employee.objects.select_related('user', 'city', 'state').prefetch_related('branches').all()
@@ -549,7 +557,7 @@ def _get_filtered_employees(request):
     return employees
 
 
-@role_required('admin', 'manager')
+@module_required('employees', 'export')
 @require_http_methods(['GET'])
 def employee_export_csv(request):
     employees = _get_filtered_employees(request)
@@ -572,7 +580,8 @@ def employee_export_csv(request):
     return response
 
 
-@role_required('admin', 'manager')
+@module_required('employees', 'create')
+@model_required('employee', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 @transaction.atomic
@@ -607,7 +616,8 @@ def employee_create_view(request):
     return render(request, template, {'form': form, 'mode': 'create', 'page_title': 'Add Employee', 'existing_branch_ids': []})
 
 
-@role_required('admin', 'manager')
+@module_required('employees', 'edit')
+@model_required('employee', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def employee_update_view(request, pk):
@@ -642,7 +652,8 @@ def employee_update_view(request, pk):
     return render(request, template, {'form': form, 'mode': 'update', 'obj': employee, 'page_title': f'Edit Employee — {employee.user.get_full_name()}', 'existing_branch_ids': list(employee.branches.values_list('id', flat=True))})
 
 
-@role_required('admin', 'manager')
+@module_required('employees', 'delete')
+@model_required('employee', 'delete')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def employee_delete_view(request, pk):
@@ -661,7 +672,7 @@ def employee_delete_view(request, pk):
     return render(request, template, {'obj': employee, 'page_title': f'Delete Employee — {employee.user.get_full_name()}'})
 
 
-@role_required('admin', 'manager')
+@module_required('employees', 'view')
 @require_http_methods(['GET'])
 def employee_detail_view(request, pk):
     employee = get_object_or_404(Employee.objects.select_related('user', 'city', 'state').prefetch_related('branches'), pk=pk)
@@ -672,7 +683,7 @@ def employee_detail_view(request, pk):
 # Location
 # ---------------------------------------------------------------------------
 
-@role_required('admin', 'manager')
+@module_required('clients', 'view')
 @require_http_methods(['GET'])
 def location_list_view(request):
     locations = Location.objects.select_related('city', 'state').all()
@@ -689,7 +700,8 @@ def location_list_view(request):
     return render(request, 'clients/location_list.html', context)
 
 
-@role_required('admin', 'manager')
+@module_required('clients', 'create')
+@model_required('location', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def location_create_view(request):
@@ -708,7 +720,8 @@ def location_create_view(request):
     return render(request, template, {'form': form, 'mode': 'create', 'page_title': 'Add Location'})
 
 
-@role_required('admin', 'manager')
+@module_required('clients', 'edit')
+@model_required('location', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def location_update_view(request, pk):
@@ -728,7 +741,8 @@ def location_update_view(request, pk):
     return render(request, template, {'form': form, 'mode': 'update', 'obj': location, 'page_title': f'Edit Location — {location.name}'})
 
 
-@role_required('admin', 'manager')
+@module_required('clients', 'delete')
+@model_required('location', 'delete')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def location_delete_view(request, pk):
@@ -749,7 +763,8 @@ def location_delete_view(request, pk):
 # Quick-Create (for inline add from other forms)
 # ---------------------------------------------------------------------------
 
-@role_required('admin', 'manager')
+@module_required('clients', 'create')
+@model_required('client', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def client_quick_create_view(request):
@@ -768,7 +783,8 @@ def client_quick_create_view(request):
     return render(request, 'clients/_client_quick_form_partial.html')
 
 
-@role_required('admin', 'manager')
+@module_required('clients', 'create')
+@model_required('location', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def location_quick_create_view(request):

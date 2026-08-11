@@ -13,7 +13,7 @@ from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
-from accounts.views import role_required
+from authorization.services.permission_engine import module_required, model_required
 
 
 def _stream_file(buffer, chunk_size=8192):
@@ -76,7 +76,7 @@ def _add_media_to_zip(zipf, media_root, prefix='media'):
             zipf.write(file_path, arcname)
 
 
-@role_required('admin')
+@module_required('system', 'view')
 @require_http_methods(['GET'])
 def backup_view(request):
     timestamp = datetime.now().strftime('%Y-%m-%d-%H%M%S')
@@ -101,7 +101,7 @@ def backup_view(request):
     return response
 
 
-@role_required('admin')
+@module_required('system', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def restore_view(request):

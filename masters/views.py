@@ -6,7 +6,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
-from accounts.views import is_htmx, login_required, role_required
+from accounts.views import is_htmx, login_required
+from authorization.services.permission_engine import module_required, model_required
 
 from .forms import (
     AssetTypeForm,
@@ -41,7 +42,7 @@ def _hx_redirect(url: str, level: str | None = None, message: str | None = None)
 # State
 # ---------------------------------------------------------------------------
 
-@role_required('admin', 'manager')
+@module_required('masters', 'view')
 @require_http_methods(['GET'])
 def state_list_view(request):
     states = State.objects.all()
@@ -54,7 +55,8 @@ def state_list_view(request):
     return render(request, 'masters/state_list.html', context)
 
 
-@role_required('admin', 'manager')
+@module_required('masters', 'create')
+@model_required('state', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def state_create_view(request):
@@ -73,7 +75,8 @@ def state_create_view(request):
     return render(request, template, {'form': form, 'mode': 'create', 'page_title': 'Add State'})
 
 
-@role_required('admin', 'manager')
+@module_required('masters', 'edit')
+@model_required('state', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def state_update_view(request, pk):
@@ -93,7 +96,8 @@ def state_update_view(request, pk):
     return render(request, template, {'form': form, 'mode': 'update', 'obj': state, 'page_title': f'Edit State — {state.name}'})
 
 
-@role_required('admin', 'manager')
+@module_required('masters', 'delete')
+@model_required('state', 'delete')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def state_delete_view(request, pk):
@@ -114,7 +118,7 @@ def state_delete_view(request, pk):
 # City
 # ---------------------------------------------------------------------------
 
-@role_required('admin', 'manager')
+@module_required('masters', 'view')
 @require_http_methods(['GET'])
 def city_list_view(request):
     cities = City.objects.select_related('state').all()
@@ -138,7 +142,8 @@ def city_list_view(request):
     return render(request, 'masters/city_list.html', context)
 
 
-@role_required('admin', 'manager')
+@module_required('masters', 'create')
+@model_required('city', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def city_create_view(request):
@@ -157,7 +162,8 @@ def city_create_view(request):
     return render(request, template, {'form': form, 'mode': 'create', 'page_title': 'Add City'})
 
 
-@role_required('admin', 'manager')
+@module_required('masters', 'edit')
+@model_required('city', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def city_update_view(request, pk):
@@ -177,7 +183,8 @@ def city_update_view(request, pk):
     return render(request, template, {'form': form, 'mode': 'update', 'obj': city, 'page_title': f'Edit City — {city.name}'})
 
 
-@role_required('admin', 'manager')
+@module_required('masters', 'delete')
+@model_required('city', 'delete')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def city_delete_view(request, pk):
@@ -198,7 +205,7 @@ def city_delete_view(request, pk):
 # ServiceType
 # ---------------------------------------------------------------------------
 
-@role_required('admin', 'manager')
+@module_required('masters', 'view')
 @require_http_methods(['GET'])
 def service_type_list_view(request):
     service_types = ServiceType.objects.all()
@@ -208,7 +215,8 @@ def service_type_list_view(request):
     return render(request, 'masters/service_type_list.html', context)
 
 
-@role_required('admin', 'manager')
+@module_required('masters', 'create')
+@model_required('servicetype', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def service_type_create_view(request):
@@ -227,7 +235,8 @@ def service_type_create_view(request):
     return render(request, template, {'form': form, 'mode': 'create', 'page_title': 'Add Service Type'})
 
 
-@role_required('admin', 'manager')
+@module_required('masters', 'edit')
+@model_required('servicetype', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def service_type_update_view(request, pk):
@@ -247,7 +256,8 @@ def service_type_update_view(request, pk):
     return render(request, template, {'form': form, 'mode': 'update', 'obj': st, 'page_title': f'Edit Service Type — {st.name}'})
 
 
-@role_required('admin', 'manager')
+@module_required('masters', 'delete')
+@model_required('servicetype', 'delete')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def service_type_delete_view(request, pk):
@@ -268,7 +278,7 @@ def service_type_delete_view(request, pk):
 # AssetType
 # ---------------------------------------------------------------------------
 
-@role_required('admin', 'manager')
+@module_required('masters', 'view')
 @require_http_methods(['GET'])
 def asset_type_list_view(request):
     asset_types = AssetType.objects.all()
@@ -278,7 +288,8 @@ def asset_type_list_view(request):
     return render(request, 'masters/asset_type_list.html', context)
 
 
-@role_required('admin', 'manager')
+@module_required('masters', 'create')
+@model_required('assettype', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def asset_type_create_view(request):
@@ -297,7 +308,8 @@ def asset_type_create_view(request):
     return render(request, template, {'form': form, 'mode': 'create', 'page_title': 'Add Asset Type'})
 
 
-@role_required('admin', 'manager')
+@module_required('masters', 'edit')
+@model_required('assettype', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def asset_type_update_view(request, pk):
@@ -317,7 +329,8 @@ def asset_type_update_view(request, pk):
     return render(request, template, {'form': form, 'mode': 'update', 'obj': at, 'page_title': f'Edit Asset Type — {at.name}'})
 
 
-@role_required('admin', 'manager')
+@module_required('masters', 'delete')
+@model_required('assettype', 'delete')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def asset_type_delete_view(request, pk):
@@ -338,7 +351,7 @@ def asset_type_delete_view(request, pk):
 # TransportType
 # ---------------------------------------------------------------------------
 
-@role_required('admin', 'manager')
+@module_required('masters', 'view')
 @require_http_methods(['GET'])
 def transport_type_list_view(request):
     transport_types = TransportType.objects.all()
@@ -348,7 +361,8 @@ def transport_type_list_view(request):
     return render(request, 'masters/transport_type_list.html', context)
 
 
-@role_required('admin', 'manager')
+@module_required('masters', 'create')
+@model_required('transporttype', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def transport_type_create_view(request):
@@ -367,7 +381,8 @@ def transport_type_create_view(request):
     return render(request, template, {'form': form, 'mode': 'create', 'page_title': 'Add Transport Type'})
 
 
-@role_required('admin', 'manager')
+@module_required('masters', 'edit')
+@model_required('transporttype', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def transport_type_update_view(request, pk):
@@ -387,7 +402,8 @@ def transport_type_update_view(request, pk):
     return render(request, template, {'form': form, 'mode': 'update', 'obj': tt, 'page_title': f'Edit Transport Type — {tt.name}'})
 
 
-@role_required('admin', 'manager')
+@module_required('masters', 'delete')
+@model_required('transporttype', 'delete')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def transport_type_delete_view(request, pk):
@@ -408,7 +424,8 @@ def transport_type_delete_view(request, pk):
 # Quick-Create (for inline add from other forms)
 # ---------------------------------------------------------------------------
 
-@role_required('admin', 'manager')
+@module_required('masters', 'create')
+@model_required('state', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def state_quick_create_view(request):
@@ -423,7 +440,8 @@ def state_quick_create_view(request):
     return render(request, 'masters/_state_quick_form_partial.html')
 
 
-@role_required('admin', 'manager')
+@module_required('masters', 'create')
+@model_required('city', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def city_quick_create_view(request):
@@ -442,7 +460,8 @@ def city_quick_create_view(request):
     return render(request, 'masters/_city_quick_form_partial.html', {'selected_state': state_id, 'states': states})
 
 
-@role_required('admin', 'manager')
+@module_required('masters', 'create')
+@model_required('servicetype', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def service_type_quick_create_view(request):
@@ -457,7 +476,8 @@ def service_type_quick_create_view(request):
     return render(request, 'masters/_service_type_quick_form_partial.html')
 
 
-@role_required('admin', 'manager')
+@module_required('masters', 'create')
+@model_required('assettype', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def asset_type_quick_create_view(request):
@@ -472,7 +492,8 @@ def asset_type_quick_create_view(request):
     return render(request, 'masters/_asset_type_quick_form_partial.html')
 
 
-@role_required('admin', 'manager')
+@module_required('masters', 'create')
+@model_required('transporttype', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def transport_type_quick_create_view(request):

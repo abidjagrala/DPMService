@@ -8,7 +8,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
-from accounts.views import is_htmx, role_required
+from accounts.views import is_htmx
+from authorization.services.permission_engine import module_required, model_required
 
 from .forms import NetworkDeviceForm
 from .models import NetworkDevice
@@ -29,7 +30,7 @@ def _hx_toast(level: str, message: str, status: int = 200, extra_events: dict | 
 # Network Device
 # ---------------------------------------------------------------------------
 
-@role_required('admin', 'manager')
+@module_required('devices', 'view')
 @require_http_methods(['GET'])
 def device_list_view(request):
     devices = NetworkDevice.objects.select_related('client').all()
@@ -70,7 +71,8 @@ def device_list_view(request):
     return render(request, 'network/device_list.html', context)
 
 
-@role_required('admin', 'manager')
+@module_required('devices', 'create')
+@model_required('networkdevice', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def device_create_view(request):
@@ -89,7 +91,8 @@ def device_create_view(request):
     return render(request, template, {'form': form, 'mode': 'create', 'page_title': 'Add Network Device'})
 
 
-@role_required('admin', 'manager')
+@module_required('devices', 'create')
+@model_required('networkdevice', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def device_multi_create_view(request):
@@ -158,7 +161,8 @@ def device_multi_create_view(request):
     return render(request, template, context)
 
 
-@role_required('admin', 'manager')
+@module_required('devices', 'edit')
+@model_required('networkdevice', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def device_update_view(request, pk):
@@ -178,7 +182,8 @@ def device_update_view(request, pk):
     return render(request, template, {'form': form, 'mode': 'update', 'obj': device, 'page_title': f'Edit Device — {device.name}'})
 
 
-@role_required('admin', 'manager')
+@module_required('devices', 'delete')
+@model_required('networkdevice', 'delete')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def device_delete_view(request, pk):
@@ -195,14 +200,16 @@ def device_delete_view(request, pk):
     return render(request, template, {'obj': device, 'page_title': f'Delete Device — {device.name}'})
 
 
-@role_required('admin', 'manager', 'staff')
+@module_required('devices', 'view')
+@model_required('networkdevice', 'view')
 @require_http_methods(['GET'])
 def device_detail_view(request, pk):
     device = get_object_or_404(NetworkDevice.objects.select_related('client'), pk=pk)
     return render(request, 'network/device_detail.html', {'obj': device, 'page_title': device.name})
 
 
-@role_required('admin', 'manager', 'staff')
+@module_required('devices', 'view')
+@model_required('networkdevice', 'view')
 @require_http_methods(['GET'])
 def device_credentials_view(request, pk):
     device = get_object_or_404(NetworkDevice, pk=pk)

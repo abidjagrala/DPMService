@@ -6,7 +6,8 @@ from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
-from accounts.views import is_htmx, role_required
+from accounts.views import is_htmx
+from authorization.services.permission_engine import module_required, model_required
 
 from .chat import AIChat
 from .classification import classify_ticket
@@ -193,7 +194,7 @@ def ai_classify_ticket_view(request):
 # Smart Suggestions
 # ---------------------------------------------------------------------------
 
-@role_required('admin', 'manager')
+@module_required('ai', 'view')
 @require_http_methods(['GET'])
 def ai_suggestions_view(request):
     """GET /ai/suggestions/ — return dashboard suggestions."""
@@ -207,7 +208,7 @@ def ai_suggestions_view(request):
     return JsonResponse({'suggestions': suggestions})
 
 
-@role_required('admin', 'manager')
+@module_required('ai', 'view')
 @require_http_methods(['POST'])
 def ai_refresh_suggestions_view(request):
     """POST /ai/suggestions/refresh/ — force regenerate suggestions."""
@@ -227,7 +228,7 @@ def ai_refresh_suggestions_view(request):
 _chat_sessions = {}
 
 
-@role_required('admin', 'manager')
+@module_required('ai', 'view')
 @require_http_methods(['GET', 'POST'])
 def ai_chat_view(request):
     """GET/POST /ai/chat/ — conversational interface."""
@@ -277,7 +278,7 @@ def ai_chat_view(request):
 # AI Settings
 # ---------------------------------------------------------------------------
 
-@role_required('admin', 'superuser')
+@module_required('ai', 'edit')
 @require_http_methods(['GET', 'POST'])
 def ai_settings_view(request):
     """GET/POST /ai/settings/ — AI API provider configuration."""

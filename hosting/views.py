@@ -11,7 +11,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
-from accounts.views import is_htmx, role_required
+from accounts.views import is_htmx
+from authorization.services.permission_engine import module_required, model_required
 from clients.models import Branch, Client
 
 from .forms import DomainHostingForm, DomainHostingInvoiceForm, AMCForm
@@ -55,7 +56,7 @@ def _get_filtered_services(request):
 # DomainHosting CRUD
 # ---------------------------------------------------------------------------
 
-@role_required('admin', 'manager', 'staff')
+@module_required('domain_hosting', 'view')
 @require_http_methods(['GET'])
 def hosting_list_view(request):
     services = _get_filtered_services(request)
@@ -82,7 +83,7 @@ def hosting_list_view(request):
     return render(request, 'hosting/hosting_list.html', context)
 
 
-@role_required('admin', 'manager', 'staff')
+@module_required('domain_hosting', 'export')
 @require_http_methods(['GET'])
 def hosting_export_csv(request):
     services = _get_filtered_services(request)
@@ -111,7 +112,8 @@ def hosting_export_csv(request):
     return response
 
 
-@role_required('admin', 'manager', 'staff')
+@module_required('domain_hosting', 'create')
+@model_required('domainhosting', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def hosting_create_view(request):
@@ -130,7 +132,8 @@ def hosting_create_view(request):
     return render(request, template, {'form': form, 'mode': 'create', 'page_title': 'Add Service'})
 
 
-@role_required('admin', 'manager', 'staff')
+@module_required('domain_hosting', 'edit')
+@model_required('domainhosting', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def hosting_update_view(request, pk):
@@ -150,7 +153,8 @@ def hosting_update_view(request, pk):
     return render(request, template, {'form': form, 'mode': 'update', 'obj': service, 'page_title': f'Edit — {service.service_name}'})
 
 
-@role_required('admin', 'manager', 'staff')
+@module_required('domain_hosting', 'delete')
+@model_required('domainhosting', 'delete')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def hosting_delete_view(request, pk):
@@ -167,7 +171,8 @@ def hosting_delete_view(request, pk):
     return render(request, template, {'obj': service, 'page_title': f'Delete — {service.service_name}'})
 
 
-@role_required('admin', 'manager', 'staff')
+@module_required('domain_hosting', 'view')
+@model_required('domainhosting', 'view')
 @require_http_methods(['GET'])
 def hosting_detail_view(request, pk):
     service = get_object_or_404(DomainHosting.objects.select_related('client'), pk=pk)
@@ -185,7 +190,8 @@ def hosting_detail_view(request, pk):
 # Invoice CRUD (nested under hosting detail)
 # ---------------------------------------------------------------------------
 
-@role_required('admin', 'manager', 'staff')
+@module_required('domain_hosting', 'create')
+@model_required('hostinginvoice', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def hosting_invoice_create_view(request, service_pk):
@@ -212,7 +218,8 @@ def hosting_invoice_create_view(request, service_pk):
     })
 
 
-@role_required('admin', 'manager', 'staff')
+@module_required('domain_hosting', 'delete')
+@model_required('hostinginvoice', 'delete')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def hosting_invoice_delete_view(request, service_pk, pk):
@@ -237,7 +244,7 @@ def hosting_invoice_delete_view(request, service_pk, pk):
 # CSV Import
 # ---------------------------------------------------------------------------
 
-@role_required('admin', 'manager', 'staff')
+@module_required('domain_hosting', 'view')
 @require_http_methods(['GET'])
 def hosting_download_template(request):
     response = HttpResponse(content_type='text/csv')
@@ -256,7 +263,7 @@ def hosting_download_template(request):
     return response
 
 
-@role_required('admin', 'manager', 'staff')
+@module_required('domain_hosting', 'import')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def hosting_import_csv(request):
@@ -416,7 +423,7 @@ def hosting_import_csv(request):
 # Annual Maintenance Contract CRUD
 # ---------------------------------------------------------------------------
 
-@role_required('admin', 'manager', 'staff')
+@module_required('domain_hosting', 'view')
 @require_http_methods(['GET'])
 def amc_list_view(request):
     amcs = AnnualMaintenanceContract.objects.select_related('client', 'client__branch').all()
@@ -457,7 +464,8 @@ def amc_list_view(request):
     return render(request, 'hosting/amc_list.html', context)
 
 
-@role_required('admin', 'manager', 'staff')
+@module_required('domain_hosting', 'create')
+@model_required('amc', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def amc_create_view(request):
@@ -476,7 +484,8 @@ def amc_create_view(request):
     return render(request, template, {'form': form, 'mode': 'create', 'page_title': 'Add AMC'})
 
 
-@role_required('admin', 'manager', 'staff')
+@module_required('domain_hosting', 'edit')
+@model_required('amc', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def amc_update_view(request, pk):
@@ -496,7 +505,8 @@ def amc_update_view(request, pk):
     return render(request, template, {'form': form, 'mode': 'update', 'obj': amc, 'page_title': f'Edit AMC — {amc.title}'})
 
 
-@role_required('admin', 'manager', 'staff')
+@module_required('domain_hosting', 'delete')
+@model_required('amc', 'delete')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def amc_delete_view(request, pk):

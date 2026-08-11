@@ -8,7 +8,8 @@ from django.template.loader import render_to_string
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
-from accounts.views import is_htmx, role_required
+from accounts.views import is_htmx
+from authorization.services.permission_engine import module_required, model_required
 
 from .forms import CommentForm
 from .models import Comment
@@ -43,7 +44,8 @@ def _render_comments_section(obj, user):
     return render_to_string('comments/_comments_partial.html', context, request=None)
 
 
-@role_required('admin', 'manager', 'staff', 'client')
+@module_required('tickets', 'create')
+@model_required('ticketcomment', 'create')
 @csrf_protect
 @require_http_methods(['POST'])
 def comment_add_view(request, app_label: str, model_name: str, object_id: int):

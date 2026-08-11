@@ -11,7 +11,8 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
-from accounts.views import is_htmx, role_required
+from accounts.views import is_htmx
+from authorization.services.permission_engine import module_required, model_required
 from notifications.services import notify_device_assigned
 
 from .forms import AssetAssignForm, AssetForm
@@ -29,7 +30,7 @@ def _hx_toast(level: str, message: str, status: int = 200, extra_events: dict | 
     return response
 
 
-@role_required('admin', 'manager', 'staff', 'client')
+@module_required('assets', 'view')
 @require_http_methods(['GET'])
 def asset_list_view(request):
     assets = Asset.objects.select_related('asset_type', 'client', 'client__branch').all()
@@ -105,7 +106,7 @@ def _get_filtered_assets(request):
     return assets
 
 
-@role_required('admin', 'manager', 'staff', 'client')
+@module_required('assets', 'export')
 @require_http_methods(['GET'])
 def asset_export_csv(request):
     assets = _get_filtered_assets(request)
@@ -139,7 +140,8 @@ def asset_export_csv(request):
     return response
 
 
-@role_required('admin', 'manager', 'client')
+@module_required('assets', 'create')
+@model_required('asset', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def asset_create_view(request):
@@ -166,7 +168,8 @@ def asset_create_view(request):
     return render(request, template, {'form': form, 'mode': 'create', 'page_title': 'Add Asset'})
 
 
-@role_required('admin', 'manager', 'client')
+@module_required('assets', 'edit')
+@model_required('asset', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def asset_update_view(request, pk):
@@ -198,7 +201,8 @@ def asset_update_view(request, pk):
     return render(request, template, {'form': form, 'mode': 'update', 'obj': asset, 'page_title': f'Edit Asset — {asset.serial_number}'})
 
 
-@role_required('admin', 'manager', 'client')
+@module_required('assets', 'delete')
+@model_required('asset', 'delete')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def asset_delete_view(request, pk):
@@ -219,7 +223,8 @@ def asset_delete_view(request, pk):
     return render(request, template, {'obj': asset, 'page_title': f'Delete Asset — {asset.serial_number}'})
 
 
-@role_required('admin', 'manager', 'staff', 'client')
+@module_required('assets', 'view')
+@model_required('asset', 'view')
 @require_http_methods(['GET'])
 def asset_detail_view(request, pk):
     asset = get_object_or_404(
@@ -242,7 +247,8 @@ def asset_detail_view(request, pk):
     })
 
 
-@role_required('admin', 'manager', 'staff', 'client')
+@module_required('assets', 'view')
+@model_required('asset', 'view')
 @require_http_methods(['GET'])
 def asset_credentials_view(request, pk):
     asset = get_object_or_404(Asset, pk=pk)
@@ -253,7 +259,8 @@ def asset_credentials_view(request, pk):
     return render(request, 'assets/_asset_credentials_partial.html', {'obj': asset})
 
 
-@role_required('admin', 'manager')
+@module_required('assets', 'assign')
+@model_required('assetassignment', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 @transaction.atomic
@@ -291,7 +298,8 @@ def asset_assign_view(request, pk):
     return render(request, template, {'form': form, 'obj': asset, 'page_title': f'Assign Asset — {asset.serial_number}'})
 
 
-@role_required('admin', 'manager')
+@module_required('assets', 'assign')
+@model_required('assetassignment', 'edit')
 @csrf_protect
 @require_http_methods(['POST'])
 @transaction.atomic
@@ -319,7 +327,8 @@ def asset_return_view(request, pk):
     return redirect('assets:asset_detail', pk=asset.pk)
 
 
-@role_required('admin', 'manager')
+@module_required('assets', 'edit')
+@model_required('asset', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def asset_status_change_view(request, pk):
@@ -348,7 +357,8 @@ def asset_status_change_view(request, pk):
     return render(request, 'assets/_asset_status_change_partial.html', context)
 
 
-@role_required('admin', 'manager', 'staff', 'client')
+@module_required('assets', 'view')
+@model_required('asset', 'view')
 @require_http_methods(['GET'])
 def asset_detail_pdf(request, pk):
     from io import BytesIO
@@ -619,7 +629,8 @@ def asset_detail_pdf(request, pk):
     return response
 
 
-@role_required('admin', 'manager', 'staff')
+@module_required('assets', 'create')
+@model_required('asset', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def asset_quick_create_view(request):

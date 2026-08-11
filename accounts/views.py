@@ -13,6 +13,8 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
+from authorization.services.permission_engine import module_required, model_required
+
 from .captcha import validate_captcha, store_captcha_answer
 from .forms import AdminUserForm, EmailLoginForm, PasswordResetConfirmForm, PasswordResetRequestForm, ProfileUpdateForm
 from .services.login_throttle import (
@@ -185,7 +187,8 @@ def password_change_view(request):
     return render(request, 'accounts/password_change.html', {'form': form})
 
 
-@role_required(User.Role.ADMIN, User.Role.MANAGER)
+@module_required('settings', 'view')
+@model_required('user', 'view')
 @require_http_methods(['GET'])
 def user_list_view(request):
     from django.db.models import Q
@@ -214,14 +217,16 @@ def user_list_view(request):
     return render(request, 'accounts/user_list.html', context)
 
 
-@role_required(User.Role.ADMIN)
+@module_required('settings', 'view')
+@model_required('user', 'view')
 @require_http_methods(['GET'])
 def user_detail_view(request, user_id):
     target_user = get_object_or_404(User, pk=user_id)
     return render(request, 'accounts/user_detail.html', {'user_obj': target_user})
 
 
-@role_required(User.Role.ADMIN)
+@module_required('settings', 'create')
+@model_required('user', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def user_create_view(request):
@@ -246,7 +251,8 @@ def user_create_view(request):
     })
 
 
-@role_required(User.Role.ADMIN)
+@module_required('settings', 'edit')
+@model_required('user', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def user_update_view(request, user_id):
@@ -280,7 +286,8 @@ def user_update_view(request, user_id):
     })
 
 
-@role_required(User.Role.ADMIN)
+@module_required('settings', 'delete')
+@model_required('user', 'delete')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def user_delete_view(request, user_id):
@@ -304,7 +311,8 @@ def user_delete_view(request, user_id):
     return render(request, template, {'user_obj': target_user})
 
 
-@role_required(User.Role.ADMIN)
+@module_required('settings', 'edit')
+@model_required('user', 'edit')
 @csrf_protect
 @require_http_methods(['POST'])
 def user_2fa_toggle_view(request, user_id):
@@ -424,7 +432,7 @@ def _send_password_reset_email(request, user, token):
 # Company Info (singleton)
 # ---------------------------------------------------------------------------
 
-@role_required('admin')
+@module_required('settings', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def company_info_edit_view(request):
@@ -453,7 +461,7 @@ def company_info_edit_view(request):
 # Mail Settings (singleton)
 # ---------------------------------------------------------------------------
 
-@role_required('admin')
+@module_required('settings', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def mail_settings_edit_view(request):
@@ -479,7 +487,7 @@ def mail_settings_edit_view(request):
     })
 
 
-@role_required('admin')
+@module_required('settings', 'edit')
 @csrf_protect
 @require_http_methods(['POST'])
 def mail_settings_test_view(request):
@@ -523,7 +531,7 @@ def mail_settings_test_view(request):
 # SMS Settings (singleton)
 # ---------------------------------------------------------------------------
 
-@role_required('admin')
+@module_required('settings', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def sms_settings_edit_view(request):
@@ -548,7 +556,7 @@ def sms_settings_edit_view(request):
     })
 
 
-@role_required('admin')
+@module_required('settings', 'edit')
 @csrf_protect
 @require_http_methods(['POST'])
 def sms_settings_test_view(request):
@@ -600,7 +608,7 @@ def sms_settings_test_view(request):
 # WhatsApp Settings (singleton)
 # ---------------------------------------------------------------------------
 
-@role_required('admin')
+@module_required('settings', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def whatsapp_settings_edit_view(request):
@@ -625,7 +633,7 @@ def whatsapp_settings_edit_view(request):
     })
 
 
-@role_required('admin')
+@module_required('settings', 'edit')
 @csrf_protect
 @require_http_methods(['POST'])
 def whatsapp_settings_test_view(request):
