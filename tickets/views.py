@@ -3,15 +3,16 @@ import json
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
-from accounts.views import is_htmx, role_required
+from accounts.views import is_htmx
 from assets.models import Asset
 from clients.models import Branch
+from authorization.services.permission_engine import module_required, model_required
 
 from comments.forms import CommentForm
 
@@ -68,7 +69,7 @@ def public_tracking_view(request, ticket_number):
     return render(request, 'tickets/tracking.html', context)
 
 
-@role_required('admin', 'manager', 'staff', 'client')
+@module_required('tickets', 'view')
 @require_http_methods(['GET'])
 def ticket_list_view(request):
     tickets = ServiceTicket.objects.select_related(
@@ -129,7 +130,8 @@ def ticket_list_view(request):
     return render(request, 'tickets/ticket_list.html', context)
 
 
-@role_required('admin', 'manager', 'staff', 'client')
+@module_required('tickets', 'create')
+@model_required('serviceticket', 'create')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def ticket_create_view(request):
@@ -167,14 +169,15 @@ def ticket_create_view(request):
     return render(request, template, context)
 
 
-@role_required('admin', 'manager', 'client')
+@module_required('tickets', 'edit')
+@model_required('serviceticket', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def ticket_update_view(request, pk):
     ticket = get_object_or_404(ServiceTicket, pk=pk)
 
     if request.user.is_client and ticket.client.user != request.user:
-        return HttpResponseForbidden('You do not have access to this ticket.')
+        return render(request, 'accounts/403.html', status=403)
 
     old_status = ticket.status
     old_assignee = ticket.assigned_to_id
@@ -210,14 +213,15 @@ def ticket_update_view(request, pk):
     return render(request, template, context)
 
 
-@role_required('admin', 'manager', 'staff', 'client')
+@module_required('tickets', 'edit')
+@model_required('serviceticket', 'edit')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def ticket_status_view(request, pk):
     ticket = get_object_or_404(ServiceTicket, pk=pk)
 
     if request.user.is_client and ticket.client.user != request.user:
-        return HttpResponseForbidden('You do not have access to this ticket.')
+        return render(request, 'accounts/403.html', status=403)
 
     if request.method == 'POST':
         old_status = ticket.status
@@ -244,7 +248,8 @@ def ticket_status_view(request, pk):
     return render(request, 'tickets/_ticket_status_change_partial.html', context)
 
 
-@role_required('admin', 'manager', 'staff', 'client')
+@module_required('tickets', 'view')
+@model_required('serviceticket', 'view')
 @require_http_methods(['GET'])
 def ticket_detail_view(request, pk):
     ticket = get_object_or_404(
@@ -253,7 +258,7 @@ def ticket_detail_view(request, pk):
     )
 
     if request.user.is_client and ticket.client.user != request.user:
-        return HttpResponseForbidden('You do not have access to this ticket.')
+        return render(request, 'accounts/403.html', status=403)
 
     history = ticket.history.select_related('changed_by')[:20]
     comment_form = CommentForm()
@@ -270,7 +275,8 @@ def ticket_detail_view(request, pk):
     return render(request, template, context)
 
 
-@role_required('admin', 'manager', 'staff', 'client')
+@module_required('tickets', 'view')
+@model_required('serviceticket', 'view')
 @require_http_methods(['GET'])
 def ticket_detail_pdf(request, pk):
     from io import BytesIO
@@ -298,7 +304,7 @@ def ticket_detail_pdf(request, pk):
     )
 
     if request.user.is_client and ticket.client.user != request.user:
-        return HttpResponseForbidden('You do not have access to this ticket.')
+        return render(request, 'accounts/403.html', status=403)
 
     company = CompanyInfo.get_instance()
     ct = ContentType.objects.get_for_model(ticket)
@@ -642,6 +648,8 @@ def ticket_detail_pdf(request, pk):
     response = HttpResponse(buffer, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="ticket_{ticket.ticket_number}.pdf"'
     return response
+@module_required('tickets', 'delete')
+@model_required('serviceticket', 'delete')
 @csrf_protect
 @require_http_methods(['GET', 'POST'])
 def ticket_delete_view(request, pk):
@@ -662,7 +670,7 @@ def ticket_delete_view(request, pk):
 # Asset API (for client-based filtering)
 # ---------------------------------------------------------------------------
 
-@role_required('admin', 'manager', 'staff', 'client')
+@module_required('tickets', 'view')
 @require_http_methods(['GET'])
 def ticket_assets_api_view(request):
     """Return active assets filtered by client_id as JSON."""

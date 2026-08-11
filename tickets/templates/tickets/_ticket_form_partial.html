@@ -4,7 +4,8 @@
     {% csrf_token %}
     {% daisy_form_errors form %}
 
-    {# ── Client field (always visible, on top) ── #}
+    {# ── Client field (visible only when form has it) ── #}
+    {% if form.client is defined %}
     {% with field=form.client %}
     <div class="form-control">
         <label class="label py-1">
@@ -21,9 +22,14 @@
         {% endif %}
     </div>
     {% endwith %}
+    {% endif %}
 
     {# ── Remaining fields (hidden until client is selected) ── #}
+    {% if form.client is defined %}
     <div id="ticket-rest-fields" style="display:none;" class="space-y-3">
+    {% else %}
+    <div id="ticket-rest-fields" class="space-y-3">
+    {% endif %}
         {% for field in form %}
             {% if field.name == 'client' %}
                 {# skip client — already rendered above #}
@@ -89,26 +95,30 @@
     var submitRow = document.getElementById('ticket-submit-row');
     var clientInput = document.querySelector('input[name="client"]');
 
+    if (!clientInput) {
+        if (restFields) restFields.style.display = '';
+        if (submitRow) submitRow.style.display = '';
+        return;
+    }
+
     function toggleRestFields() {
         var hasClient = clientInput && clientInput.value && clientInput.value.trim() !== '';
         if (restFields) restFields.style.display = hasClient ? '' : 'none';
         if (submitRow) submitRow.style.display = hasClient ? '' : 'none';
     }
 
-    if (clientInput) {
-        var observer = new MutationObserver(toggleRestFields);
-        observer.observe(clientInput, { attributes: true, attributeFilter: ['value'] });
-        clientInput.addEventListener('change', toggleRestFields);
+    var observer = new MutationObserver(toggleRestFields);
+    observer.observe(clientInput, { attributes: true, attributeFilter: ['value'] });
+    clientInput.addEventListener('change', toggleRestFields);
 
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('.ss-item')) {
-                setTimeout(toggleRestFields, 50);
-            }
-        }, true);
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.ss-item')) {
+            setTimeout(toggleRestFields, 50);
+        }
+    }, true);
 
-        toggleRestFields();
-        setTimeout(toggleRestFields, 200);
-    }
+    toggleRestFields();
+    setTimeout(toggleRestFields, 200);
 
     window.addEventListener('quick-add-done', function(e) {
         if (e.detail && e.detail.fieldName === 'client') {

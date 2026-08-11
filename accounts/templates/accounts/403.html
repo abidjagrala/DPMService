@@ -1,0 +1,40 @@
+{% extends "accounts/base.html" %}
+{% load static %}
+
+{% block title %}403 — Permission Denied{% endblock %}
+
+{% block auth_content %}
+<div class="flex items-center justify-center min-h-[70vh]">
+    <div class="text-center space-y-6">
+        <div class="text-9xl font-black text-warning/20 select-none">403</div>
+        <div class="space-y-2">
+            <h1 class="text-3xl font-bold">Permission Denied</h1>
+            <p class="text-base-content/60 max-w-md mx-auto">
+                You do not have permission to access this page. Please contact your administrator if you believe this is an error.
+            </p>
+        </div>
+        <div class="flex justify-center gap-3">
+            <a href="/" class="btn btn-primary">Go to Home</a>
+            <button onclick="history.back()" class="btn btn-ghost">Go Back</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-[70vh]">
+    <div class="text-center space-y-6">
+        <div class="text-9xl font-black text-warning/20 select-none">403</div>
+        <div class="space-y-2">
+            <h1 class="text-3xl font-bold">Permission Denied</h1>
+            <p class="text-base-content/60 max-w-md mx-auto">
+                You do not have permission to access this page. Please contact your administrator if you believe this is an error.
+            </p>
+        </div>
+        <div class="flex justify-center gap-3">
+            <a href="/" class="btn btn-primary">Go to Home</a>
+            <button onclick="history.back()" class="btn btn-ghost">Go Back</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

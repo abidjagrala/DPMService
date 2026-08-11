@@ -3,7 +3,7 @@ from functools import wraps
 from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponseForbidden
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.contrib import messages
 
 CACHE_TTL = 300
@@ -130,7 +130,7 @@ def module_required(module_code, perm='view'):
                 if request.headers.get('HX-Request') == 'true':
                     return HttpResponseForbidden('Access denied.')
                 messages.error(request, f'You do not have permission to access this module.')
-                return redirect('accounts:dashboard')
+                return render(request, 'accounts/403.html', status=403)
             return view_func(request, *args, **kwargs)
         return _wrapped
     return decorator
@@ -146,7 +146,7 @@ def model_required(model_name, perm='view'):
                 if request.headers.get('HX-Request') == 'true':
                     return HttpResponseForbidden('Access denied.')
                 messages.error(request, f'You do not have permission for this action.')
-                return redirect('accounts:dashboard')
+                return render(request, 'accounts/403.html', status=403)
             return view_func(request, *args, **kwargs)
         return _wrapped
     return decorator

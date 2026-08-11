@@ -31,7 +31,8 @@ def role_required(*roles):
         @login_required
         def _wrapped(request, *args, **kwargs):
             if request.user.role not in roles and not request.user.is_superuser:
-                return HttpResponseForbidden('You do not have permission to access this page.')
+                from django.shortcuts import render as _render
+                return _render(request, 'accounts/403.html', status=403)
             return view_func(request, *args, **kwargs)
         return _wrapped
     return decorator
